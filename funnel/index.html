@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AstroMap App</title>
+<script>
+/* Язык выбирается до загрузки текстов: copy.js читает window.ASTROMAP_LANG.
+   По умолчанию английский. Ключ общий с продуктом — astromap.lang. */
+(function () {
+  var l = 'en';
+  try { l = localStorage.getItem('astromap.lang') || 'en'; } catch (e) {}
+  if (l !== 'pl' && l !== 'en') { l = 'en'; }
+  window.ASTROMAP_LANG = l;
+  document.documentElement.lang = l;
+})();
+</script>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/flow.css">
+</head>
+<body>
+
+<!-- декор фона. SVG инлайновый: <use href="file.svg#id"> не работает по file:// -->
+<div class="sky" aria-hidden="true">
+  <svg class="s1" viewBox="0 0 100 100"><path d="M50 0C53 34 66 47 100 50 66 53 53 66 50 100 47 66 34 53 0 50 34 47 47 34 50 0Z" fill="#E8C57F"/></svg>
+  <svg class="s2" viewBox="0 0 100 100"><path d="M50 0C53 34 66 47 100 50 66 53 53 66 50 100 47 66 34 53 0 50 34 47 47 34 50 0Z" fill="#F5EFE4"/></svg>
+  <svg class="s3" viewBox="0 0 100 100"><path d="M50 0C53 34 66 47 100 50 66 53 53 66 50 100 47 66 34 53 0 50 34 47 47 34 50 0Z" fill="#E8C57F"/></svg>
+  <svg class="s4" viewBox="0 0 100 100"><path d="M50 0C53 34 66 47 100 50 66 53 53 66 50 100 47 66 34 53 0 50 34 47 47 34 50 0Z" fill="#F5EFE4"/></svg>
+</div>
+
+<div class="app">
+
+  <header class="top" id="top">
+    <div class="top__row">
+      <span class="top__brand" data-t="brand"></span>
+      <span class="top__right">
+      <span class="lang" role="group" aria-label="Language">
+        <button class="lang__b" data-lang="en" type="button">EN</button>
+        <button class="lang__b" data-lang="pl" type="button">PL</button>
+      </span>
+        <span class="top__pct" id="pct"></span>
+      </span>
+    </div>
+    <div class="bar" id="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+      <i class="bar__seg"></i><i class="bar__seg"></i><i class="bar__seg"></i><i class="bar__seg"></i><i class="bar__seg"></i>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===================================================== 1. дата -->
+    <section class="scr is-active" id="s1">
+      <p class="eyebrow" data-t="s1.eyebrow"></p>
+      <h1 class="h1" data-t="s1.title"></h1>
+      <div class="fields">
+        <div class="field">
+          <label class="field__lab" for="d1" data-t="s1.day"></label>
+          <select id="d1"></select>
+        </div>
+        <div class="field">
+          <label class="field__lab" for="m1" data-t="s1.month"></label>
+          <select id="m1"></select>
+        </div>
+        <div class="field">
+          <label class="field__lab" for="y1" data-t="s1.year"></label>
+          <select id="y1"></select>
+        </div>
+      </div>
+      <div class="res hidden" id="s1res">
+        <div class="res__lab" data-t="s1.resultLabel"></div>
+        <div class="res__val" id="s1sign"></div>
+        <div class="res__txt" id="s1line"></div>
+        <div class="res__meta" id="s1el"></div>
+      </div>
+    </section>
+
+    <!-- ===================================================== 2. темы -->
+    <section class="scr" id="s2">
+      <p class="eyebrow" data-t="s2.eyebrow"></p>
+      <h1 class="h1" data-t="s2.title"></h1>
+      <p class="hint" data-t="s2.hint"></p>
+      <div class="tiles" id="tiles" role="group"></div>
+    </section>
+
+    <!-- ===================================================== 3. время и место -->
+    <section class="scr" id="s3">
+      <p class="eyebrow" data-t="s3.eyebrow"></p>
+      <h1 class="h1" data-t="s3.title"></h1>
+      <p class="hint" data-t="s3.hint"></p>
+      <div class="fields">
+        <div class="field">
+          <label class="field__lab" for="hh" data-t="s3.hour"></label>
+          <select id="hh"></select>
+        </div>
+        <div class="field">
+          <label class="field__lab" for="mm" data-t="s3.minute"></label>
+          <select id="mm"></select>
+        </div>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="noTime">
+        <span data-t="s3.unknown"></span>
+      </label>
+      <div class="fields fields--stack">
+        <div class="field field--wide">
+          <label class="field__lab" for="city" data-t="s3.city"></label>
+          <select id="city"></select>
+        </div>
+      </div>
+      <p class="calc hidden" id="calc"><span data-t="computing"></span><span class="calc__dots"></span></p>
+      <div class="res hidden" id="moonBox">
+        <div class="res__lab" data-t="s3.moonLabel"></div>
+        <div class="res__val" id="moonSign"></div>
+        <div class="res__txt" id="moonLine"></div>
+      </div>
+      <div class="res hidden" id="ascBox">
+        <div class="res__lab" data-t="s3.ascLabel"></div>
+        <div class="res__val" id="ascSign"></div>
+        <div class="res__txt" id="ascLine"></div>
+      </div>
+      <p class="res__meta hidden" id="s3note"></p>
+    </section>
+
+    <!-- ===================================================== 4. партнёр -->
+    <section class="scr" id="s4">
+      <p class="eyebrow" data-t="s4.eyebrow"></p>
+      <h1 class="h1" data-t="s4.title"></h1>
+      <p class="hint" data-t="s4.hint"></p>
+      <div class="fields">
+        <div class="field">
+          <label class="field__lab" for="d2" data-t="s1.day"></label>
+          <select id="d2"></select>
+        </div>
+        <div class="field">
+          <label class="field__lab" for="m2" data-t="s1.month"></label>
+          <select id="m2"></select>
+        </div>
+        <div class="field">
+          <label class="field__lab" for="y2" data-t="s1.year"></label>
+          <select id="y2"></select>
+        </div>
+      </div>
+      <div class="score hidden" id="scoreBox">
+        <div class="score__num" id="scoreNum">0</div>
+        <div class="score__lab" data-t="s4.scoreLabel"></div>
+        <div class="track"><i class="track__fill" id="scoreFill"></i></div>
+        <div class="score__t" id="scoreT"></div>
+        <div class="score__d" id="scoreD"></div>
+        <div class="score__foot" data-t="s4.scoleFoot"></div>
+      </div>
+    </section>
+
+    <!-- ===================================================== 5. сводка -->
+    <section class="scr" id="s5">
+      <p class="eyebrow" data-t="s5.eyebrow"></p>
+      <h1 class="h1" data-t="s5.title"></h1>
+      <div class="sum" id="sum"></div>
+      <p class="hint" data-t="s5.ready"></p>
+    </section>
+
+    <!-- ===================================================== 6. пейволл -->
+    <section class="scr" id="s6">
+      <p class="eyebrow" data-t="paywall.eyebrow"></p>
+      <h1 class="h1" data-t="paywall.title"></h1>
+      <div class="inc" id="inc"></div>
+
+      <div class="plan">
+        <div class="plan__t" data-t="paywall.planTitle"></div>
+        <div class="plan__p" id="planPrice"></div>
+        <div class="plan__after" id="planAfter"></div>
+        <p class="disc" id="planDisc"></p>
+      </div>
+
+      <!-- Соцдоказательства здесь нет намеренно: цифр пользователей у продукта
+           пока не существует. Когда появятся реальные — вставлять сюда,
+           селектор .plan + .proof, и только проверяемые формулировки. -->
+
+      <p class="legal" id="legal"></p>
+      <p class="legal hidden" id="checkoutNote"></p>
+    </section>
+
+    <!-- ===================================================== 7. recovery -->
+    <section class="scr" id="s7">
+      <p class="eyebrow" data-t="paywall.eyebrow"></p>
+      <h1 class="h1" data-t="recovery.title"></h1>
+      <p class="hint" data-t="recovery.sub"></p>
+      <div class="blur">
+        <p class="blur__txt" id="revealed"></p>
+        <p class="blur__txt blur__hid" id="hiddenTxt" aria-hidden="true"></p>
+      </div>
+      <p class="eyebrow" data-t="recovery.surveyTitle" style="margin-top:22px"></p>
+      <div class="chips" id="chips" role="radiogroup"></div>
+      <p class="answer" id="answer"></p>
+      <div class="alt">
+        <div class="alt__t" data-t="recovery.yearTitle"></div>
+        <div class="alt__p" id="onePrice"></div>
+        <p class="disc" id="oneDisc"></p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="dock">
+  <div class="dock__in">
+    <button class="cta cta--ghost hidden" id="ghost" type="button"></button>
+    <button class="cta" id="cta" type="button" disabled></button>
+  </div>
+</div>
+
+<script src="js/astro.js"></script>
+<script src="js/copy.js"></script>
+<script src="js/flow.js"></script>
+</body>
+</html>

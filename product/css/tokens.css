@@ -1,0 +1,50 @@
+/* tokens.css — значения сняты пиксельно из макета Figma (см. astromap_tokens.png).
+   Рядом с каждым — что он заменяет в макете. */
+:root {
+  --bg:            #06020C;  /* фон экрана */
+  --bg-2:          #07020D;  /* фон вторичных экранов */
+  --surf:          #130F20;  /* карточки, строки прогноза */
+  --surf-sel:      #280F46;  /* выбранная карточка */
+  --nav:           #0E0B10;  /* плашка навигации */
+  --nav-on:        #201D22;  /* активный пункт навигации */
+
+  --grad-a:        #C7BFFB;  /* левый край градиентной кнопки */
+  --grad-b:        #9B92F8;  /* правый край */
+  --accent:        #9B8AF8;  /* тумблеры, рамка выбора, иконки */
+  --mint:          #6FE9C2;  /* бейдж выгоды */
+  --pink:          #F19DE7;  /* бейдж most popular */
+
+  --ink:           #FFFFFF;              /* контраст к фону 20.1:1 */
+  --ink-dim:       rgba(255,255,255,.62);
+  --ink-faint:     rgba(255,255,255,.38);
+  --on-accent:     #1A1035;              /* текст на градиенте, 9.4:1 */
+  --line:          rgba(255,255,255,.10);
+  --line-2:        rgba(255,255,255,.06);
+
+  --soft:          #6FE9C2;  /* лёгкий аспект */
+  --hard:          #F0928A;  /* трудный аспект */
+  --neutral:       #B9AEF9;  /* нейтральный */
+
+  --r-card:        16px;
+  --r-btn:         999px;
+  --h-btn:         54px;
+  --pad:           24px;
+
+  --serif: 'CormorantG', Georgia, serif;
+  --sans:  'InterApp', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+/* Шрифты локальные: внешний запрос к Google Fonts добавляет 150-250 мс
+   до первого рендера заголовка. */
+@font-face { font-family:'CormorantG'; src:url('../assets/fonts/CG-Roman.ttf') format('truetype');
+  font-weight:300 700; font-style:normal; font-display:swap; }
+@font-face { font-family:'CormorantG'; src:url('../assets/fonts/CG-Italic.ttf') format('truetype');
+  font-weight:300 700; font-style:italic; font-display:swap; }
+@font-face { font-family:'InterApp'; src:url('../assets/fonts/inter-latin-ext-400-normal.woff2') format('woff2');
+  font-weight:400; font-display:swap; }
+@font-face { font-family:'InterApp'; src:url('../assets/fonts/inter-latin-ext-500-normal.woff2') format('woff2');
+  font-weight:500; font-display:swap; }
+@font-face { font-family:'InterApp'; src:url('../assets/fonts/inter-latin-ext-600-normal.woff2') format('woff2');
+  font-weight:600; font-display:swap; }
+@font-face { font-family:'InterApp'; src:url('../assets/fonts/inter-latin-ext-700-normal.woff2') format('woff2');
+  font-weight:700; font-display:swap; }

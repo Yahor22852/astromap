@@ -1,0 +1,110 @@
+/* reading.css — только то, что нужно странице разбора.
+   Токены и базовые компоненты берутся из tokens.css и flow.css. */
+
+.rd { position: relative; z-index: 1; padding: 20px 0 64px; }
+.rd.is-on { display: block; }
+
+.rd__meta {
+  margin-top: 10px;
+  font-size: 13px;
+  letter-spacing: .04em;
+  color: var(--ink-faint);
+}
+
+.rd__h {
+  margin-top: 34px;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* карточка позиции */
+.pos {
+  margin-top: 12px;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+.pos__k {
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.pos__v {
+  margin-top: 2px;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 38px;
+}
+.pos__v span { font-family: var(--sans); font-size: 14px; color: var(--ink-dim); font-weight: 400; }
+.pos__t { margin-top: 8px; font-size: 15px; line-height: 23px; color: var(--ink-dim); }
+
+/* тематический блок */
+.th { margin-top: 14px; }
+.th__t {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 21px;
+}
+.th__b { margin-top: 5px; font-size: 15px; line-height: 23px; color: var(--ink-dim); }
+.th + .th { margin-top: 18px; }
+
+/* неделя */
+.rd__week {
+  margin-top: 10px;
+  font-size: 13px;
+  letter-spacing: .06em;
+  color: var(--ink-faint);
+}
+.wk { margin-top: 12px; }
+.wk__k {
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.wk__t { margin-top: 4px; font-size: 15px; line-height: 23px; }
+.wk + .wk { margin-top: 16px; }
+.rd__note { margin-top: 14px; font-size: 12px; line-height: 18px; color: var(--ink-faint); }
+
+/* пара */
+.pr { margin-top: 12px; display: flex; align-items: center; }
+.pr__n {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 52px;
+  line-height: 52px;
+  color: var(--gold);
+  margin-right: 16px;
+}
+.pr__c { flex: 1 1 auto; }
+.pr__k {
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.pr__t { font-family: var(--serif); font-weight: 600; font-size: 20px; }
+.pr__d { margin-top: 8px; font-size: 15px; line-height: 23px; color: var(--ink-dim); }
+.pr__foot { margin-top: 12px; font-size: 11px; line-height: 16px; color: var(--ink-faint); }
+
+.rd__disc {
+  margin-top: 34px;
+  padding-top: 16px;
+  border-top: 1px solid var(--card-line-2);
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--ink-faint);
+}
+
+.cta--link {
+  margin-top: 22px;
+  text-decoration: none;
+  display: flex;
+}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AstroMap App</title>
+<script>
+/* Язык выбирается до загрузки текстов: copy.js читает window.ASTROMAP_LANG.
+   По умолчанию английский. Ключ общий с продуктом — astromap.lang. */
+(function () {
+  var l = 'en';
+  try { l = localStorage.getItem('astromap.lang') || 'en'; } catch (e) {}
+  if (l !== 'pl' && l !== 'en') { l = 'en'; }
+  window.ASTROMAP_LANG = l;
+  document.documentElement.lang = l;
+})();
+</script>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/flow.css">
+<link rel="stylesheet" href="css/reading.css">
+</head>
+<body>
+
+<div class="sky" aria-hidden="true">
+  <svg class="s1" viewBox="0 0 100 100"><path d="M50 0C53 34 66 47 100 50 66 53 53 66 50 100 47 66 34 53 0 50 34 47 47 34 50 0Z" fill="#E8C57F"/></svg>
+  <svg class="s2" viewBox="0 0 100 100"><path d="M50 0C53 34 66 47 100 50 66 53 53 66 50 100 47 66 34 53 0 50 34 47 47 34 50 0Z" fill="#F5EFE4"/></svg>
+  <svg class="s4" viewBox="0 0 100 100"><path d="M50 0C53 34 66 47 100 50 66 53 53 66 50 100 47 66 34 53 0 50 34 47 47 34 50 0Z" fill="#F5EFE4"/></svg>
+</div>
+
+<div class="app">
+  <header class="top">
+    <div class="top__row">
+      <span class="top__brand">AstroMap App</span>
+      <span class="lang" role="group" aria-label="Language">
+        <button class="lang__b" data-lang="en" type="button">EN</button>
+        <button class="lang__b" data-lang="pl" type="button">PL</button>
+      </span>
+    </div>
+  </header>
+
+  <main>
+    <!-- нет сохранённой карты -->
+    <section class="rd hidden" id="empty">
+      <h1 class="h1" id="emptyTitle"></h1>
+      <p class="hint" id="emptyText"></p>
+      <a class="cta cta--link" href="index.html" id="emptyBack"></a>
+    </section>
+
+    <!-- разбор -->
+    <section class="rd hidden" id="report">
+      <h1 class="h1" id="rTitle"></h1>
+      <p class="rd__meta" id="rMeta"></p>
+
+      <h2 class="rd__h" id="hPositions"></h2>
+      <div id="positions"></div>
+
+      <h2 class="rd__h" id="hThemes"></h2>
+      <div id="themes"></div>
+
+      <h2 class="rd__h" id="hWeek"></h2>
+      <p class="rd__week" id="weekRange"></p>
+      <div id="week"></div>
+      <p class="rd__note" id="weekNote"></p>
+
+      <h2 class="rd__h" id="hPair"></h2>
+      <div id="pair"></div>
+
+      <p class="rd__disc" id="disc"></p>
+    </section>
+  </main>
+</div>
+
+<script src="js/astro.js"></script>
+<script src="js/copy.js"></script>
+<script src="js/reading-copy.js"></script>
+<script src="js/reading.js"></script>
+</body>
+</html>

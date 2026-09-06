@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AstroMap — sprawdzenie silnika</title>
+<style>
+  :root {
+    --bg: #0B0D22; --card: rgba(255,255,255,.05); --line: rgba(245,239,228,.14);
+    --ink: #F5EFE4; --dim: rgba(245,239,228,.62); --gold: #E8C57F;
+    --hard: #E88A7D; --soft: #8FD3B0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg); color: var(--ink); padding: 28px 20px 60px;
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; }
+  .note { margin-top: 6px; font-size: 13px; color: var(--dim); }
+  fieldset {
+    margin-top: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 12px;
+  }
+  legend { padding: 0 8px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+  .row { display: flex; flex-wrap: wrap; }
+  .f { margin: 0 12px 10px 0; }
+  label { display:block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); margin-bottom: 4px; }
+  input, select {
+    height: 40px; padding: 0 10px; font-size: 15px; color: var(--ink);
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+  }
+  button {
+    height: 44px; padding: 0 22px; margin-top: 8px; border: 0; border-radius: 999px;
+    background: var(--gold); color: #241A05; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  h2 { margin-top: 28px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+  table { width: 100%; margin-top: 10px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid rgba(245,239,228,.08); }
+  th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); font-weight: 400; }
+  td.r { color: var(--gold); }
+  .soft { color: var(--soft); } .hard { color: var(--hard); } .neutral { color: var(--dim); }
+  .big { font-size: 42px; font-weight: 700; color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sprawdzenie silnika obliczeń</h1>
+  <p class="note">To nie interfejs produktu, tylko strona kontrolna: pokazuje surowy wynik obliczeń, żeby dało się porównać go z dowolnym kalkulatorem astrologicznym.</p>
+
+  <fieldset>
+    <legend>Twoje dane</legend>
+    <div class="row">
+      <div class="f"><label for="d1">Data urodzenia</label><input type="date" id="d1" value="1994-07-23"></div>
+      <div class="f"><label for="t1">Godzina (lokalna)</label><input type="time" id="t1" value="14:30"></div>
+      <div class="f"><label for="c1">Miasto</label><select id="c1"></select></div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Druga osoba (opcjonalnie)</legend>
+    <div class="row">
+      <div class="f"><label for="d2">Data urodzenia</label><input type="date" id="d2" value="1993-10-27"></div>
+      <div class="f"><label for="t2">Godzina</label><input type="time" id="t2" value="08:15"></div>
+      <div class="f"><label for="c2">Miasto</label><select id="c2"></select></div>
+    </div>
+    <button id="go">Policz</button>
+  </fieldset>
+
+  <div id="out"></div>
+</div>
+
+<script src="vendor/astronomy.browser.min.js"></script>
+<script src="js/cities.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/demo.js"></script>
+</body>
+</html>

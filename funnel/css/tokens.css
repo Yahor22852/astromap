@@ -1,0 +1,66 @@
+/* tokens.css — палитра и типографика воронки AstroMap App.
+   Макета не было: значения выбраны мной, поэтому в комментарии указано
+   назначение и контраст, а не узел Figma.
+
+   Палитра «ночное небо» выбрана специально отличной от всех четырёх серий
+   постеров (крем/чёрный, бордо, розово-сиреневый, ледяной), чтобы воронка
+   читалась как продукт, а не как ещё один баннер.
+*/
+:root {
+  /* фон */
+  --bg-0:        #0B0D22;   /* базовый фон страницы */
+  --bg-1:        #17123A;   /* верх градиента, «небо» */
+  --bg-2:        #0A0B1C;   /* низ градиента */
+
+  /* текст */
+  --ink:         #F5EFE4;   /* основной текст. На --bg-0 контраст 15.8:1 */
+  --ink-dim:     rgba(245, 239, 228, 0.64);  /* подписи, хинты. ~9.4:1 */
+  --ink-faint:   rgba(245, 239, 228, 0.40);  /* legal, сноски. ~5.6:1 */
+
+  /* акцент */
+  --gold:        #E8C57F;   /* заливка CTA, цифры, активная рамка */
+  --gold-soft:   rgba(232, 197, 127, 0.16);  /* фон выбранной плитки */
+  --gold-line:   rgba(232, 197, 127, 0.45);  /* рамка выбранной плитки */
+  --on-gold:     #241A05;   /* текст на золотой заливке. Контраст 9.1:1 */
+
+  /* поверхности */
+  --card:        rgba(255, 255, 255, 0.045);
+  --card-line:   rgba(245, 239, 228, 0.14);
+  --card-line-2: rgba(245, 239, 228, 0.08);
+
+  /* геометрия */
+  --pad:         24px;      /* боковой отступ; на 320px становится 16px */
+  --radius:      18px;
+  --radius-sm:   12px;
+  --cta-h:       56px;
+
+  /* типографика */
+  --serif: 'CormorantG', 'Cormorant Garamond', Georgia, serif;
+  --sans:  -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+           'Helvetica Neue', Arial, sans-serif;
+
+  /* Дисплейные кегли. Серif — только заголовки и цифры результата.
+     UI-текст, кнопки и legal — sans: Cormorant на 13px нечитаем. */
+  --t-h1:        34px;
+  --t-h1-lh:     38px;      /* высота задана явно: line-height множителем
+                               ломает вертикаль при смене текста */
+  --t-eyebrow:   13px;
+  --t-body:      15px;
+  --t-legal:     11px;
+  --t-display:   44px;      /* знак/градус в карточке результата */
+}
+
+@font-face {
+  font-family: 'CormorantG';
+  src: url('../assets/fonts/CG-Roman.ttf') format('truetype');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'CormorantG';
+  src: url('../assets/fonts/CG-Italic.ttf') format('truetype');
+  font-weight: 300 700;
+  font-style: italic;
+  font-display: swap;
+}

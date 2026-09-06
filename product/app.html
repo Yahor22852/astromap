@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AstroMap</title>
+<script>
+/* Язык выбирается до загрузки текстов: texts.js читает window.APP_LANG.
+   По умолчанию английский, выбор пользователя хранится в localStorage
+   и общий с воронкой — ключ astromap.lang. */
+(function () {
+  var l = 'en';
+  try { l = localStorage.getItem('astromap.lang') || 'en'; } catch (e) {}
+  if (l !== 'pl' && l !== 'en') { l = 'en'; }
+  window.APP_LANG = l;
+  document.documentElement.lang = l;
+})();
+</script>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand">AstroMap</div>
+    <nav class="nav">
+      <a class="nav__i" href="#today"    data-t="ui.nav.today"></a>
+      <a class="nav__i" href="#forecast" data-t="ui.nav.forecast"></a>
+      <a class="nav__i" href="#chart"    data-t="ui.nav.chart"></a>
+      <a class="nav__i" href="#match"    data-t="ui.nav.match"></a>
+      <a class="nav__i" href="#numbers"  data-t="ui.nav.numbers"></a>
+      <a class="nav__i" href="#moon"     data-t="ui.nav.moon"></a>
+      <a class="nav__i" href="#retro"    data-t="ui.nav.retro"></a>
+      <a class="nav__i" href="#profile"  data-t="ui.nav.profile"></a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language">
+      <button class="lang__b" data-lang="en" type="button">EN</button>
+      <button class="lang__b" data-lang="pl" type="button">PL</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="head"><h1 id="title"></h1></div>
+    <div class="view" id="view"></div>
+    <p class="disc" id="disc"></p>
+  </main>
+</div>
+
+<script src="vendor/astronomy.browser.min.js"></script>
+<script src="js/cities.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/numerology.js"></script>
+<script src="js/texts.js"></script>
+<script src="js/wheel.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
