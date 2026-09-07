@@ -175,6 +175,51 @@ th {
 }
 td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 
+/* --- гороскоп: переключатель периодов и карточки категорий ----------------
+   Капсула периодов повторяет .topbar__pill (тот же blur/borderline), но
+   внутри — скользящий градиентный индикатор под активной кнопкой: та же
+   идея, что у референса (Astroscope), только вместо server-side активного
+   класса на разных страницах — один переиспользуемый DOM-узел, который
+   двигает app.js через inline-style (см. positionHzIndicator). */
+.hzhead { display: flex; }
+.segbar {
+  position: relative; display: inline-flex; gap: 2px; max-width: 100%;
+  padding: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  background: rgba(255,255,255,.035);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--line); border-radius: 999px;
+  scrollbar-width: none;
+}
+.segbar::-webkit-scrollbar { display: none; }
+.segbar__ind {
+  position: absolute; top: 6px; left: 0; bottom: 6px; z-index: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--grad-b), var(--grad-a));
+  box-shadow: 0 6px 18px -4px rgba(155,138,248,.55);
+  transition: transform .32s cubic-bezier(.4,0,.2,1), width .32s cubic-bezier(.4,0,.2,1);
+  will-change: transform, width;
+}
+.segbar__b {
+  position: relative; z-index: 1; flex: 0 0 auto; white-space: nowrap;
+  padding: 9px 16px; border: 0; border-radius: 999px; background: transparent;
+  color: var(--ink-dim); font-family: var(--sans); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: color .25s ease;
+}
+.segbar__b.on { color: var(--on-accent); }
+.segbar__b:hover:not(.on) { color: var(--ink); }
+.segbar__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.hz { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.hzcard__h { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.hzcard__i { font-size: 20px; line-height: 1; }
+.hzcard__t {
+  font-family: var(--serif); font-size: 19px; font-weight: 600; letter-spacing: -.01em;
+}
+@media (max-width: 900px) {
+  .hz { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .segbar__b { padding: 8px 13px; font-size: 12px; }
+}
+
 /* --- чипы ----------------------------------------------------------------- */
 .chips { display: flex; margin-bottom: 14px; }
 .chip {

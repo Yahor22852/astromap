@@ -280,41 +280,98 @@
       cardWide(T.ui.activeTransits, top);
   };
 
-  var fcRange = 'week';
-  views.forecast = function () {
-    if (!natal) { return needProfile('needText') + skyNow() + moonCard(); }
-    var now = new Date();
-    var days = fcRange === 'day' ? 1 : (fcRange === 'week' ? 7 : 31);
-    var bodies = fcRange === 'day'
-      ? ['Moon', 'Sun', 'Mercury', 'Venus', 'Mars']
-      : ['Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'];
-    var ev = E.transitEvents(natal, now, new Date(now.getTime() + days * 86400000),
-      { bodies: bodies, stepHours: fcRange === 'day' ? 2 : 12 });
+  /* --- гороскоп: 6 периодов, читаемых как в референсе Astroscope ----------
+     Переключатель периодов — «капсула» со скользящим градиентным индикатором
+     (см. .segbar в app.css). Индикатор — постоянный DOM-узел: при клике по
+     периоду мы не пересоздаём панель целиком (как делает route() для смены
+     экрана), а двигаем этот же узел через inline-style, чтобы transition
+     реально анимировал скольжение, а не перерисовывался мгновенно. */
+  var HZ_FAST = ['Moon', 'Sun', 'Mercury', 'Venus', 'Mars'];
+  var HZ_MED  = ['Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'];
+  var HZ_SLOW = ['Sun', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
+  var HZ_PERIODS = [
+    { key: 'today',    days: 1,   offset: 0, bodies: HZ_FAST, stepHours: 2 },
+    { key: 'tomorrow', days: 1,   offset: 1, bodies: HZ_FAST, stepHours: 2 },
+    { key: 'week',     days: 7,   offset: 0, bodies: HZ_MED,  stepHours: 12 },
+    { key: 'month',    days: 31,  offset: 0, bodies: HZ_MED,  stepHours: 12 },
+    { key: 'halfyear', days: 183, offset: 0, bodies: HZ_SLOW, stepHours: 24 },
+    { key: 'year',     days: 365, offset: 0, bodies: HZ_SLOW, stepHours: 24 }
+  ];
+  /* Натальная точка -> раздел. Каждая точка ровно в одном разделе; всё, что
+     не перечислено явно, попадает в «Общий обзор». */
+  var HZ_CAT = { Venus: 'love', Saturn: 'career', MC: 'career', Mars: 'career',
+                 Jupiter: 'luck', Node: 'luck' };
+  var HZ_SECTIONS = [
+    { key: 'general', icon: '✨' },
+    { key: 'love', icon: '💕' },
+    { key: 'career', icon: '💼' },
+    { key: 'luck', icon: '🍀' }
+  ];
+  var hzPeriod = 'today';
 
-    var tabs = ['day', 'week', 'month'].map(function (k) {
-      return '<button class="chip' + (fcRange === k ? ' on' : '') +
-        '" data-range="' + k + '">' + T.ui[k] + '</button>';
+  function hzPeriodData(key) {
+    var p = HZ_PERIODS.filter(function (x) { return x.key === key; })[0] || HZ_PERIODS[0];
+    var now = new Date();
+    var from = new Date(now.getTime() + (p.offset || 0) * 86400000);
+    var to = new Date(from.getTime() + p.days * 86400000);
+    return E.transitEvents(natal, from, to, { bodies: p.bodies, stepHours: p.stepHours });
+  }
+
+  function hzContentHtml() {
+    var ev = hzPeriodData(hzPeriod);
+    var buckets = { general: [], love: [], career: [], luck: [] };
+    ev.forEach(function (e) { buckets[HZ_CAT[e.natal] || 'general'].push(e); });
+
+    var cards = HZ_SECTIONS.map(function (s) {
+      var list = buckets[s.key].slice(0, 3);
+      var text = list.length
+        ? list.map(function (e) {
+            return transitText({ transit: e.transit, natal: e.natal, tone: e.tone });
+          }).join(' ')
+        : T.ui.hzQuiet;
+      return '<article class="card hzcard"><div class="hzcard__h"><span class="hzcard__i">' +
+        s.icon + '</span><h3 class="hzcard__t">' + T.ui['hz' + s.key.charAt(0).toUpperCase() + s.key.slice(1)] +
+        '</h3></div><p class="p">' + text + '</p></article>';
     }).join('');
 
     var rows = ev.slice(0, 40).map(function (e) {
       return [fmtDateTime(e.exactAt), pName(e.transit), T.aspects[e.aspect],
               pName(e.natal), toneTag(e.tone)];
     });
+    var tableHtml = rows.length
+      ? table([T.ui.dateCol, T.ui.transitCol, T.ui.aspects, T.ui.point, T.ui.tone], rows)
+      : '<p class="empty">' + T.ui.noTransits + '</p>';
 
-    var body = '<div class="chips">' + tabs + '</div>' +
-      (rows.length
-        ? table([T.ui.dateCol, T.ui.transitCol, T.ui.aspects, T.ui.point, T.ui.tone], rows)
-        : '<p class="empty">' + T.ui.noTransits + '</p>');
+    return cards + cardWide(T.ui.exactDates, tableHtml);
+  }
 
-    var detail = ev.slice(0, 4).map(function (e) {
-      return '<article class="tr"><div class="tr__h"><span class="tr__s"><b>' +
-        fmtDate(e.exactAt) + '</b> &middot; ' + pName(e.transit) + ' ' +
-        T.aspects[e.aspect] + ' ' + pName(e.natal) + '</span></div><p class="tr__t">' +
-        transitText({ transit: e.transit, natal: e.natal, tone: e.tone }) +
-        '</p></article>';
+  /* Позиционирует скользящий индикатор под активной кнопкой периода.
+     skipAnim=true — мгновенно (первый рендер экрана), иначе — с transition
+     (клик по другому периоду на уже отрисованной панели). */
+  function positionHzIndicator(skipAnim) {
+    var bar = el('segbar'), ind = el('segbarInd');
+    if (!bar || !ind) { return; }
+    var btn = bar.querySelector('.segbar__b.on');
+    if (!btn) { return; }
+    if (skipAnim) { ind.style.transition = 'none'; }
+    ind.style.width = btn.offsetWidth + 'px';
+    ind.style.transform = 'translateX(' + btn.offsetLeft + 'px)';
+    if (skipAnim) {
+      void ind.offsetWidth;
+      ind.style.transition = '';
+    }
+  }
+
+  views.horoscope = function () {
+    if (!natal) { return needProfile('needText') + skyNow() + moonCard(); }
+    var tabs = HZ_PERIODS.map(function (p) {
+      return '<button class="segbar__b' + (hzPeriod === p.key ? ' on' : '') +
+        '" data-period="' + p.key + '"><span class="segbar__t">' +
+        T.ui.period[p.key] + '</span></button>';
     }).join('');
-
-    return card(T.ui.exactDates, body) + (detail ? card(null, detail) : '');
+    return '<div class="hzhead card--wide"><div class="segbar" id="segbar">' +
+      '<span class="segbar__ind" id="segbarInd"></span>' + tabs + '</div></div>' +
+      '<div class="hz card--wide" id="hzBody">' + hzContentHtml() + '</div>';
   };
 
   views.chart = function () {
@@ -528,7 +585,7 @@
   };
 
   /* --- роутер ------------------------------------------------------------- */
-  var ORDER = ['today', 'forecast', 'chart', 'match', 'numbers', 'moon', 'retro', 'profile'];
+  var ORDER = ['today', 'horoscope', 'chart', 'match', 'numbers', 'moon', 'retro', 'profile'];
 
   function route() {
     /* Без данных открываем профиль: остальные экраны без него не считаются. */
@@ -546,6 +603,7 @@
     view.classList.remove('fade-in');
     void view.offsetWidth;
     view.classList.add('fade-in');
+    if (h === 'horoscope') { positionHzIndicator(true); }
     window.scrollTo(0, 0);
     bind();
   }
@@ -577,8 +635,22 @@
         if (first) { location.hash = '#today'; } else { route(); }
       });
     }
-    Array.prototype.slice.call(document.querySelectorAll('[data-range]')).forEach(function (b) {
-      b.addEventListener('click', function () { fcRange = b.dataset.range; route(); });
+    Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (b.classList.contains('on')) { return; }
+        hzPeriod = b.dataset.period;
+        Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (x) {
+          x.classList.toggle('on', x === b);
+        });
+        positionHzIndicator(false);
+        var body = el('hzBody');
+        if (body) {
+          body.innerHTML = hzContentHtml();
+          body.classList.remove('fade-in');
+          void body.offsetWidth;
+          body.classList.add('fade-in');
+        }
+      });
     });
   }
 
@@ -626,6 +698,12 @@
     });
     window.addEventListener('hashchange', close);
   })();
+
+  /* На ресайзе переизмеряем ширину/позицию активной кнопки периода —
+     .segbar не пересоздаётся при resize, но её кнопки могут менять размер. */
+  window.addEventListener('resize', function () {
+    if (location.hash === '#horoscope') { positionHzIndicator(true); }
+  });
 
   window.addEventListener('hashchange', route);
   route();
