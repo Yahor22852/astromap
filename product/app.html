@@ -20,10 +20,50 @@
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
+
+<div class="stars" id="stars" aria-hidden="true"></div>
+<script>
+/* Звёздный фон: 44 точки со случайной позицией/длительностью мерцания.
+   Инлайн, а не в app.js — чисто декоративный слой, не часть логики приложения. */
+(function () {
+  var host = document.getElementById('stars');
+  var n = 44, html = '';
+  for (var i = 0; i < n; i++) {
+    var top = (Math.random() * 100).toFixed(2);
+    var left = (Math.random() * 100).toFixed(2);
+    var size = (1 + Math.random() * 1.6).toFixed(1);
+    var dur = (2.4 + Math.random() * 3.2).toFixed(1);
+    var delay = (Math.random() * 4).toFixed(1);
+    html += '<i style="top:' + top + '%;left:' + left + '%;width:' + size + 'px;height:' + size +
+      'px;animation-duration:' + dur + 's;animation-delay:-' + delay + 's;"></i>';
+  }
+  host.innerHTML = html;
+})();
+</script>
+
 <div class="shell">
-  <aside class="side">
-    <div class="brand">AstroMap</div>
-    <nav class="nav">
+  <header class="topbar">
+    <div class="topbar__pill">
+      <a class="brand" href="#today">AstroMap</a>
+      <nav class="nav">
+        <a class="nav__i" href="#today"    data-t="ui.nav.today"></a>
+        <a class="nav__i" href="#forecast" data-t="ui.nav.forecast"></a>
+        <a class="nav__i" href="#chart"    data-t="ui.nav.chart"></a>
+        <a class="nav__i" href="#match"    data-t="ui.nav.match"></a>
+        <a class="nav__i" href="#numbers"  data-t="ui.nav.numbers"></a>
+        <a class="nav__i" href="#moon"     data-t="ui.nav.moon"></a>
+        <a class="nav__i" href="#retro"    data-t="ui.nav.retro"></a>
+        <a class="nav__i" href="#profile"  data-t="ui.nav.profile"></a>
+      </nav>
+      <div class="lang" role="group" aria-label="Language">
+        <button class="lang__b" data-lang="en" type="button">EN</button>
+        <button class="lang__b" data-lang="pl" type="button">PL</button>
+      </div>
+      <button class="topbar__burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mnav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="mnav" id="mnav" hidden>
       <a class="nav__i" href="#today"    data-t="ui.nav.today"></a>
       <a class="nav__i" href="#forecast" data-t="ui.nav.forecast"></a>
       <a class="nav__i" href="#chart"    data-t="ui.nav.chart"></a>
@@ -33,11 +73,7 @@
       <a class="nav__i" href="#retro"    data-t="ui.nav.retro"></a>
       <a class="nav__i" href="#profile"  data-t="ui.nav.profile"></a>
     </nav>
-    <div class="lang" role="group" aria-label="Language">
-      <button class="lang__b" data-lang="en" type="button">EN</button>
-      <button class="lang__b" data-lang="pl" type="button">PL</button>
-    </div>
-  </aside>
+  </header>
 
   <main class="main">
     <div class="head"><h1 id="title"></h1></div>

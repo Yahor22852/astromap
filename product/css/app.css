@@ -15,33 +15,80 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.shell { display: flex; min-height: 100vh; }
+.shell { min-height: 100vh; }
 
-/* --- сайдбар -------------------------------------------------------------- */
-.side {
-  flex: 0 0 232px;
-  padding: 26px 16px;
-  border-right: 1px solid var(--line-2);
-  background: var(--bg-2);
-  position: sticky; top: 0; height: 100vh;
+/* --- декор: звёздное небо -------------------------------------------------
+   Лёгкий слой мерцающих точек. Элементы создаются в app.html инлайн-скриптом
+   (позиции и задержки случайны при каждой загрузке), стиль и анимация — тут. */
+.stars { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.stars i {
+  position: absolute; width: 2px; height: 2px; border-radius: 50%;
+  background: #fff; animation-name: star-twinkle; animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite; animation-direction: alternate;
+}
+@keyframes star-twinkle { from { opacity: .1; } to { opacity: .85; } }
+
+/* --- верхняя панель: плавающая стеклянная капсула --------------------------
+   Раньше навигация была левым сайдбаром (см. историю файла). Теперь — по
+   образцу референса: капсула зафиксирована сверху по центру, со скруглением
+   и блюром; на узких экранах пункты уходят в выпадающее меню по гамбургеру. */
+.topbar {
+  position: fixed; top: 18px; left: 0; right: 0; z-index: 100;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0 16px; pointer-events: none;
+}
+.topbar__pill {
+  pointer-events: auto;
+  display: flex; align-items: center; gap: 1px;
+  padding: 6px 8px 6px 20px; max-width: 100%;
+  background: rgba(14,11,16,.7);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line); border-radius: 999px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.4);
 }
 .brand {
-  font-family: var(--serif);
-  font-size: 26px; font-weight: 700; letter-spacing: -.01em;
-  padding: 0 10px 18px;
+  font-family: var(--serif); font-size: 18px; font-weight: 700; letter-spacing: -.01em;
+  color: var(--ink); text-decoration: none; white-space: nowrap;
+  padding-right: 14px; margin-right: 6px; border-right: 1px solid var(--line-2);
 }
-.nav { display: flex; flex-direction: column; }
+.nav { display: flex; align-items: center; gap: 1px; }
 .nav__i {
-  display: block; padding: 11px 14px; border-radius: 12px;
-  color: var(--ink-dim); text-decoration: none; font-size: 15px;
+  display: block; padding: 9px 14px; border-radius: 999px; white-space: nowrap;
+  color: var(--ink-dim); text-decoration: none; font-size: 14px;
+  transition: background .2s ease, color .2s ease;
 }
-.nav__i + .nav__i { margin-top: 2px; }
-.nav__i:hover { color: var(--ink); background: rgba(255,255,255,.03); }
+.nav__i:hover { color: var(--ink); background: rgba(255,255,255,.05); }
 .nav__i.on { background: var(--nav-on); color: var(--ink); font-weight: 600; }
 .nav__i:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+.topbar__burger {
+  display: none; align-items: center; justify-content: center;
+  width: 38px; height: 38px; margin-left: 4px; border: 0; border-radius: 999px;
+  background: transparent; cursor: pointer;
+}
+.topbar__burger:hover { background: rgba(255,255,255,.06); }
+.topbar__burger span {
+  display: block; width: 16px; height: 1.5px; background: var(--ink-dim);
+  margin: 3px auto; transition: transform .2s ease, opacity .2s ease;
+}
+.topbar__burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(4.5px) rotate(45deg); }
+.topbar__burger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.topbar__burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-4.5px) rotate(-45deg); }
+
+.mnav {
+  pointer-events: auto; display: flex; flex-direction: column; gap: 2px;
+  margin-top: 8px; padding: 10px; width: 100%; max-width: 420px;
+  background: rgba(14,11,16,.85);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line); border-radius: 18px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.4);
+}
+.mnav .nav__i { padding: 11px 14px; }
+.mnav[hidden] { display: none; }
+@media (min-width: 901px) { .mnav { display: none !important; } }
+
 /* --- контент -------------------------------------------------------------- */
-.main { flex: 1 1 auto; padding: 34px var(--pad) 64px; min-width: 0; }
+.main { flex: 1 1 auto; padding: 108px var(--pad) 64px; min-width: 0; position: relative; z-index: 1; }
 .head { max-width: 1120px; margin: 0 auto 22px; }
 h1 {
   font-family: var(--serif);
@@ -53,16 +100,11 @@ h1 {
   align-items: start;
 }
 @media (max-width: 900px) {
-  .shell { display: block; }
-  .side {
-    position: static; height: auto; flex: none; width: 100%;
-    border-right: 0; border-bottom: 1px solid var(--line-2); padding: 16px;
-  }
-  .brand { padding: 0 4px 12px; font-size: 22px; }
-  .nav { flex-direction: row; overflow-x: auto; }
-  .nav__i { white-space: nowrap; padding: 9px 13px; }
-  .nav__i + .nav__i { margin-top: 0; margin-left: 4px; }
-  .main { padding: 22px 16px 56px; }
+  .topbar__pill .nav { display: none; }
+  .topbar__burger { display: flex; }
+  .topbar__pill { padding: 6px 6px 6px 16px; }
+  .brand { font-size: 16px; padding-right: 10px; margin-right: 2px; }
+  .main { padding: 92px 16px 56px; }
   h1 { font-size: 30px; }
   .view { grid-template-columns: minmax(0, 1fr); gap: 14px; }
 }
@@ -217,20 +259,19 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
-/* --- переключатель языка -------------------------------------------------- */
-.lang { display: flex; margin-top: 22px; padding: 0 10px; }
+/* --- переключатель языка --------------------------------------------------
+   Раньше стоял в подвале сайдбара (margin-top держал отступ от пунктов меню
+   над ним). Теперь живёт внутри капсулы, в одну строку с пунктами меню. */
+.lang { display: flex; align-items: center; margin-left: 4px; padding-left: 10px; border-left: 1px solid var(--line-2); }
 .lang__b {
-  flex: 1 1 0; padding: 8px 0; border: 1px solid var(--line); border-radius: 10px;
+  flex: 0 0 auto; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px;
   background: transparent; color: var(--ink-faint);
-  font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: .08em;
+  font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: .06em;
   cursor: pointer;
 }
-.lang__b + .lang__b { margin-left: 6px; }
+.lang__b + .lang__b { margin-left: 5px; }
 .lang__b.on { background: var(--nav-on); color: var(--ink); border-color: var(--accent); }
 .lang__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-@media (max-width: 900px) {
-  .lang { margin-top: 12px; padding: 0; max-width: 160px; }
-}
 
 /* --- кнопка-ссылка в заглушках -------------------------------------------- */
 .btn--link {

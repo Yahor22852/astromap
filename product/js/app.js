@@ -599,6 +599,28 @@
     });
   });
 
+  /* Мобильное меню: капсула навигации сворачивается в гамбургер ниже 900px
+     (см. media-запрос в app.css). Пункты те же .nav__i, что и в капсуле —
+     router выше уже переключает .on сразу на обоих наборах. */
+  (function () {
+    var burger = el('burger'), menu = el('mnav');
+    if (!burger || !menu) { return; }
+    function close() {
+      menu.hidden = true;
+      burger.setAttribute('aria-expanded', 'false');
+    }
+    burger.addEventListener('click', function () {
+      var open = burger.getAttribute('aria-expanded') === 'true';
+      if (open) { close(); return; }
+      menu.hidden = false;
+      burger.setAttribute('aria-expanded', 'true');
+    });
+    Array.prototype.slice.call(menu.querySelectorAll('.nav__i')).forEach(function (a) {
+      a.addEventListener('click', close);
+    });
+    window.addEventListener('hashchange', close);
+  })();
+
   window.addEventListener('hashchange', route);
   route();
 })();
