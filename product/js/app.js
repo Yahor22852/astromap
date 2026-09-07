@@ -539,7 +539,13 @@
       a.classList.toggle('on', a.getAttribute('href') === '#' + h);
     });
     el('title').textContent = T.ui[h + 'Title'] || T.ui.nav[h];
-    el('view').innerHTML = views[h]();
+    var view = el('view');
+    view.innerHTML = views[h]();
+    /* Перезапуск CSS-анимации: снять класс, форсировать reflow, вернуть класс.
+       Без чтения offsetWidth браузер схлопнёт снятие+возврат в один кадр. */
+    view.classList.remove('fade-in');
+    void view.offsetWidth;
+    view.classList.add('fade-in');
     window.scrollTo(0, 0);
     bind();
   }

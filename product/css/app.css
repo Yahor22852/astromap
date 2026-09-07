@@ -99,6 +99,10 @@ h1 {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px;
   align-items: start;
 }
+/* Смена раздела: лёгкое появление вместо мгновенной подмены — .fade-in
+   переключается в app.js на каждый route(), см. комментарий там. */
+@keyframes viewFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.view.fade-in { animation: viewFade .38s cubic-bezier(.4,0,.2,1) both; }
 @media (max-width: 900px) {
   .topbar__pill .nav { display: none; }
   .topbar__burger { display: flex; }
@@ -177,8 +181,10 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
   padding: 9px 18px; border: 1px solid var(--line); border-radius: 999px;
   background: transparent; color: var(--ink-dim);
   font-family: var(--sans); font-size: 14px; cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
 }
 .chip + .chip { margin-left: 8px; }
+.chip:hover { color: var(--ink); border-color: rgba(255,255,255,.22); }
 .chip.on { background: var(--nav-on); color: var(--ink); border-color: var(--accent); }
 .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -219,6 +225,7 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
   background: transparent; color: var(--ink);
   border: 0; border-bottom: 1px solid rgba(255,255,255,.16);
   font-family: var(--serif); font-size: 24px;
+  transition: border-color .2s ease;
 }
 .f select { font-family: var(--sans); font-size: 16px; }
 .f input:focus, .f select:focus { outline: none; border-bottom-color: var(--accent); }
@@ -227,7 +234,11 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
   background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
   color: var(--on-accent); font-family: var(--sans);
   font-size: 16px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 8px 22px -8px rgba(155,138,248,.55);
+  transition: transform .18s cubic-bezier(.4,0,.2,1), box-shadow .25s ease, opacity .2s ease;
 }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 12px 28px -6px rgba(155,138,248,.65); }
+.btn:active { transform: translateY(0); box-shadow: 0 6px 16px -8px rgba(155,138,248,.5); }
 .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
 /* --- колесо --------------------------------------------------------------- */
