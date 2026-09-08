@@ -330,20 +330,52 @@
             return transitText({ transit: e.transit, natal: e.natal, tone: e.tone });
           }).join(' ')
         : T.ui.hzQuiet;
-      return '<article class="card hzcard" data-section="' + s.key + '"><div class="hzcard__h"><span class="hzcard__i">' +
-        s.icon + '</span><h3 class="hzcard__t">' + T.ui['hz' + s.key.charAt(0).toUpperCase() + s.key.slice(1)] +
+      return '<article class="card hzcard hzcard--' + s.key + '" id="hz-' + s.key + '" data-section="' + s.key + '">' +
+        '<div class="hzcard__h"><span class="hzcard__i">' + s.icon + '</span><h3 class="hzcard__t">' +
+        T.ui['hz' + s.key.charAt(0).toUpperCase() + s.key.slice(1)] +
         '</h3></div><p class="p hzcard__text">' + text + '</p></article>';
     }).join('');
 
-    var rows = ev.slice(0, 40).map(function (e) {
-      return [fmtDateTime(e.exactAt), pName(e.transit), T.aspects[e.aspect],
-              pName(e.natal), toneTag(e.tone)];
-    });
-    var tableHtml = rows.length
-      ? table([T.ui.dateCol, T.ui.transitCol, T.ui.aspects, T.ui.point, T.ui.tone], rows)
-      : '<p class="empty">' + T.ui.noTransits + '</p>';
+    return cards + cardWide(T.ui.exactDates, hzDatesHtml(ev));
+  }
 
-    return cards + cardWide(T.ui.exactDates, tableHtml);
+  /* Таблица точных дат — та же информация, что раньше, но строки кликабельны:
+     разворачивают то же связное предложение (transitText), что уже есть в
+     карточках выше, вместо сухих значений колонок. */
+  function hzDatesHtml(ev) {
+    var rows = ev.slice(0, 40);
+    if (!rows.length) { return '<p class="empty">' + T.ui.noTransits + '</p>'; }
+    var head = '<tr><th class="hzrow__chevCol"></th><th>' + T.ui.dateCol + '</th><th>' +
+      T.ui.transitCol + '</th><th>' + T.ui.aspects + '</th><th>' + T.ui.point + '</th><th>' +
+      T.ui.tone + '</th></tr>';
+    var body = rows.map(function (e, i) {
+      var main = '<tr class="hzrow" data-idx="' + i + '">' +
+        '<td class="hzrow__chev">›</td>' +
+        '<td>' + fmtDateTime(e.exactAt) + '</td>' +
+        '<td>' + pName(e.transit) + '</td>' +
+        '<td>' + T.aspects[e.aspect] + '</td>' +
+        '<td>' + pName(e.natal) + '</td>' +
+        '<td>' + toneTag(e.tone) + '</td></tr>';
+      var detail = '<tr class="hzrow__d" data-idx="' + i + '" hidden><td colspan="6"><p class="p">' +
+        transitText({ transit: e.transit, natal: e.natal, tone: e.tone }) + '</p></td></tr>';
+      return main + detail;
+    }).join('');
+    return '<div class="tw"><table><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
+  }
+
+  /* Разворачивает/сворачивает строку с транзитом в таблице точных дат. */
+  function bindHzRows() {
+    var body = el('hzBody');
+    if (!body) { return; }
+    Array.prototype.slice.call(body.querySelectorAll('.hzrow')).forEach(function (tr) {
+      tr.addEventListener('click', function () {
+        var idx = tr.getAttribute('data-idx');
+        var d = body.querySelector('.hzrow__d[data-idx="' + idx + '"]');
+        if (!d) { return; }
+        d.hidden = !d.hidden;
+        tr.classList.toggle('hzrow--open', !d.hidden);
+      });
+    });
   }
 
   /* Позиционирует скользящий индикатор под активной кнопкой периода.
@@ -431,8 +463,14 @@
         '" data-period="' + p.key + '"><span class="segbar__t">' +
         T.ui.period[p.key] + '</span></button>';
     }).join('');
+    var quick = HZ_SECTIONS.map(function (s) {
+      return '<a href="#hz-' + s.key + '" class="hzquick__b" data-jump="hz-' + s.key + '">' +
+        '<span class="hzquick__i">' + s.icon + '</span>' +
+        T.ui['hz' + s.key.charAt(0).toUpperCase() + s.key.slice(1)] + '</a>';
+    }).join('');
     return '<div class="hzhead card--wide"><div class="segbar" id="segbar">' +
       '<span class="segbar__ind" id="segbarInd"></span>' + tabs + '</div></div>' +
+      '<div class="hzquick card--wide" id="hzquick">' + quick + '</div>' +
       '<div class="hz card--wide" id="hzBody">' + hzContentHtml() + '</div>';
   };
 
@@ -697,6 +735,17 @@
         if (first) { location.hash = '#today'; } else { route(); }
       });
     }
+    Array.prototype.slice.call(document.querySelectorAll('.hzquick__b')).forEach(function (a) {
+      a.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        var target = document.getElementById(a.getAttribute('data-jump'));
+        if (!target) { return; }
+        var y = target.getBoundingClientRect().top + window.pageYOffset - 96;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      });
+    });
+    bindHzRows();
+
     Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {
       b.addEventListener('click', function () {
         if (b.classList.contains('on')) { return; }
@@ -712,6 +761,7 @@
           void body.offsetWidth;
           body.classList.add('fade-in');
         }
+        bindHzRows();
         hzAiEnhance(hzPeriod);
       });
     });
