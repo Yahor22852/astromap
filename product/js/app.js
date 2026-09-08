@@ -8,6 +8,7 @@
   'use strict';
 
   var E = window.Engine, N = window.Numerology, T = window.T, W = window.Wheel;
+  var Moon = window.Moon;
   var A = window.Astronomy;
   var CITIES = (window.APP_LANG === 'pl') ? window.CITIES.pl : window.CITIES.en;
   var TZ = window.TZ;
@@ -833,23 +834,145 @@
       card(T.ui.pYear, cycles);
   };
 
-  views.moon = function () {
+  /* --- страница «Фаза Луны»: интерактивный лунный календарь --------------
+     Один источник состояния (moonSelected) -> вся остальная разметка
+     пересчитывается из него: герой, бейдж освещённости, знак, карточка
+     интерпретации и советы дня (см. ТЗ п.11). Клик по дню календаря или
+     смена месяца перерисовывают только #moonBody — без полного route()
+     и без сброса скролла/шапки, тем же приёмом, что уже использует
+     переключатель периодов Гороскопа (#hzBody). */
+  function moonLocale() { return window.APP_LANG === 'pl' ? 'pl-PL' : 'en-US'; }
+
+  function moonWeekdayLabels() {
+    var fmt = new Intl.DateTimeFormat(moonLocale(), { weekday: 'short' });
+    var out = [];
+    for (var i = 0; i < 7; i++) { out.push(fmt.format(new Date(2023, 0, 2 + i))); } /* 2.01.2023 — понедельник */
+    return out;
+  }
+  function moonMonthName(year, month) {
+    return new Intl.DateTimeFormat(moonLocale(), { month: 'long' }).format(new Date(year, month, 1));
+  }
+  function moonHeroDateStr(date) {
+    return new Intl.DateTimeFormat(moonLocale(),
+      { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+  }
+  function sameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+  function isoDay(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+
+  /* Выбранный день переживает переключение видимого месяца: смена месяца
+     двигает только календарную сетку, герой/знак/советы остаются на
+     выбранной дате, пока пользователь не кликнет другой день. */
+  var moonSelected = null, moonViewY = null, moonViewM = null;
+  function moonEnsureState() {
+    if (moonSelected) { return; }
     var now = new Date();
-    var m = moonInfo(now);
-    var rows = moonMonth(now).map(function (r) {
-      return [fmtDate(r.date), T.moonPhase[r.phaseIndex].n,
-              Math.round(r.illum * 100) + '%',
-              signName(r.sign) + ' ' + fmtDeg(r.sign.degree)];
+    moonSelected = now; moonViewY = now.getFullYear(); moonViewM = now.getMonth();
+  }
+
+  function moonHeroHtml(info) {
+    return '<div class="mp-hero">' +
+      '<p class="mp-date">' + moonHeroDateStr(info.date) + '</p>' +
+      '<h2 class="mp-title">' + T.ui.moonHeroTitle + '</h2>' +
+      '<div class="mp-moon">' + Moon.moonHtml(300, info.illum, info.waxing, 'hero') +
+        '<span class="mp-illum"><b>' + Math.round(info.illum * 100) + '%</b> ' + T.ui.illuminated + '</span>' +
+      '</div>' +
+      '<span class="mp-zodiac">' + ZODIAC_GLYPHS[info.sign.index] + ' ' + T.signs[info.sign.index] + '</span>' +
+      '</div>';
+  }
+
+  function moonCalHtml() {
+    var cells = Moon.monthGrid(moonViewY, moonViewM);
+    var wd = moonWeekdayLabels().map(function (w) {
+      return '<span class="mp-cal__wd">' + w + '</span>';
+    }).join('');
+    var today = new Date();
+    var grid = cells.map(function (c) {
+      var cls = 'mp-cal__cell';
+      if (!c.inMonth) { cls += ' mp-cal__cell--out'; }
+      if (sameDay(c.date, today)) { cls += ' mp-cal__cell--today'; }
+      var sel = sameDay(c.date, moonSelected);
+      if (sel) { cls += ' mp-cal__cell--sel'; }
+      var ph = T.moonPhase[c.info.phaseIndex];
+      var label = c.date.getDate() + ' ' + moonMonthName(c.date.getFullYear(), c.date.getMonth()) +
+        ', ' + ph.n + ', ' + Math.round(c.info.illum * 100) + '% ' + T.ui.illuminated.toLowerCase();
+      return '<button type="button" class="' + cls + '" data-iso="' + isoDay(c.date) +
+        '" aria-label="' + esc(label) + '" aria-pressed="' + sel + '">' +
+        Moon.moonHtml(34, c.info.illum, c.info.waxing, 'cal') +
+        '<span class="mp-cal__num">' + c.date.getDate() + '</span></button>';
+    }).join('');
+    return '<div class="mp-cal">' +
+      '<div class="mp-cal__head">' +
+        '<button type="button" class="mp-cal__nav" data-nav="-1" aria-label="' + T.ui.prevMonth + '">←</button>' +
+        '<span class="mp-cal__title"><b>' + moonMonthName(moonViewY, moonViewM) + '</b> <span class="mp-cal__yr">' + moonViewY + '</span></span>' +
+        '<button type="button" class="mp-cal__nav" data-nav="1" aria-label="' + T.ui.nextMonth + '">→</button>' +
+      '</div>' +
+      '<div class="mp-cal__grid">' + wd + grid + '</div>' +
+      '</div>';
+  }
+
+  function moonSignHtml(info) {
+    return '<div class="mp-sign">' +
+      '<div class="mp-sign__head"><span class="mp-sign__icon">' + ZODIAC_GLYPHS[info.sign.index] + '</span>' +
+      '<h3 class="mp-sign__title">' + T.ui.moonInSign + ' ' + T.signsLoc[info.sign.index] + '</h3></div>' +
+      '<p class="mp-sign__text">' + (T.moonSignText[info.sign.key] || '') + '</p>' +
+      '</div>';
+  }
+
+  function moonAdviceHtml(info) {
+    var items = Moon.adviceFor(info.sign, info.bucket).map(function (a) {
+      var meta = T.moonAdvice[a.key];
+      var arrow = a.status === 'favorable' ? '↑ ' : a.status === 'unfavorable' ? '↓ ' : '— ';
+      return '<article class="mp-adv mp-adv--' + a.status + '">' +
+        '<span class="mp-adv__icon">' + a.icon + '</span>' +
+        '<span class="mp-adv__body"><span class="mp-adv__title">' + meta.title + '</span>' +
+        '<span class="mp-adv__desc">' + meta.desc + '</span></span>' +
+        '<span class="mp-adv__status mp-adv__status--' + a.status + '">' + arrow + T.moonStatus[a.status] + '</span>' +
+        '</article>';
+    }).join('');
+    return '<div class="mp-advice"><h2 class="mp-advice__title">' + T.ui.dailyAdviceTitle + '</h2>' + items + '</div>';
+  }
+
+  function moonBodyHtml() {
+    moonEnsureState();
+    var info = Moon.infoFor(moonSelected);
+    return moonHeroHtml(info) + moonCalHtml() + moonSignHtml(info) + moonAdviceHtml(info);
+  }
+
+  function rerenderMoon() {
+    var body = el('moonBody');
+    if (!body) { return; }
+    body.innerHTML = moonBodyHtml();
+    body.classList.remove('fade-in');
+    void body.offsetWidth;
+    body.classList.add('fade-in');
+    bindMoonBody();
+  }
+
+  function bindMoonBody() {
+    var body = el('moonBody');
+    if (!body) { return; }
+    Array.prototype.slice.call(body.querySelectorAll('.mp-cal__cell')).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var p = btn.dataset.iso.split('-').map(Number);
+        moonSelected = new Date(p[0], p[1] - 1, p[2]);
+        moonViewY = moonSelected.getFullYear(); moonViewM = moonSelected.getMonth();
+        rerenderMoon();
+      });
     });
-    return card(T.ui.moonTitle,
-        '<div class="kv"><span>' + T.ui.phase + '</span><b>' +
-          T.moonPhase[m.phaseIndex].n + '</b></div>' +
-        '<div class="kv"><span>' + T.ui.nextNew + '</span><b>' +
-          (m.nextNew ? fmtDateTime(m.nextNew) : '\u2014') + '</b></div>' +
-        '<div class="kv"><span>' + T.ui.nextFull + '</span><b>' +
-          (m.nextFull ? fmtDateTime(m.nextFull) : '\u2014') + '</b></div>' +
-        '<p class="p">' + T.moonPhase[m.phaseIndex].t + '</p>') +
-      card(null, table([T.ui.dateCol, T.ui.phase, T.ui.illum, T.ui.moonSign], rows));
+    Array.prototype.slice.call(body.querySelectorAll('.mp-cal__nav')).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        moonViewM += (+btn.dataset.nav);
+        if (moonViewM < 0) { moonViewM = 11; moonViewY -= 1; }
+        if (moonViewM > 11) { moonViewM = 0; moonViewY += 1; }
+        rerenderMoon();
+      });
+    });
+  }
+
+  views.moon = function () {
+    return '<div class="mp-page" id="moonBody">' + moonBodyHtml() + '</div>';
   };
 
   views.retro = function () {
@@ -937,6 +1060,9 @@
     el('title').textContent = T.ui[h + 'Title'] || T.ui.nav[h];
     var view = el('view');
     view.innerHTML = views[h]();
+    /* Страница Луны — узкая центрированная колонка, не двухколоночный грид
+       остальных разделов (см. .view--moon в app.css). */
+    view.classList.toggle('view--moon', h === 'moon');
     /* Перезапуск CSS-анимации: снять класс, форсировать reflow, вернуть класс.
        Без чтения offsetWidth браузер схлопнёт снятие+возврат в один кадр. */
     view.classList.remove('fade-in');
@@ -989,6 +1115,7 @@
     bindMcGrid('A');
     bindMcGrid('B');
     bindMcTabs();
+    bindMoonBody();
 
     Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {
       b.addEventListener('click', function () {

@@ -466,3 +466,159 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 .num--sm { padding: 10px 0; }
 .num--sm .num__v { flex-basis: 50px; height: 50px; font-size: 24px; border-radius: 12px; }
 .num--sm .num__t { margin-top: 12px; }
+
+/* ==========================================================================
+   Фаза Луны: узкая центрированная страница поверх общего двухколоночного
+   грида (.view--moon переключает .view в route(), см. app.js). Порядок
+   блоков: .mp-hero (герой) -> .mp-cal (календарь месяца) -> .mp-sign
+   (трактовка знака) -> .mp-advice (советы дня); ритм между ними задаёт
+   margin-top каждого следующего блока. */
+.view--moon { display: block; }
+
+.mp-hero { max-width: 760px; margin: 8px auto 0; text-align: center; }
+.mp-date {
+  font-size: 13px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--accent);
+}
+.mp-title {
+  margin-top: 15px;
+  font-family: var(--serif); font-size: 54px; font-weight: 700;
+  line-height: 1.05; letter-spacing: -.01em; color: var(--ink);
+}
+.mp-moon { position: relative; margin-top: 40px; display: flex; justify-content: center; }
+
+/* Диск Луны: общий рендер для героя и мини-иконок календаря (Moon.moonHtml
+   в moon.js) — тут только обёртка и её свечение. */
+.moonv-wrap { display: inline-flex; }
+.moonv { display: block; border-radius: 50%; }
+.moonv-wrap--glow .moonv { filter: drop-shadow(0 0 8px rgba(255,230,140,.22)); }
+.moonv-wrap--hero.moonv-wrap--glow .moonv { filter: drop-shadow(0 0 28px rgba(255,230,140,.38)); }
+.moonv-wrap--hero .moonv { width: min(300px, 62vw); height: min(300px, 62vw); }
+.moonv-wrap--cal .moonv { width: 34px; height: 34px; }
+
+.mp-illum {
+  position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+  padding: 8px 18px; border-radius: 999px;
+  background: rgba(14,11,16,.85); border: 1px solid rgba(245,230,121,.35);
+  box-shadow: 0 10px 26px -12px rgba(245,230,121,.3);
+  font-size: 13px; color: var(--ink-dim);
+}
+.mp-illum b { color: var(--moon-light); font-weight: 700; }
+
+.mp-zodiac {
+  display: inline-block; margin-top: 60px;
+  padding: 10px 22px; border-radius: 22px;
+  background: rgba(155,138,248,.12); border: 1px solid rgba(155,138,248,.35);
+  box-shadow: 0 10px 26px -16px rgba(155,138,248,.5);
+  font-size: 15px; font-weight: 600; color: var(--ink);
+}
+
+.mp-cal {
+  max-width: 650px; margin: 50px auto 0;
+  background: var(--surf); border: 1px solid var(--line);
+  border-radius: 30px; padding: 32px;
+}
+.mp-cal__head { display: flex; align-items: center; justify-content: space-between; }
+.mp-cal__title { font-size: 19px; }
+.mp-cal__title b { font-weight: 700; color: var(--ink); }
+.mp-cal__yr { margin-left: 6px; color: var(--ink-faint); }
+.mp-cal__nav {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: 999px;
+  border: 1px solid var(--line); background: rgba(255,255,255,.03);
+  color: var(--ink-dim); font-size: 16px; cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+.mp-cal__nav:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.22); color: var(--ink); }
+.mp-cal__nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.mp-cal__grid { margin-top: 22px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px 4px; }
+.mp-cal__wd {
+  padding-bottom: 8px; text-align: center;
+  font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.mp-cal__cell {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  aspect-ratio: 1; border-radius: 16px; border: 0; background: transparent; cursor: pointer;
+  color: var(--ink-dim);
+  transition: background .2s ease, box-shadow .25s ease;
+}
+.mp-cal__cell:hover { background: rgba(255,255,255,.04); }
+.mp-cal__cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mp-cal__cell--out { opacity: .32; }
+.mp-cal__cell--today { box-shadow: inset 0 0 0 1px rgba(155,138,248,.45); }
+.mp-cal__num { font-size: 13px; font-weight: 600; }
+.mp-cal__cell--sel {
+  background: linear-gradient(145deg, #A529FF, #6A3DFF);
+  box-shadow: 0 0 25px rgba(140,60,255,.35);
+}
+.mp-cal__cell--sel .mp-cal__num { color: #fff; }
+
+.mp-sign {
+  max-width: 650px; margin: 55px auto 0; padding: 30px;
+  border-radius: 24px; border: 1px solid rgba(155,138,248,.28);
+  background: linear-gradient(160deg, rgba(155,138,248,.12), rgba(20,15,38,.4));
+}
+.mp-sign__head { display: flex; align-items: center; gap: 16px; }
+.mp-sign__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: 12px; flex: 0 0 auto;
+  font-size: 22px; color: var(--ink);
+  background: linear-gradient(145deg, var(--grad-a), var(--grad-b));
+  box-shadow: 0 0 22px -4px rgba(155,138,248,.65);
+}
+.mp-sign__title { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--ink); }
+.mp-sign__text { margin-top: 16px; font-size: 16px; line-height: 1.6; color: var(--ink-dim); }
+
+.mp-advice { max-width: 650px; margin: 40px auto 0; }
+.mp-advice__title {
+  text-align: center; font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--ink);
+  margin-bottom: 18px;
+}
+.mp-adv {
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 20px; min-height: 92px;
+  background: var(--surf); border: 1px solid var(--line); border-radius: 24px;
+}
+.mp-adv + .mp-adv { margin-top: 14px; }
+.mp-adv--favorable { border-color: rgba(0,220,170,.22); }
+.mp-adv--unfavorable { border-color: rgba(255,140,0,.24); }
+.mp-adv__icon {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 58px; height: 58px; border-radius: 14px; font-size: 24px;
+  background: rgba(255,255,255,.045); border: 1px solid var(--line-2);
+}
+.mp-adv__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.mp-adv__title { font-size: 17px; font-weight: 600; color: var(--ink); }
+.mp-adv__desc { margin-top: 5px; font-size: 14px; color: var(--ink-faint); }
+.mp-adv__status {
+  flex: 0 0 auto; white-space: nowrap; padding: 6px 14px; border-radius: 999px;
+  font-size: 13px; font-weight: 600;
+}
+.mp-adv__status--favorable { color: #00E8B2; background: rgba(0,220,170,.08); border: 1px solid rgba(0,220,170,.25); }
+.mp-adv__status--neutral { color: var(--neutral); background: rgba(185,174,249,.08); border: 1px solid rgba(185,174,249,.22); }
+.mp-adv__status--unfavorable { color: #FF9500; background: rgba(255,140,0,.08); border: 1px solid rgba(255,140,0,.28); }
+
+@media (max-width: 900px) {
+  .mp-hero { max-width: 100%; }
+  .mp-title { font-size: 40px; margin-top: 12px; }
+  .mp-moon { margin-top: 30px; }
+  .moonv-wrap--cal .moonv { width: 28px; height: 28px; }
+  .mp-zodiac { margin-top: 46px; }
+  .mp-cal, .mp-sign, .mp-advice { max-width: 100%; }
+  .mp-cal { padding: 22px 16px; margin-top: 40px; border-radius: 24px; }
+  .mp-cal__grid { gap: 6px 2px; }
+  .mp-cal__num { font-size: 12px; }
+  .mp-sign { padding: 22px; margin-top: 44px; }
+  .mp-sign__title { font-size: 24px; }
+  .mp-advice { margin-top: 32px; }
+  .mp-adv { padding: 0 16px; min-height: 84px; gap: 12px; }
+  .mp-adv__icon { width: 48px; height: 48px; font-size: 20px; border-radius: 12px; }
+}
+
+@media (max-width: 480px) {
+  .mp-adv { flex-wrap: wrap; padding: 14px 16px; min-height: 0; }
+  .mp-adv__status { margin-left: 74px; margin-top: -4px; }
+}

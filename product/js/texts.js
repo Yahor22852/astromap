@@ -78,6 +78,9 @@
       karmic: 'Dług karmiczny', master: 'Liczba mistrzowska',
       nameNeeded: 'Podaj imię w profilu, żeby policzyć liczby z imienia.',
       phase: 'Faza', illum: 'Oświetlenie', moonSign: 'Księżyc w znaku',
+      moonHeroTitle: 'Faza Księżyca dziś', illuminated: 'Oświetlenia',
+      moonInSign: 'Księżyc w', dailyAdviceTitle: 'Rady dnia',
+      prevMonth: 'Poprzedni miesiąc', nextMonth: 'Następny miesiąc',
       nextFull: 'Najbliższa pełnia', nextNew: 'Najbliższy nów',
       stationing: 'Zmiana kierunku', direct: 'ruch prosty',
       retrograde: 'retrogradacja', noRetro: 'Żadna planeta nie jest teraz retrogradna.',
@@ -89,6 +92,10 @@
 
     signs: ['Baran', 'Byk', 'Bliźnięta', 'Rak', 'Lew', 'Panna',
             'Waga', 'Skorpion', 'Strzelec', 'Koziorożec', 'Wodnik', 'Ryby'],
+    /* Miejscownik, do fraz w stylu "Księżyc w Lwie" — inaczej niż mianownik
+       w .signs, którego używają tabele i etykiety "Znak: X". */
+    signsLoc: ['Baranie', 'Byku', 'Bliźniętach', 'Raku', 'Lwie', 'Pannie',
+               'Wadze', 'Skorpionie', 'Strzelcu', 'Koziorożcu', 'Wodniku', 'Rybach'],
     elements: { fire: 'Ogień', earth: 'Ziemia', air: 'Powietrze', water: 'Woda' },
     modes: { cardinal: 'Kardynalny', fixed: 'Stały', mutable: 'Zmienny' },
     mcElementText: {
@@ -266,7 +273,43 @@
       14: 'Dług 14: nauka umiaru i wolności bez ucieczki.',
       16: 'Dług 16: stare wyobrażenie o sobie musi się rozpaść.',
       19: 'Dług 19: samodzielność bez odcinania się od ludzi.'
-    }
+    },
+
+    /* --- Księżyc w znaku: interpretacja na stronie Fazy Księżyca ---------- */
+    moonSignText: {
+      aries: 'Przy Księżycu w Baranie instynkt działa szybciej niż cierpliwość. To dobry moment, żeby coś zacząć, a nie dopieszczać w nieskończoność — liczy się rozpęd, nie idealny plan. Uważaj na krótki lont w drobnych sprzeczkach: chęć działania może wyprzedzić chęć słuchania.',
+      taurus: 'Księżyc w Byku prosi o wolniejsze, spokojniejsze tempo. Wygoda, dobre jedzenie i znane rytuały smakują dziś wyjątkowo dobrze, a cierpliwość do długich, niespiesznych zadań jest większa niż zwykle. Pilnuj, żeby nie zamieniła się w upór, gdy ktoś prosi Cię o zmianę kierunku.',
+      gemini: 'Przy Księżycu w Bliźniętach umysł chce różnorodności i rozmowy. To dobre okno, żeby odpisać na zaległe wiadomości, porównać notatki i pójść za ciekawością, dokądkolwiek prowadzi. Spróbuj domknąć chociaż jedną decyzję, zanim porwie Cię kolejny ciekawy wątek.',
+      cancer: 'Księżyc w Raku kieruje uwagę w stronę domu i ludzi, którzy czują się jak dom. Dawne wspomnienia mogą wracać łatwiej niż zwykle, a drobne gesty troski dziś naprawdę się liczą. Pozwól sobie się wycofać, jeśli dzień robi się za ciężki.',
+      leo: 'Przy Księżycu w Lwie możesz czuć się pewniej i bardziej widoczny niż zwykle. Twoja kreatywna strona się budzi — dobry moment, żeby coś stworzyć, wystąpić albo po prostu pokazać się sobą, zamiast chować się w tle. Zwróć uwagę, czy potrzeba uznania nie zaczyna zagłuszać ludzi wokół.',
+      virgo: 'Księżyc w Pannie wyostrza oko na szczegóły i na to, co jeszcze wymaga poprawki. To produktywny czas na porządkowanie, dopracowywanie i domykanie praktycznych spraw. Pamiętaj, że to samo oko do detali potrafi zmienić się w samokrytykę, jeśli mu na to pozwolisz.',
+      libra: 'Przy Księżycu w Wadze równowaga i sprawiedliwość liczą się bardziej niż zwykle, zwłaszcza w bliskich relacjach. To dobry dzień, żeby naprawić nieporozumienie albo po prostu cieszyć się dobrym towarzystwem. Uważaj na skłonność do unikania decyzji tylko po to, żeby zachować spokój.',
+      scorpio: 'Księżyc w Skorpionie ciągnie Cię pod powierzchnię — do prawdziwego motywu, niewypowiedzianego uczucia, sprawy, o której nikt jeszcze nie powiedział na głos. Rozmowy mogą pójść głębiej niż zwykle, jeśli na to pozwolisz. Intensywność jest tu przydatna, ale warto świadomie wybrać, na co ją skierować.',
+      sagittarius: 'Przy Księżycu w Strzelcu ciągnie Cię do szerokiego obrazu, nie do drobnego druku. To dobry dzień na planowanie podróży, naukę czegoś nowego albo powiedzenie tego, co naprawdę myślisz. Staraj się nie obiecywać więcej, niż jesteś w stanie dotrzymać.',
+      capricorn: 'Księżyc w Koziorożcu sprzyja dyscyplinie bardziej niż spontaniczności. Długoterminowe cele, obowiązki i wszystko, co wymaga konsekwencji, dziś łatwiej ogarnąć. Pilnuj tylko, żeby pęd do osiągnięć nie zabrał miejsca odpoczynkowi, którego naprawdę potrzebujesz.',
+      aquarius: 'Przy Księżycu w Wodniku możesz poczuć ciągnięcie w stronę niezależności i własnego sposobu działania. To dobry czas na oryginalne pomysły, ludzi o podobnych zainteresowaniach i odstąpienie od rutyn, które już nie pasują. Staraj się nie tracić kontaktu z najbliższymi, nawet gdy szukasz własnej drogi.',
+      pisces: 'Księżyc w Rybach wzmacnia wyobraźnię i empatię, czasem kosztem jasnych granic. To łagodny dzień na odpoczynek, pracę twórczą albo po prostu posiedzenie z uczuciem zamiast jego rozwiązywania. Trzymaj jedną nogę na twardym gruncie, żeby dzień zupełnie nie odpłynął.'
+    },
+
+    /* --- Rady dnia: tytuł + opis dla 15 kategorii; status liczy moon.js --- */
+    moonAdvice: {
+      cleaning:      { title: 'Sprzątanie',      desc: 'Dobry czas na gruntowne porządki' },
+      selfcare:      { title: 'Troska o siebie', desc: 'Czas zwolnić i o siebie zadbać' },
+      spirituality:  { title: 'Duchowość',       desc: 'Dobry czas na refleksję i wyciszenie' },
+      beauty:        { title: 'Uroda',           desc: 'Zabiegi i nawyki, które dziś się przyjmą' },
+      business:      { title: 'Biznes',          desc: 'Dobry czas na budowanie i ruch do przodu' },
+      career:        { title: 'Kariera',         desc: 'Sprzyja widoczności i postępom w pracy' },
+      creativity:    { title: 'Kreatywność',     desc: 'Pomysły i inspiracja płyną dziś łatwiej' },
+      family:        { title: 'Rodzina',         desc: 'Dobry czas na bliskość z najbliższymi' },
+      health:        { title: 'Zdrowie',         desc: 'Dobry czas na nawyki wspierające ciało' },
+      love:          { title: 'Miłość',          desc: 'Otwartość i ciepło przychodzą dziś łatwiej' },
+      rest:          { title: 'Odpoczynek',      desc: 'Dobry dzień, żeby zwolnić i odpocząć' },
+      traveling:     { title: 'Podróże',         desc: 'Sprzyja ruchowi i nowym miejscom' },
+      bigDecisions:  { title: 'Ważne decyzje',   desc: 'Dobra jasność do istotnych wyborów' },
+      communication: { title: 'Komunikacja',     desc: 'Rozmowy dziś płyną zwykle łatwiej' },
+      learning:      { title: 'Nauka',           desc: 'Dobra koncentracja na przyswajanie nowości' }
+    },
+    moonStatus: { favorable: 'Sprzyjający', neutral: 'Neutralny', unfavorable: 'Niesprzyjający' }
   };
 
   var EN = {
@@ -337,6 +380,9 @@
       karmic: 'Karmic debt', master: 'Master number',
       nameNeeded: 'Add your name in the profile to calculate the name numbers.',
       phase: 'Phase', illum: 'Illumination', moonSign: 'Moon in sign',
+      moonHeroTitle: 'Moon Phase Today', illuminated: 'Illuminated',
+      moonInSign: 'Moon in', dailyAdviceTitle: 'Daily Advice',
+      prevMonth: 'Previous month', nextMonth: 'Next month',
       nextFull: 'Next full moon', nextNew: 'Next new moon',
       stationing: 'Station', direct: 'direct',
       retrograde: 'retrograde', noRetro: 'No planet is retrograde right now.',
@@ -348,6 +394,8 @@
 
     signs: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
             'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'],
+    signsLoc: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+               'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'],
     elements: { fire: 'Fire', earth: 'Earth', air: 'Air', water: 'Water' },
     modes: { cardinal: 'Cardinal', fixed: 'Fixed', mutable: 'Mutable' },
     mcElementText: {
@@ -520,7 +568,44 @@
       14: 'Debt 14: learning moderation and freedom without escape.',
       16: 'Debt 16: an old self-image has to fall apart.',
       19: 'Debt 19: independence without cutting people off.'
-    }
+    },
+
+    /* --- Moon in sign: interpretation for the Moon Phase page ------------- */
+    moonSignText: {
+      aries: 'With the Moon in Aries, your instincts move faster than your patience. This is a good stretch for starting something rather than perfecting it, since momentum matters more than a flawless plan today. Watch for a short fuse in small disagreements: the urge to act can outrun the urge to listen.',
+      taurus: 'Moon in Taurus asks for a slower, steadier pace. Comfort, food and familiar routines feel unusually good right now, and your patience for long, unhurried tasks is stronger than usual. Resist the pull toward stubbornness if someone asks you to change course.',
+      gemini: 'With the Moon in Gemini, your mind wants variety and conversation. This is a good window for catching up on messages, comparing notes and following a curiosity wherever it leads. Try to land on at least one decision before the next interesting thing pulls you away.',
+      cancer: 'Moon in Cancer turns your attention toward home and the people who feel like home. Old memories may surface more easily, and small gestures of care go a long way today. Give yourself permission to retreat if the day feels like too much.',
+      leo: 'With the Moon in Leo, you may feel more confident and more visible than usual. Your creative side is awake, a good time to make something, perform, or simply be seen as yourself rather than shrink into the background. Notice if the need for recognition starts to crowd out the people around you.',
+      virgo: 'Moon in Virgo sharpens your eye for detail and for what still needs fixing. It is a productive stretch for organizing, refining and taking care of practical loose ends. Be mindful that the same eye for detail can turn into self-criticism if you let it.',
+      libra: 'With the Moon in Libra, balance and fairness matter more than usual, especially in close relationships. This is a good day for repairing a disagreement or simply enjoying good company. Watch for a tendency to avoid a decision just to keep the peace.',
+      scorpio: 'Moon in Scorpio pulls you toward what is underneath the surface: the real motive, the unspoken feeling, the thing no one has said out loud yet. Conversations can go deeper than usual if you let them. Intensity is useful here, but it helps to choose where you point it.',
+      sagittarius: 'With the Moon in Sagittarius, you are drawn to the bigger picture rather than the fine print. It is a good day for planning a trip, starting to learn something new, or simply saying what you actually think. Try not to promise more than you can follow through on.',
+      capricorn: 'Moon in Capricorn favors discipline over spontaneity. Long-term goals, responsibilities and anything that requires follow-through are easier to face today. Just make sure the drive to achieve does not crowd out the rest you actually need.',
+      aquarius: 'With the Moon in Aquarius, you may feel a pull toward independence and your own way of doing things. It is a good stretch for original ideas, people who share your interests, and stepping back from routines that no longer fit. Try to stay connected to the people closest to you while you figure things out.',
+      pisces: 'Moon in Pisces heightens imagination and empathy, sometimes at the cost of clear boundaries. This is a gentle day for rest, creative work, or simply sitting with a feeling instead of solving it. Keep one foot on practical ground so the day does not drift entirely.'
+    },
+
+    /* --- Daily advice: title + description for the 15 categories; the
+       favorable/neutral/unfavorable status itself is computed in moon.js. */
+    moonAdvice: {
+      cleaning:      { title: 'Cleaning',      desc: 'Good for a deep, thorough clean' },
+      selfcare:      { title: 'Self-Care',     desc: 'Slow down and tend to yourself' },
+      spirituality:  { title: 'Spirituality',  desc: 'Good for reflection and quiet practice' },
+      beauty:        { title: 'Beauty',        desc: 'Treatments and habits that tend to last' },
+      business:      { title: 'Business',      desc: 'Good for building and moving plans forward' },
+      career:        { title: 'Career',        desc: 'Favorable for visibility and progress at work' },
+      creativity:    { title: 'Creativity',    desc: 'Ideas and inspiration flow more easily' },
+      family:        { title: 'Family',        desc: 'Good for time with people close to you' },
+      health:        { title: 'Health',        desc: 'Good for routines that support your body' },
+      love:          { title: 'Love',          desc: 'Openness and warmth come more naturally' },
+      rest:          { title: 'Rest',          desc: 'A good day to slow down and recover' },
+      traveling:     { title: 'Traveling',     desc: 'Favorable for movement and new places' },
+      bigDecisions:  { title: 'Big Decisions', desc: 'Good clarity for choices that matter' },
+      communication: { title: 'Communication', desc: 'Conversations tend to go more smoothly' },
+      learning:      { title: 'Learning',      desc: 'Good focus for absorbing something new' }
+    },
+    moonStatus: { favorable: 'Favorable', neutral: 'Neutral', unfavorable: 'Unfavorable' }
   };
 
   g.T_ALL = { pl: PL, en: EN };
