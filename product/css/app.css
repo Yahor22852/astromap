@@ -10,8 +10,8 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -40,21 +40,21 @@ body {
 .topbar__pill {
   pointer-events: auto;
   display: flex; align-items: center; gap: 1px;
-  padding: 6px 8px 6px 20px; max-width: 100%;
+  padding: 7px 9px 7px 22px; max-width: 100%;
   background: rgba(14,11,16,.7);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--line); border-radius: 999px;
   box-shadow: 0 12px 34px rgba(0,0,0,.4);
 }
 .brand {
-  font-family: var(--serif); font-size: 18px; font-weight: 700; letter-spacing: -.01em;
+  font-family: var(--serif); font-size: 21px; font-weight: 700; letter-spacing: -.01em;
   color: var(--ink); text-decoration: none; white-space: nowrap;
-  padding-right: 14px; margin-right: 6px; border-right: 1px solid var(--line-2);
+  padding-right: 15px; margin-right: 6px; border-right: 1px solid var(--line-2);
 }
 .nav { display: flex; align-items: center; gap: 1px; }
 .nav__i {
-  display: block; padding: 9px 14px; border-radius: 999px; white-space: nowrap;
-  color: var(--ink-dim); text-decoration: none; font-size: 14px;
+  display: block; padding: 10px 16px; border-radius: 999px; white-space: nowrap;
+  color: var(--ink-dim); text-decoration: none; font-size: 15px;
   transition: background .2s ease, color .2s ease;
 }
 .nav__i:hover { color: var(--ink); background: rgba(255,255,255,.05); }
@@ -63,17 +63,17 @@ body {
 
 .topbar__burger {
   display: none; align-items: center; justify-content: center;
-  width: 38px; height: 38px; margin-left: 4px; border: 0; border-radius: 999px;
+  width: 42px; height: 42px; margin-left: 4px; border: 0; border-radius: 999px;
   background: transparent; cursor: pointer;
 }
 .topbar__burger:hover { background: rgba(255,255,255,.06); }
 .topbar__burger span {
-  display: block; width: 16px; height: 1.5px; background: var(--ink-dim);
-  margin: 3px auto; transition: transform .2s ease, opacity .2s ease;
+  display: block; width: 18px; height: 2px; background: var(--ink-dim);
+  margin: 3.5px auto; transition: transform .2s ease, opacity .2s ease;
 }
-.topbar__burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(4.5px) rotate(45deg); }
+.topbar__burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
 .topbar__burger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
-.topbar__burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-4.5px) rotate(-45deg); }
+.topbar__burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
 
 .mnav {
   pointer-events: auto; display: flex; flex-direction: column; gap: 2px;
@@ -83,7 +83,7 @@ body {
   border: 1px solid var(--line); border-radius: 18px;
   box-shadow: 0 12px 34px rgba(0,0,0,.4);
 }
-.mnav .nav__i { padding: 11px 14px; }
+.mnav .nav__i { padding: 12px 16px; }
 .mnav[hidden] { display: none; }
 @media (min-width: 901px) { .mnav { display: none !important; } }
 
@@ -92,7 +92,7 @@ body {
 .head { max-width: 1120px; margin: 0 auto 22px; }
 h1 {
   font-family: var(--serif);
-  font-size: 40px; font-weight: 700; line-height: 1.05; letter-spacing: -.012em;
+  font-size: 46px; font-weight: 700; line-height: 1.05; letter-spacing: -.012em;
 }
 .view {
   max-width: 1120px; margin: 0 auto;
@@ -107,9 +107,9 @@ h1 {
   .topbar__pill .nav { display: none; }
   .topbar__burger { display: flex; }
   .topbar__pill { padding: 6px 6px 6px 16px; }
-  .brand { font-size: 16px; padding-right: 10px; margin-right: 2px; }
+  .brand { font-size: 18px; padding-right: 10px; margin-right: 2px; }
   .main { padding: 92px 16px 56px; }
-  h1 { font-size: 30px; }
+  h1 { font-size: 32px; }
   .view { grid-template-columns: minmax(0, 1fr); gap: 14px; }
 }
 
@@ -122,44 +122,44 @@ h1 {
 }
 .card--wide { grid-column: 1 / -1; }
 .card__t {
-  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
   color: var(--accent); font-weight: 600; margin-bottom: 12px;
 }
 .card__t2 {
-  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--ink-faint); margin-bottom: 8px;
 }
-.note { margin-top: 14px; font-size: 12px; line-height: 1.45; color: var(--ink-faint); }
-.p { margin-top: 12px; font-size: 15px; line-height: 1.55; color: var(--ink-dim); }
-.empty { font-size: 15px; color: var(--ink-dim); }
+.note { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-faint); }
+.p { margin-top: 12px; font-size: 16px; line-height: 1.6; color: var(--ink-dim); }
+.empty { font-size: 16px; color: var(--ink-dim); }
 
 /* --- ключ-значение -------------------------------------------------------- */
 .kv { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; }
 .kv + .kv { border-top: 1px solid var(--line-2); }
-.kv span { font-size: 13px; color: var(--ink-dim); }
-.kv b { font-family: var(--serif); font-size: 21px; font-weight: 600; }
+.kv span { font-size: 14px; color: var(--ink-dim); }
+.kv b { font-family: var(--serif); font-size: 24px; font-weight: 600; }
 
 /* --- индексы -------------------------------------------------------------- */
 .bar + .bar { margin-top: 14px; }
-.bar__r { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-dim); }
-.bar__t { margin-top: 7px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.08); }
-.bar__t i { display: block; height: 6px; border-radius: 3px;
+.bar__r { display: flex; justify-content: space-between; font-size: 15px; color: var(--ink-dim); }
+.bar__t { margin-top: 7px; height: 7px; border-radius: 3.5px; background: rgba(255,255,255,.08); }
+.bar__t i { display: block; height: 7px; border-radius: 3.5px;
   background: linear-gradient(90deg, var(--grad-b), var(--grad-a)); }
 
 /* --- транзиты ------------------------------------------------------------- */
 .tr { padding: 14px 0; }
 .tr + .tr { border-top: 1px solid var(--line-2); }
 .tr:first-child { padding-top: 0; }
-.tr__h { display: flex; align-items: baseline; flex-wrap: wrap; font-size: 15px; }
+.tr__h { display: flex; align-items: baseline; flex-wrap: wrap; font-size: 16px; }
 .tr__s { flex: 1 1 auto; min-width: 0; }   /* фраза одним узлом: во flex-контейнере
    пробелы между соседними элементами схлопываются, и слова склеиваются */
 .tr__h b { font-weight: 600; }
-.tr__o { margin-left: auto; font-size: 12px; color: var(--ink-faint); }
-.tr__t { margin-top: 6px; font-size: 14px; line-height: 1.55; color: var(--ink-dim); }
+.tr__o { margin-left: auto; font-size: 13px; color: var(--ink-faint); }
+.tr__t { margin-top: 6px; font-size: 15px; line-height: 1.6; color: var(--ink-dim); }
 
 .tag {
-  margin: 0 6px; padding: 2px 8px; border-radius: 999px;
-  font-size: 11px; font-weight: 600; letter-spacing: .02em;
+  margin: 0 6px; padding: 3px 9px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; letter-spacing: .02em;
 }
 .tag--soft { background: rgba(111,233,194,.16); color: var(--soft); }
 .tag--hard { background: rgba(240,146,138,.16); color: var(--hard); }
@@ -168,12 +168,12 @@ h1 {
 /* --- таблицы -------------------------------------------------------------- */
 .tw { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-th, td { text-align: left; padding: 7px 10px 7px 0; white-space: nowrap; }
+th, td { text-align: left; padding: 8px 10px 8px 0; white-space: nowrap; }
 th {
-  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--ink-faint); font-weight: 500; border-bottom: 1px solid var(--line);
 }
-td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
+td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 
 /* --- гороскоп: переключатель периодов и карточки категорий ----------------
    Капсула периодов повторяет .topbar__pill (тот же blur/borderline), но
@@ -201,8 +201,8 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 }
 .segbar__b {
   position: relative; z-index: 1; flex: 0 0 auto; white-space: nowrap;
-  padding: 9px 16px; border: 0; border-radius: 999px; background: transparent;
-  color: var(--ink-dim); font-family: var(--sans); font-size: 13px; font-weight: 600;
+  padding: 10px 18px; border: 0; border-radius: 999px; background: transparent;
+  color: var(--ink-dim); font-family: var(--sans); font-size: 15px; font-weight: 600;
   cursor: pointer; transition: color .25s ease;
 }
 .segbar__b.on { color: var(--on-accent); }
@@ -217,17 +217,17 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 .hzcard:hover { transform: translateY(-4px); }
 .hzcard--ai::after {
   content: 'AI'; position: absolute; top: 20px; right: 22px;
-  font-size: 9px; font-weight: 700; letter-spacing: .08em;
+  font-size: 10px; font-weight: 700; letter-spacing: .08em;
   color: var(--accent); background: rgba(155,138,248,.14);
-  padding: 2px 7px; border-radius: 999px;
+  padding: 3px 8px; border-radius: 999px;
 }
-.hzcard__h { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.hzcard__h { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .hzcard__i {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 34px; height: 34px; border-radius: 999px; font-size: 16px; flex: 0 0 auto;
+  width: 46px; height: 46px; border-radius: 999px; font-size: 24px; flex: 0 0 auto;
 }
 .hzcard__t {
-  font-family: var(--serif); font-size: 19px; font-weight: 600; letter-spacing: -.01em;
+  font-family: var(--serif); font-size: 22px; font-weight: 600; letter-spacing: -.01em;
 }
 /* Раздел -> цвет: тот же язык, что уже задают --accent/--pink/--sky/--mint
    в токенах (кнопки, теги). Тонировка иконки + акцент рамки/тени при ховере. */
@@ -253,42 +253,43 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 }
 .hzquick::-webkit-scrollbar { display: none; }
 .hzquick__b {
-  display: flex; align-items: center; gap: 7px; flex: 0 0 auto; white-space: nowrap;
-  padding: 8px 15px; border-radius: 999px; text-decoration: none;
-  color: var(--ink-dim); font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 8px; flex: 0 0 auto; white-space: nowrap;
+  padding: 9px 16px; border-radius: 999px; text-decoration: none;
+  color: var(--ink-dim); font-size: 14px; font-weight: 600;
   transition: background .2s ease, color .2s ease;
 }
 .hzquick__b:hover { color: var(--ink); background: rgba(255,255,255,.06); }
 .hzquick__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.hzquick__i { font-size: 14px; }
+.hzquick__i { font-size: 19px; }
 
 /* --- раскрывающиеся строки таблицы точных дат ------------------------------
    Клик по строке показывает то же связное предложение (transitText), что
    уже есть в карточках выше — вместо ещё одной порции пустых чисел. */
 .hzrow { cursor: pointer; transition: background .2s ease; }
 .hzrow:hover { background: rgba(255,255,255,.03); }
-.hzrow__chevCol { width: 18px; }
+.hzrow__chevCol { width: 20px; }
 .hzrow__chev {
-  display: inline-block; color: var(--ink-faint); font-size: 13px;
+  display: inline-block; color: var(--ink-faint); font-size: 15px;
   transition: transform .25s cubic-bezier(.4,0,.2,1);
 }
 .hzrow--open .hzrow__chev { transform: rotate(90deg); color: var(--accent); }
 .hzrow__d td { border-bottom: 1px solid var(--line-2); padding-top: 0; padding-bottom: 14px; }
-.hzrow__d .p { margin-top: 0; font-size: 13px; }
+.hzrow__d .p { margin-top: 0; font-size: 14px; }
 
 @media (max-width: 900px) {
   .hz { grid-template-columns: minmax(0, 1fr); gap: 14px; }
-  .segbar__b { padding: 8px 13px; font-size: 12px; }
+  .segbar__b { padding: 9px 14px; font-size: 13px; }
   .hzquick { top: 78px; }
-  .hzquick__b { padding: 7px 12px; font-size: 12px; }
+  .hzquick__b { padding: 8px 13px; font-size: 13px; }
+  .hzquick__i { font-size: 17px; }
 }
 
 /* --- чипы ----------------------------------------------------------------- */
 .chips { display: flex; margin-bottom: 14px; }
 .chip {
-  padding: 9px 18px; border: 1px solid var(--line); border-radius: 999px;
+  padding: 10px 19px; border: 1px solid var(--line); border-radius: 999px;
   background: transparent; color: var(--ink-dim);
-  font-family: var(--sans); font-size: 14px; cursor: pointer;
+  font-family: var(--sans); font-size: 15px; cursor: pointer;
   transition: background .2s ease, border-color .2s ease, color .2s ease;
 }
 .chip + .chip { margin-left: 8px; }
@@ -299,12 +300,12 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 /* --- индекс совместимости ------------------------------------------------- */
 .score { text-align: center; padding: 8px 0 4px; }
 .score__n {
-  font-family: var(--serif); font-weight: 700; font-size: 72px; line-height: 1;
+  font-family: var(--serif); font-weight: 700; font-size: 84px; line-height: 1;
   background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.score__b { margin-top: 14px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.08); }
-.score__b i { display: block; height: 6px; border-radius: 3px;
+.score__b { margin-top: 14px; height: 7px; border-radius: 3.5px; background: rgba(255,255,255,.08); }
+.score__b i { display: block; height: 7px; border-radius: 3.5px;
   background: linear-gradient(90deg, var(--grad-b), var(--grad-a)); }
 
 /* --- совместимость: быстрый выбор знаков ----------------------------------
@@ -315,13 +316,13 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 .mcnote { margin-top: 0; margin-bottom: 6px; }
 .mcpick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 4px; }
 .mcpick__l {
-  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--ink-faint); margin-bottom: 10px;
 }
 .signgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .signtile {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 10px 4px; border: 1px solid var(--line); border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 12px 4px; border: 1px solid var(--line); border-radius: 14px;
   background: transparent; cursor: pointer; color: var(--ink-dim);
   font-family: var(--sans);
   transition: transform .2s ease, border-color .2s ease, background .2s ease, color .2s ease;
@@ -332,32 +333,33 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
   box-shadow: 0 10px 24px -14px rgba(155,138,248,.6);
 }
 .signtile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.signtile__g { font-size: 20px; line-height: 1; }
-.signtile__n { font-size: 10px; font-weight: 600; letter-spacing: .01em; }
+.signtile__g { font-size: 28px; line-height: 1; }
+.signtile__n { font-size: 11px; font-weight: 600; letter-spacing: .01em; }
 
 .mchero { text-align: center; margin-bottom: 16px; }
 .mchero__signs {
-  display: flex; align-items: center; justify-content: center; gap: 12px;
-  font-family: var(--serif); font-size: 20px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  font-family: var(--serif); font-size: 25px; font-weight: 600;
 }
-.mchero__x { color: var(--ink-faint); font-size: 15px; }
+.mchero__x { color: var(--ink-faint); font-size: 18px; }
 .mcsegbar { display: flex; margin: 0 auto 4px; max-width: 100%; justify-content: center; }
 .mccard { padding-top: 6px; }
 .mccard__text { text-align: center; }
 .mc-ai-tag {
-  display: inline-block; margin-left: 6px; padding: 2px 7px; border-radius: 999px;
-  font-size: 9px; font-weight: 700; letter-spacing: .08em; vertical-align: middle;
+  display: inline-block; margin-left: 6px; padding: 3px 8px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; letter-spacing: .08em; vertical-align: middle;
   color: var(--accent); background: rgba(155,138,248,.14);
 }
 .segbar__b.mc-ai { position: relative; }
 .segbar__b.mc-ai::after {
-  content: ''; position: absolute; top: 7px; right: 9px;
-  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  content: ''; position: absolute; top: 8px; right: 10px;
+  width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
 }
 @media (max-width: 900px) {
   .mcpick { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .signgrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .mchero__signs { font-size: 17px; gap: 8px; }
+  .signtile__g { font-size: 24px; }
+  .mchero__signs { font-size: 20px; gap: 10px; }
 }
 
 /* --- нумерология ---------------------------------------------------------- */
@@ -365,36 +367,36 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 .num + .num { border-top: 1px solid var(--line-2); }
 .num:first-child { padding-top: 0; }
 .num__v {
-  flex: 0 0 62px; height: 62px; margin-right: 16px;
-  border-radius: 14px; background: var(--surf-sel);
+  flex: 0 0 68px; height: 68px; margin-right: 16px;
+  border-radius: 15px; background: var(--surf-sel);
   border: 1px solid var(--accent);
-  font-family: var(--serif); font-weight: 700; font-size: 30px;
+  font-family: var(--serif); font-weight: 700; font-size: 34px;
   display: flex; align-items: center; justify-content: center;
 }
 .num__c { flex: 1 1 auto; min-width: 0; }
-.num__l { font-size: 15px; font-weight: 600; }
-.num__d { margin-top: 3px; font-size: 12px; color: var(--ink-faint); }
-.num__t { margin-top: 7px; font-size: 14px; line-height: 1.5; color: var(--ink-dim); }
-.num__k { margin-top: 5px; font-size: 13px; color: var(--hard); }
+.num__l { font-size: 16px; font-weight: 600; }
+.num__d { margin-top: 3px; font-size: 13px; color: var(--ink-faint); }
+.num__t { margin-top: 7px; font-size: 15px; line-height: 1.55; color: var(--ink-dim); }
+.num__k { margin-top: 5px; font-size: 14px; color: var(--hard); }
 
 /* --- формы ---------------------------------------------------------------- */
 .form { display: block; margin-top: 18px; }
 .f { display: block; margin-bottom: 18px; }
-.f span { display: block; font-size: 12px; color: var(--ink-dim); margin-bottom: 4px; }
+.f span { display: block; font-size: 13px; color: var(--ink-dim); margin-bottom: 4px; }
 .f input, .f select {
-  width: 100%; height: 46px; padding: 0 2px;
+  width: 100%; height: 48px; padding: 0 2px;
   background: transparent; color: var(--ink);
   border: 0; border-bottom: 1px solid rgba(255,255,255,.16);
-  font-family: var(--serif); font-size: 24px;
+  font-family: var(--serif); font-size: 25px;
   transition: border-color .2s ease;
 }
-.f select { font-family: var(--sans); font-size: 16px; }
+.f select { font-family: var(--sans); font-size: 17px; }
 .f input:focus, .f select:focus { outline: none; border-bottom-color: var(--accent); }
 .btn {
   width: 100%; height: var(--h-btn); border: 0; border-radius: var(--r-btn);
   background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
   color: var(--on-accent); font-family: var(--sans);
-  font-size: 16px; font-weight: 700; cursor: pointer;
+  font-size: 17px; font-weight: 700; cursor: pointer;
   box-shadow: 0 8px 22px -8px rgba(155,138,248,.55);
   transition: transform .18s cubic-bezier(.4,0,.2,1), box-shadow .25s ease, opacity .2s ease;
 }
@@ -414,19 +416,19 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 .w-ring--thin { stroke: rgba(255,255,255,.09); }
 .w-spoke { stroke: rgba(255,255,255,.12); stroke-width: 1; }
 .w-tick { stroke: rgba(255,255,255,.14); stroke-width: 1; }
-.w-sign { fill: var(--ink-faint); font-family: var(--sans); font-size: 11px; text-anchor: middle; }
+.w-sign { fill: var(--ink-faint); font-family: var(--sans); font-size: 13px; text-anchor: middle; }
 .w-asp { stroke-width: 1.1; }
 .w-stem { stroke: rgba(255,255,255,.14); stroke-width: 1; }
 .w-dot { fill: var(--surf-sel); stroke: var(--accent); stroke-width: 1.2; }
 .w-dot--r { stroke: var(--hard); }
-.w-code { fill: var(--ink); font-family: var(--sans); font-size: 11px; font-weight: 600; text-anchor: middle; }
+.w-code { fill: var(--ink); font-family: var(--sans); font-size: 13px; font-weight: 600; text-anchor: middle; }
 .w-axis { stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 4 4; opacity: .7; }
 
 .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .disc {
   max-width: 1120px; margin: 34px auto 0; padding-top: 16px;
   border-top: 1px solid var(--line-2);
-  font-size: 11px; line-height: 1.5; color: var(--ink-faint);
+  font-size: 12px; line-height: 1.5; color: var(--ink-faint);
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
@@ -436,9 +438,9 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
    над ним). Теперь живёт внутри капсулы, в одну строку с пунктами меню. */
 .lang { display: flex; align-items: center; margin-left: 4px; padding-left: 10px; border-left: 1px solid var(--line-2); }
 .lang__b {
-  flex: 0 0 auto; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px;
+  flex: 0 0 auto; padding: 7px 11px; border: 1px solid var(--line); border-radius: 999px;
   background: transparent; color: var(--ink-faint);
-  font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: .06em;
+  font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: .06em;
   cursor: pointer;
 }
 .lang__b + .lang__b { margin-left: 5px; }
@@ -452,15 +454,15 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 }
 .list { margin: 4px 0 0; padding: 0; list-style: none; }
 .list li {
-  position: relative; padding: 7px 0 7px 20px;
-  font-size: 14px; color: var(--ink-dim);
+  position: relative; padding: 8px 0 8px 22px;
+  font-size: 15px; color: var(--ink-dim);
 }
 .list li + li { border-top: 1px solid var(--line-2); }
 .list li:before {
-  content: ''; position: absolute; left: 2px; top: 15px;
-  width: 7px; height: 7px; background: var(--accent); transform: rotate(45deg);
+  content: ''; position: absolute; left: 2px; top: 16px;
+  width: 8px; height: 8px; background: var(--accent); transform: rotate(45deg);
 }
 
 .num--sm { padding: 10px 0; }
-.num--sm .num__v { flex-basis: 46px; height: 46px; font-size: 22px; border-radius: 11px; }
+.num--sm .num__v { flex-basis: 50px; height: 50px; font-size: 24px; border-radius: 12px; }
 .num--sm .num__t { margin-top: 12px; }
