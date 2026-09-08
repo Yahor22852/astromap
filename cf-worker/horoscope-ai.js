@@ -14,7 +14,7 @@
    без выдумывания новых аспектов. */
 
 var ALLOWED_ORIGIN = 'https://yahor22852.github.io';
-var MODEL = 'llama-3.3-70b-versatile';
+var MODEL = 'openai/gpt-oss-120b';
 
 function corsHeaders() {
   return {
