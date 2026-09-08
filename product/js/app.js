@@ -321,6 +321,7 @@
     var ev = hzPeriodData(hzPeriod);
     var buckets = { general: [], love: [], career: [], luck: [] };
     ev.forEach(function (e) { buckets[HZ_CAT[e.natal] || 'general'].push(e); });
+    hzLastBuckets = buckets;
 
     var cards = HZ_SECTIONS.map(function (s) {
       var list = buckets[s.key].slice(0, 3);
@@ -329,9 +330,9 @@
             return transitText({ transit: e.transit, natal: e.natal, tone: e.tone });
           }).join(' ')
         : T.ui.hzQuiet;
-      return '<article class="card hzcard"><div class="hzcard__h"><span class="hzcard__i">' +
+      return '<article class="card hzcard" data-section="' + s.key + '"><div class="hzcard__h"><span class="hzcard__i">' +
         s.icon + '</span><h3 class="hzcard__t">' + T.ui['hz' + s.key.charAt(0).toUpperCase() + s.key.slice(1)] +
-        '</h3></div><p class="p">' + text + '</p></article>';
+        '</h3></div><p class="p hzcard__text">' + text + '</p></article>';
     }).join('');
 
     var rows = ev.slice(0, 40).map(function (e) {
@@ -360,6 +361,67 @@
       void ind.offsetWidth;
       ind.style.transition = '';
     }
+  }
+
+  /* --- ИИ-озвучка карточек гороскопа ---------------------------------------
+     Композиционный текст (transitText) рендерится сразу и служит фолбэком.
+     Параллельно уходит запрос к воркеру на Cloudflare (см. cf-worker/), тот
+     дергает бесплатный Groq API и возвращает связный текст по тем же фактам
+     — если он ответит вовремя, подменяем параграф; если нет (сеть, лимит
+     Groq, воркер недоступен) — молча остаёмся на композиционном тексте.
+     Кэш в localStorage на календарный день не даёт дёргать API повторно
+     при каждом заходе на вкладку. */
+  var AI_URL = 'https://astromap-horoscope-ai.egorrut3030.workers.dev';
+  var hzLastBuckets = null;
+  var hzAiSeq = 0;
+
+  function hzCacheKey(period, lang) {
+    var d = new Date();
+    return 'hzai:' + lang + ':' + period + ':' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+
+  function applyHzSections(sections, mySeq) {
+    if (mySeq !== hzAiSeq) { return; } /* пользователь уже переключил период/экран */
+    var body = el('hzBody');
+    if (!body) { return; }
+    ['general', 'love', 'career', 'luck'].forEach(function (k) {
+      if (!sections[k]) { return; }
+      var card = body.querySelector('.hzcard[data-section="' + k + '"]');
+      if (!card) { return; }
+      var p = card.querySelector('.hzcard__text');
+      if (p) { p.textContent = sections[k]; }
+      card.classList.add('hzcard--ai');
+    });
+  }
+
+  function hzAiEnhance(period) {
+    if (!hzLastBuckets || !AI_URL || AI_URL.indexOf('REPLACE_ME') >= 0) { return; }
+    var lang = window.APP_LANG || 'en';
+    var cacheKey = hzCacheKey(period, lang);
+    var mySeq = ++hzAiSeq;
+    try {
+      var cached = localStorage.getItem(cacheKey);
+      if (cached) { applyHzSections(JSON.parse(cached), mySeq); return; }
+    } catch (e) {}
+
+    var payload = { lang: lang, period: period, buckets: {} };
+    ['general', 'love', 'career', 'luck'].forEach(function (k) {
+      payload.buckets[k] = hzLastBuckets[k].slice(0, 3).map(function (e) {
+        return { transit: e.transit, natal: e.natal, aspect: e.aspect, tone: e.tone };
+      });
+    });
+
+    fetch(AI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.sections) { return; }
+        try { localStorage.setItem(cacheKey, JSON.stringify(data.sections)); } catch (e) {}
+        applyHzSections(data.sections, mySeq);
+      })
+      .catch(function () {});
   }
 
   views.horoscope = function () {
@@ -603,7 +665,7 @@
     view.classList.remove('fade-in');
     void view.offsetWidth;
     view.classList.add('fade-in');
-    if (h === 'horoscope') { positionHzIndicator(true); }
+    if (h === 'horoscope') { positionHzIndicator(true); hzAiEnhance(hzPeriod); }
     window.scrollTo(0, 0);
     bind();
   }
@@ -650,6 +712,7 @@
           void body.offsetWidth;
           body.classList.add('fade-in');
         }
+        hzAiEnhance(hzPeriod);
       });
     });
   }

@@ -210,6 +210,13 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 .segbar__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .hz { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.hzcard { position: relative; }
+.hzcard--ai::after {
+  content: 'AI'; position: absolute; top: 20px; right: 22px;
+  font-size: 9px; font-weight: 700; letter-spacing: .08em;
+  color: var(--accent); background: rgba(155,138,248,.14);
+  padding: 2px 7px; border-radius: 999px;
+}
 .hzcard__h { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .hzcard__i { font-size: 20px; line-height: 1; }
 .hzcard__t {
