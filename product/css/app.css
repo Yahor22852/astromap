@@ -307,6 +307,59 @@ td { font-size: 14px; border-bottom: 1px solid var(--line-2); }
 .score__b i { display: block; height: 6px; border-radius: 3px;
   background: linear-gradient(90deg, var(--grad-b), var(--grad-a)); }
 
+/* --- совместимость: быстрый выбор знаков ----------------------------------
+   Тайлы знаков (.signtile) говорят на том же визуальном языке, что и .chip/
+   .hzcard выше — hover-подъём + подсветка рамки при выборе. Результат
+   (.mchero + .mcsegbar) переиспользует .segbar целиком: те же вкладки, что
+   у периодов Гороскопа, другой набор данных (positionMcIndicator в app.js). */
+.mcnote { margin-top: 0; margin-bottom: 6px; }
+.mcpick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 4px; }
+.mcpick__l {
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-faint); margin-bottom: 10px;
+}
+.signgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.signtile {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 4px; border: 1px solid var(--line); border-radius: 14px;
+  background: transparent; cursor: pointer; color: var(--ink-dim);
+  font-family: var(--sans);
+  transition: transform .2s ease, border-color .2s ease, background .2s ease, color .2s ease;
+}
+.signtile:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.22); color: var(--ink); }
+.signtile.on {
+  background: var(--surf-sel); border-color: var(--accent); color: var(--ink);
+  box-shadow: 0 10px 24px -14px rgba(155,138,248,.6);
+}
+.signtile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.signtile__g { font-size: 20px; line-height: 1; }
+.signtile__n { font-size: 10px; font-weight: 600; letter-spacing: .01em; }
+
+.mchero { text-align: center; margin-bottom: 16px; }
+.mchero__signs {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-family: var(--serif); font-size: 20px; font-weight: 600;
+}
+.mchero__x { color: var(--ink-faint); font-size: 15px; }
+.mcsegbar { display: flex; margin: 0 auto 4px; max-width: 100%; justify-content: center; }
+.mccard { padding-top: 6px; }
+.mccard__text { text-align: center; }
+.mc-ai-tag {
+  display: inline-block; margin-left: 6px; padding: 2px 7px; border-radius: 999px;
+  font-size: 9px; font-weight: 700; letter-spacing: .08em; vertical-align: middle;
+  color: var(--accent); background: rgba(155,138,248,.14);
+}
+.segbar__b.mc-ai { position: relative; }
+.segbar__b.mc-ai::after {
+  content: ''; position: absolute; top: 7px; right: 9px;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+}
+@media (max-width: 900px) {
+  .mcpick { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .signgrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .mchero__signs { font-size: 17px; gap: 8px; }
+}
+
 /* --- нумерология ---------------------------------------------------------- */
 .num { display: flex; padding: 16px 0; }
 .num + .num { border-top: 1px solid var(--line-2); }

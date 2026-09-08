@@ -31,6 +31,12 @@
       numbersRef: 'Znaczenia liczb',
       matchIntro: 'Jak czytać zgodność',
       matchIntroText: 'Wskaźnik powstaje z aspektów między dwiema kartami: kontakty Słońca, Księżyca, Wenus i Marsa liczą się najmocniej. Composite to trzecia karta, zbudowana z punktów środkowych — pokazuje relację jako osobny byt.',
+      mcTitle: 'Szybkie sprawdzenie zgodności',
+      mcNote: 'Na podstawie samych znaków Słońca — po dokładny wynik z pełnych danych urodzenia użyj kalkulatora poniżej.',
+      mcPickA: 'Twój znak', mcPickB: 'Znak partnera', mcCompat: 'Zgodność',
+      mcGeneral: 'Ogólnie', mcLove: 'Miłość', mcIntimacy: 'Bliskość', mcTrust: 'Zaufanie',
+      mcCommunication: 'Komunikacja', mcWork: 'Praca', mcFriendship: 'Przyjaźń',
+      mcChoose: 'Wybierz oba znaki, żeby zobaczyć wynik.',
       profileIntro: 'Godzina urodzenia zmienia Ascendent i domy. Jeśli jej nie znasz, zostaw pole puste — policzymy resztę.',
       getList: [
         'Wskaźniki dnia i aktywne tranzyty',
@@ -85,6 +91,22 @@
             'Waga', 'Skorpion', 'Strzelec', 'Koziorożec', 'Wodnik', 'Ryby'],
     elements: { fire: 'Ogień', earth: 'Ziemia', air: 'Powietrze', water: 'Woda' },
     modes: { cardinal: 'Kardynalny', fixed: 'Stały', mutable: 'Zmienny' },
+    mcElementText: {
+      'air-air': 'Dwa znaki powietrza potrafią rozmawiać bez końca i rzadko brakuje im pomysłów, choć więź bywa bardziej intelektualna niż emocjonalna.',
+      'air-earth': 'Powietrze wnosi pomysły, a ziemia strukturę, więc ta para musi się nauczyć przekładać plany na konkretne, przyziemne kroki.',
+      'air-fire': 'Powietrze podsyca iskrę ognia, dzięki czemu to jedno z najbardziej żywiołowych połączenzeń — pełne energii, rozmów i wspólnych planów.',
+      'air-water': 'Powietrze woli wszystko przemyśleć, a woda kieruje się wyczuciem, więc ta para musi nauczyć się spotykać w połowie drogi emocjonalnie.',
+      'earth-earth': 'Dwa znaki ziemi budują razem coś solidnego i pewnego, ceniąc konsekwencję bardziej niż spontaniczność.',
+      'earth-fire': 'Ziemia chce spokojnego tempa, a ogień chce działać szybko, więc cierpliwość obu stron chroni tę parę przed tarciami.',
+      'earth-water': 'Ziemia daje wodzie bezpieczne miejsce, by mogła się osadzić, a woda zmiękcza ziemię — to naturalnie opiekuńcze połączenie.',
+      'fire-fire': 'Dwa znaki ognia wnoszą pasję i rozpęd, choć podobne ego oznaczają, że będą musiały na zmianę przejmować prowadzenie.',
+      'fire-water': 'Ogień i woda mogą stworzyć prawdziwą chemię albo prawdziwy konflikt — tę intensywność trzeba ostrożnie kanalizować.',
+      'water-water': 'Dwa znaki wody rozumieją się na poziomie instynktu, tworząc głęboką więź emocjonalną, która bywa też bardzo intensywna.'
+    },
+    mcModeText: {
+      same: 'Ta sama jakość oznacza podobny rytm życia — na plus (harmonia) i na minus (podobny upór).',
+      diff: 'Różne jakości oznaczają, że zwykle jedna strona inicjuje, a druga się dostosowuje lub stabilizuje — to działa, gdy oboje znają swoją rolę.'
+    },
     planets: {
       Sun: 'Słońce', Moon: 'Księżyc', Mercury: 'Merkury', Venus: 'Wenus',
       Mars: 'Mars', Jupiter: 'Jowisz', Saturn: 'Saturn', Uranus: 'Uran',
@@ -268,6 +290,12 @@
       numbersRef: 'What the numbers mean',
       matchIntro: 'How to read compatibility',
       matchIntroText: 'The index comes from aspects between the two charts, with Sun, Moon, Venus and Mars contacts weighted heaviest. The composite is a third chart built from midpoints — it shows the relationship as its own entity.',
+      mcTitle: 'Quick Compatibility Check',
+      mcNote: 'Based on Sun signs only — for a precise reading from full birth data, use the calculator below.',
+      mcPickA: 'Your sign', mcPickB: 'Their sign', mcCompat: 'Compatibility',
+      mcGeneral: 'General', mcLove: 'Love', mcIntimacy: 'Intimacy', mcTrust: 'Trust',
+      mcCommunication: 'Communication', mcWork: 'Work', mcFriendship: 'Friendship',
+      mcChoose: 'Choose both signs to see the result.',
       profileIntro: 'The birth time changes the Ascendant and the houses. If you don\u2019t know it, leave the field empty — everything else still works.',
       getList: [
         'Indices of the day and active transits',
@@ -322,6 +350,22 @@
             'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'],
     elements: { fire: 'Fire', earth: 'Earth', air: 'Air', water: 'Water' },
     modes: { cardinal: 'Cardinal', fixed: 'Fixed', mutable: 'Mutable' },
+    mcElementText: {
+      'air-air': 'Two air signs talk endlessly and rarely run out of ideas, though the bond can stay more cerebral than emotional.',
+      'air-earth': 'Air brings ideas and earth brings structure, so this pairing has to work to translate plans into real, grounded steps.',
+      'air-fire': 'Air feeds fire’s spark, making this one of the liveliest combinations — full of energy, talk and shared plans.',
+      'air-water': 'Air prefers to think things through while water feels its way, so this pair has to learn to meet in the middle emotionally.',
+      'earth-earth': 'Two earth signs build something solid and dependable together, valuing consistency over spontaneity.',
+      'earth-fire': 'Earth wants a steady pace while fire wants to move fast, so patience on both sides keeps this pairing from friction.',
+      'earth-water': 'Earth gives water a safe place to settle, and water softens earth — a naturally nurturing, supportive combination.',
+      'fire-fire': 'Two fire signs bring passion and momentum, though matching egos mean they’ll need to take turns leading.',
+      'fire-water': 'Fire and water can create real chemistry or real conflict — the intensity has to be channelled carefully.',
+      'water-water': 'Two water signs understand each other on a gut level, with a deep emotional bond that can also run intense.'
+    },
+    mcModeText: {
+      same: 'Sharing the same modality means they move through life at a similar rhythm, for better (harmony) and worse (matching stubbornness).',
+      diff: 'Different modalities mean one usually initiates and the other adapts or stabilises — a balance that works once both know their role.'
+    },
     planets: {
       Sun: 'Sun', Moon: 'Moon', Mercury: 'Mercury', Venus: 'Venus',
       Mars: 'Mars', Jupiter: 'Jupiter', Saturn: 'Saturn', Uranus: 'Uranus',

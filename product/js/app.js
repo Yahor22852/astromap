@@ -381,8 +381,11 @@
   /* Позиционирует скользящий индикатор под активной кнопкой периода.
      skipAnim=true — мгновенно (первый рендер экрана), иначе — с transition
      (клик по другому периоду на уже отрисованной панели). */
-  function positionHzIndicator(skipAnim) {
-    var bar = el('segbar'), ind = el('segbarInd');
+  /* Общий механизм скользящего индикатора для любой .segbar-капсулы:
+     сначала использовался только для периодов Гороскопа, теперь и для
+     вкладок категорий в быстрой Совместимости (см. positionMcIndicator). */
+  function positionSegIndicator(barId, indId, skipAnim) {
+    var bar = el(barId), ind = el(indId);
     if (!bar || !ind) { return; }
     var btn = bar.querySelector('.segbar__b.on');
     if (!btn) { return; }
@@ -394,6 +397,7 @@
       ind.style.transition = '';
     }
   }
+  function positionHzIndicator(skipAnim) { positionSegIndicator('segbar', 'segbarInd', skipAnim); }
 
   /* --- ИИ-озвучка карточек гороскопа ---------------------------------------
      Композиционный текст (transitText) рендерится сразу и служит фолбэком.
@@ -454,6 +458,221 @@
         applyHzSections(data.sections, mySeq);
       })
       .catch(function () {});
+  }
+
+  /* --- совместимость: быстрый выбор знаков ---------------------------------
+     Дополняет точный синастрический расчёт ниже (полные данные рождения),
+     а не заменяет его: выбираешь два знака Солнца тайлами — как в референсе
+     Astroscope — и сразу получаешь ощутимый результат по 7 категориям с
+     собственной шкалой и вкладками (тот же .segbar/индикатор, что у периодов
+     Гороскопа, через общий positionSegIndicator). Композиционный фолбэк
+     (mcFallback) держится на паре таблиц «стихия+стихия» и «качество
+     совпадает/нет» —10+2 комбинации вместо 144 готовых текстов на каждую
+     пару знаков. Тот же ИИ-воркер (AI_URL), что озвучивает Гороскопа, умеет
+     и режим type:'compat' — если он ответит вовремя, подменяем счёт/текст
+     точечно (mcApplyCategories), как applyHzSections делает для Гороскопа;
+     если нет — молча остаемся на композиционном тексте. */
+  var ZODIAC_GLYPHS = ['\u2648', '\u2649', '\u264A', '\u264B', '\u264C', '\u264D',
+                       '\u264E', '\u264F', '\u2650', '\u2651', '\u2652', '\u2653'];
+  var SIGN_ELEMENT = ['fire', 'earth', 'air', 'water', 'fire', 'earth', 'air', 'water',
+                       'fire', 'earth', 'air', 'water'];
+  var SIGN_MODE = ['cardinal', 'fixed', 'mutable', 'cardinal', 'fixed', 'mutable',
+                    'cardinal', 'fixed', 'mutable', 'cardinal', 'fixed', 'mutable'];
+  var MC_ELEMENT_BASE = {
+    'air-air': 70, 'air-earth': 42, 'air-fire': 82, 'air-water': 48,
+    'earth-earth': 75, 'earth-fire': 45, 'earth-water': 80,
+    'fire-fire': 78, 'fire-water': 40,
+    'water-water': 74
+  };
+  var MC_CATEGORY_DELTA = {
+    general:       { base: 0,  elBonus: 0,  modeBonus: 0 },
+    love:          { base: 2,  elBonus: 4,  modeBonus: -2 },
+    intimacy:      { base: -3, elBonus: 6,  modeBonus: 0 },
+    trust:         { base: 0,  elBonus: 2,  modeBonus: 6 },
+    communication: { base: 3,  elBonus: 0,  modeBonus: 4 },
+    work:          { base: -2, elBonus: -3, modeBonus: 8 },
+    friendship:    { base: 5,  elBonus: 3,  modeBonus: 2 }
+  };
+  var MC_CATEGORIES = [
+    { key: 'general', icon: '\u{1F52E}' },
+    { key: 'love', icon: '\u2764\uFE0F' },
+    { key: 'intimacy', icon: '\u{1F525}' },
+    { key: 'trust', icon: '\u{1F91D}' },
+    { key: 'communication', icon: '\u{1F4AC}' },
+    { key: 'work', icon: '\u{1F4BC}' },
+    { key: 'friendship', icon: '\u{1F31F}' }
+  ];
+
+  function mcPairKey(elA, elB) {
+    var arr = [elA, elB].sort();
+    return arr[0] + '-' + arr[1];
+  }
+  function mcScore(iA, iB, catKey) {
+    var elA = SIGN_ELEMENT[iA], elB = SIGN_ELEMENT[iB];
+    var sameMode = SIGN_MODE[iA] === SIGN_MODE[iB];
+    var base = MC_ELEMENT_BASE[mcPairKey(elA, elB)];
+    var adj = MC_CATEGORY_DELTA[catKey] || MC_CATEGORY_DELTA.general;
+    var score = base + adj.base +
+      (elA === elB ? adj.elBonus : Math.round(adj.elBonus / 2)) +
+      (sameMode ? adj.modeBonus : -Math.round(adj.modeBonus / 2));
+    /* небольшая детерминированная вариация — иначе все категории для одной
+      пары знаков получили бы один и тот же процент */
+    var seed = (iA * 31 + iB * 17 + catKey.length * 7) % 9;
+    score += seed - 4;
+    return Math.max(5, Math.min(96, Math.round(score)));
+  }
+  function mcFallbackText(iA, iB) {
+    var elA = SIGN_ELEMENT[iA], elB = SIGN_ELEMENT[iB];
+    var sameMode = SIGN_MODE[iA] === SIGN_MODE[iB];
+    var elText = T.mcElementText[mcPairKey(elA, elB)] || '';
+    var modeText = T.mcModeText[sameMode ? 'same' : 'diff'];
+    return elText + ' ' + modeText;
+  }
+  function mcFallback(iA, iB) {
+    var text = mcFallbackText(iA, iB);
+    var out = {};
+    MC_CATEGORIES.forEach(function (c) {
+      out[c.key] = { score: mcScore(iA, iB, c.key), text: text, ai: false };
+    });
+    return out;
+  }
+
+  var mcSignA = null, mcSignB = null, mcCat = 'general';
+  var mcCategories = null, mcCategoriesKey = null, mcAiSeq = 0;
+
+  function mcEnsureCategories() {
+    if (mcSignA == null || mcSignB == null) { mcCategories = null; mcCategoriesKey = null; return; }
+    var key = Math.min(mcSignA, mcSignB) + '-' + Math.max(mcSignA, mcSignB);
+    if (key !== mcCategoriesKey) {
+      mcCategories = mcFallback(mcSignA, mcSignB);
+      mcCategoriesKey = key;
+      mcAiSeq++; /* новая пара — предыдущий ИИ-запрос (если летит) больше не актуален */
+    }
+  }
+
+  function mcGridHtml(which, selected) {
+    return ZODIAC_GLYPHS.map(function (g, i) {
+      return '<button type="button" class="signtile' + (selected === i ? ' on' : '') +
+        '" data-which="' + which + '" data-sign="' + i + '">' +
+        '<span class="signtile__g">' + g + '</span>' +
+        '<span class="signtile__n">' + T.signs[i] + '</span></button>';
+    }).join('');
+  }
+
+  function mcCardBodyHtml() {
+    var c = mcCategories && mcCategories[mcCat];
+    if (!c) { return ''; }
+    return '<div class="score"><div class="score__n">' + c.score + '%</div>' +
+      '<div class="score__b"><i style="width:' + c.score + '%"></i></div></div>' +
+      '<p class="p mccard__text">' + c.text +
+      (c.ai ? ' <span class="mc-ai-tag">AI</span>' : '') + '</p>';
+  }
+
+  function mcResultHtml() {
+    if (mcSignA == null || mcSignB == null) {
+      return '<p class="empty">' + T.ui.mcChoose + '</p>';
+    }
+    var tabs = MC_CATEGORIES.map(function (c) {
+      var cat = mcCategories && mcCategories[c.key];
+      return '<button class="segbar__b' + (mcCat === c.key ? ' on' : '') +
+        (cat && cat.ai ? ' mc-ai' : '') + '" data-cat="' + c.key + '">' +
+        '<span class="segbar__t">' + c.icon + ' ' +
+        T.ui['mc' + c.key.charAt(0).toUpperCase() + c.key.slice(1)] + '</span></button>';
+    }).join('');
+    return '<div class="mchero"><div class="mchero__signs">' +
+      '<span class="mchero__s">' + ZODIAC_GLYPHS[mcSignA] + ' ' + T.signs[mcSignA] + '</span>' +
+      '<span class="mchero__x">\u00D7</span>' +
+      '<span class="mchero__s">' + ZODIAC_GLYPHS[mcSignB] + ' ' + T.signs[mcSignB] + '</span>' +
+      '</div></div>' +
+      '<div class="segbar mcsegbar" id="mcSegbar"><span class="segbar__ind" id="mcSegbarInd"></span>' +
+      tabs + '</div>' +
+      '<div class="mccard" id="mcCardBody">' + mcCardBodyHtml() + '</div>';
+  }
+
+  function positionMcIndicator(skipAnim) { positionSegIndicator('mcSegbar', 'mcSegbarInd', skipAnim); }
+
+  function mcApplyCategories(categories, mySeq) {
+    if (mySeq !== mcAiSeq || !mcCategories) { return; } /* пара знаков уже сменилась */
+    MC_CATEGORIES.forEach(function (c) {
+      var incoming = categories[c.key];
+      if (!incoming || typeof incoming.score !== 'number' || !incoming.text) { return; }
+      mcCategories[c.key] = { score: incoming.score, text: incoming.text, ai: true };
+    });
+    var result = el('mcResult');
+    if (!result) { return; }
+    var body = el('mcCardBody');
+    if (body) { body.innerHTML = mcCardBodyHtml(); }
+    Array.prototype.slice.call(result.querySelectorAll('.segbar__b[data-cat]')).forEach(function (b) {
+      var cat = mcCategories[b.getAttribute('data-cat')];
+      b.classList.toggle('mc-ai', !!(cat && cat.ai));
+    });
+  }
+
+  function mcAiEnhance() {
+    if (mcSignA == null || mcSignB == null || !AI_URL || AI_URL.indexOf('REPLACE_ME') >= 0) { return; }
+    var lang = window.APP_LANG || 'en';
+    var lo = Math.min(mcSignA, mcSignB), hi = Math.max(mcSignA, mcSignB);
+    var cacheKey = 'mcai:' + lang + ':' + lo + '-' + hi;
+    var mySeq = mcAiSeq;
+    try {
+      var cached = localStorage.getItem(cacheKey);
+      if (cached) { mcApplyCategories(JSON.parse(cached), mySeq); return; }
+    } catch (e) {}
+
+    fetch(AI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'compat', lang: lang, signA: T.signs[mcSignA], signB: T.signs[mcSignB] })
+    }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.categories) { return; }
+        try { localStorage.setItem(cacheKey, JSON.stringify(data.categories)); } catch (e) {}
+        mcApplyCategories(data.categories, mySeq);
+      })
+      .catch(function () {});
+  }
+
+  /* Тайлы знаков не пересоздаются при каждом клике (меняется только класс
+     .on), ощутомучики вешаются один раз — в отличие от вкладок
+     категорий (bindMcTabs), чьй контейнер #mcResult пересобирается целиком
+     при каждой смене пары знаков и должен перепривязываться заново. */
+  function bindMcGrid(which) {
+    var grid = el('mcGrid' + which);
+    if (!grid) { return; }
+    Array.prototype.slice.call(grid.querySelectorAll('.signtile')).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = +btn.getAttribute('data-sign');
+        if (which === 'A') { mcSignA = idx; } else { mcSignB = idx; }
+        Array.prototype.slice.call(grid.querySelectorAll('.signtile')).forEach(function (x) {
+          x.classList.toggle('on', x === btn);
+        });
+        mcEnsureCategories();
+        var result = el('mcResult');
+        if (result) {
+          result.innerHTML = mcResultHtml();
+          positionMcIndicator(true);
+          bindMcTabs();
+        }
+        mcAiEnhance();
+      });
+    });
+  }
+
+  function bindMcTabs() {
+    var result = el('mcResult');
+    if (!result) { return; }
+    Array.prototype.slice.call(result.querySelectorAll('.segbar__b[data-cat]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (b.classList.contains('on')) { return; }
+        mcCat = b.getAttribute('data-cat');
+        Array.prototype.slice.call(result.querySelectorAll('.segbar__b[data-cat]')).forEach(function (x) {
+          x.classList.toggle('on', x === b);
+        });
+        positionMcIndicator(false);
+        var body = el('mcCardBody');
+        if (body) { body.innerHTML = mcCardBodyHtml(); }
+      });
+    });
   }
 
   views.horoscope = function () {
@@ -520,13 +739,33 @@
   };
 
   views.match = function () {
+    /* Быстрый выбор по знакам не требует данных рождения — доступен всегда.
+       Если натальные карты уже посчитаны, подставляем реальные знаки Солнца
+       по умолчанию, чтобы блок не выглядел пустым при первом заходе. */
+    if (mcSignA == null && natal && natal.byName && natal.byName.Sun) {
+      mcSignA = natal.byName.Sun.sign.index;
+    }
+    if (mcSignB == null && partnerChart && partnerChart.byName && partnerChart.byName.Sun) {
+      mcSignB = partnerChart.byName.Sun.sign.index;
+    }
+    mcEnsureCategories();
+    var quick = cardWide(T.ui.mcTitle,
+      '<p class="p mcnote">' + T.ui.mcNote + '</p>' +
+      '<div class="mcpick">' +
+        '<div class="mcpick__col"><div class="mcpick__l">' + T.ui.mcPickA + '</div>' +
+          '<div class="signgrid" id="mcGridA">' + mcGridHtml('A', mcSignA) + '</div></div>' +
+        '<div class="mcpick__col"><div class="mcpick__l">' + T.ui.mcPickB + '</div>' +
+          '<div class="signgrid" id="mcGridB">' + mcGridHtml('B', mcSignB) + '</div></div>' +
+      '</div>' +
+      '<div id="mcResult">' + mcResultHtml() + '</div>');
+
     if (!natal) {
-      return needProfile('needTextMatch') +
+      return quick + needProfile('needTextMatch') +
         card(T.ui.matchIntro, '<p class="p">' + T.ui.matchIntroText + '</p>');
     }
     var form = personForm('partner', S.partner);
     if (!partnerChart) {
-      return card(T.ui.partnerTitle,
+      return quick + card(T.ui.partnerTitle,
           '<p class="p">' + T.ui.needTextMatch.replace(/^[^.]*\.\s*/, '') + '</p>' + form) +
         card(T.ui.matchIntro, '<p class="p">' + T.ui.matchIntroText + '</p>');
     }
@@ -541,7 +780,7 @@
       return [pName(p.name), signName(p.sign), fmtDeg(p.sign.degree)];
     });
 
-    return card(T.ui.index,
+    return quick + card(T.ui.index,
         '<div class="score"><div class="score__n">' + syn.score + '%</div>' +
         '<div class="score__b"><i style="width:' + syn.score + '%"></i></div></div>',
         T.ui.indexNote) +
@@ -704,6 +943,7 @@
     void view.offsetWidth;
     view.classList.add('fade-in');
     if (h === 'horoscope') { positionHzIndicator(true); hzAiEnhance(hzPeriod); }
+    if (h === 'match') { positionMcIndicator(true); if (mcSignA != null && mcSignB != null) { mcAiEnhance(); } }
     window.scrollTo(0, 0);
     bind();
   }
@@ -745,6 +985,10 @@
       });
     });
     bindHzRows();
+
+    bindMcGrid('A');
+    bindMcGrid('B');
+    bindMcTabs();
 
     Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {
       b.addEventListener('click', function () {
@@ -816,6 +1060,7 @@
      .segbar не пересоздаётся при resize, но её кнопки могут менять размер. */
   window.addEventListener('resize', function () {
     if (location.hash === '#horoscope') { positionHzIndicator(true); }
+    if (location.hash === '#match') { positionMcIndicator(true); }
   });
 
   window.addEventListener('hashchange', route);
