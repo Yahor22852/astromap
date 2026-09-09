@@ -309,6 +309,7 @@
     { key: 'luck', icon: '🍀' }
   ];
   var hzPeriod = 'today';
+  var chartSel = null;
 
   function hzPeriodData(key) {
     var p = HZ_PERIODS.filter(function (x) { return x.key === key; })[0] || HZ_PERIODS[0];
@@ -694,21 +695,61 @@
       '<div class="hz card--wide" id="hzBody">' + hzContentHtml() + '</div>';
   };
 
-  views.chart = function () {
-    if (!natal) { return needProfile('needText') + skyNow(); }
-    var pts = natal.points.concat(natal.asc ? [natal.asc, natal.mc] : []);
+  /* --- вкладка Chart: интерактивное колесо -------------------------------
+     Один источник состояния (chartSel — имя выбранной точки: планета,
+     Node, ASC или MC) -> колесо, чипы-легенда, обе таблицы и карточка
+     интерпретации перерисовываются из него, тем же приёмом, что уже
+     используют #hzBody (периоды Гороскопа) и #moonBody (календарь Луны):
+     клик меняет только chartSel и перерисовывает #chartBody, без полного
+     route() и без сброса скролла/шапки. */
+  function chartPts() {
+    return natal.points.concat(natal.asc ? [natal.asc, natal.mc] : []);
+  }
+  function chartFind(pts, name) {
+    var out = null;
+    pts.forEach(function (p) { if (p.name === name) { out = p; } });
+    return out;
+  }
+
+  function chartChipsHtml(pts) {
+    return '<div class="chartchips">' + pts.map(function (p) {
+      return '<button type="button" class="chip' + (p.name === chartSel ? ' on' : '') +
+        '" data-point="' + p.name + '">' + pName(p.name) + ' ' +
+        ZODIAC_GLYPHS[p.sign.index] + '</button>';
+    }).join('') + '</div>';
+  }
+
+  function chartPositionsHtml(pts) {
     var rows = pts.map(function (p) {
-      return [pName(p.name), signName(p.sign), fmtDeg(p.sign.degree),
-              p.house || '\u2014',
-              p.speed ? p.speed.toFixed(3) : '\u2014',
-              p.retro ? '<span class="tag tag--hard">R</span>' : ''];
-    });
-    var asp = E.chartAspects(natal).slice(0, 16).map(function (x) {
-      return [pName(x.a), T.aspects[x.data.aspect], pName(x.b),
-              fmtDeg(x.data.orb), toneTag(x.data.tone)];
-    });
+      return '<tr class="rowpt' + (p.name === chartSel ? ' rowpt--sel' : '') +
+        '" data-point="' + p.name + '">' +
+        '<td>' + pName(p.name) + '</td><td>' + signName(p.sign) + '</td><td>' +
+        fmtDeg(p.sign.degree) + '</td><td>' + (p.house || '—') + '</td><td>' +
+        (p.speed ? p.speed.toFixed(3) : '—') + '</td><td>' +
+        (p.retro ? '<span class="tag tag--hard">R</span>' : '') + '</td></tr>';
+    }).join('');
+    return '<div class="tw"><table><thead><tr><th>' + T.ui.point + '</th><th>' +
+      T.ui.sign + '</th><th>' + T.ui.deg + '</th><th>' + T.ui.house + '</th><th>' +
+      T.ui.motion + '</th><th>' + T.ui.retroCol + '</th></tr></thead><tbody>' +
+      rows + '</tbody></table></div>';
+  }
+
+  function chartAspectsHtml() {
+    var rows = E.chartAspects(natal).slice(0, 16).map(function (x) {
+      return '<tr class="rowpt' + (x.a === chartSel ? ' rowpt--sel' : '') +
+        '" data-point="' + x.a + '">' +
+        '<td>' + pName(x.a) + '</td><td>' + T.aspects[x.data.aspect] + '</td><td>' +
+        pName(x.b) + '</td><td>' + fmtDeg(x.data.orb) + '</td><td>' +
+        toneTag(x.data.tone) + '</td></tr>';
+    }).join('');
+    return '<div class="tw"><table><thead><tr><th>A</th><th>' + T.ui.aspects +
+      '</th><th>B</th><th>' + T.ui.orb + '</th><th>' + T.ui.tone +
+      '</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  function chartBalanceHtml() {
     var b = natal.balance;
-    var bal = '<div class="cols2">' +
+    return '<div class="cols2">' +
       '<div><div class="card__t2">' + T.ui.elements + '</div>' +
         Object.keys(b.elements).map(function (k) {
           return '<div class="kv"><span>' + T.elements[k] + '</span><b>' +
@@ -719,24 +760,73 @@
           return '<div class="kv"><span>' + T.modes[k] + '</span><b>' +
             b.modes[k] + '</b></div>';
         }).join('') + '</div></div>';
+  }
 
-    var reads = ['Sun', 'Moon', 'Venus', 'Mars', 'Saturn'].map(function (k) {
-      var p = natal.byName[k];
-      if (!p) { return ''; }
-      var txt = T.planetElement[k] && T.planetElement[k][p.sign.element];
-      if (!txt) { return ''; }
-      return '<article class="tr"><div class="tr__h"><span class="tr__s"><b>' +
-        pName(k) + '</b> ' + signName(p.sign) + '</span></div><p class="tr__t">' +
-        txt + '</p></article>';
-    }).join('');
+  /* Карточка выбранной точки: T.nPoint покрывает все точки, включая ASC/MC;
+     T.planetElement — только 10 планет + Node (глубже про стихию знака),
+     для ASC/MC добавки просто нет — показываем один общий смысл точки. */
+  function chartDetailHtml(pts) {
+    var p = chartFind(pts, chartSel);
+    if (!p) { return ''; }
+    var txt = T.nPoint[p.name] || '';
+    var extra = T.planetElement[p.name] && T.planetElement[p.name][p.sign.element];
+    return '<div class="ptcard">' +
+      '<div class="ptcard__head"><span class="ptcard__icon">' + ZODIAC_GLYPHS[p.sign.index] + '</span>' +
+      '<div><div class="ptcard__title">' + pName(p.name) + '</div>' +
+      '<div class="ptcard__sub">' + signName(p.sign) + ' ' + fmtDeg(p.sign.degree) +
+      (p.retro ? ' · R' : '') + '</div></div></div>' +
+      '<p class="ptcard__text">' + txt + (extra ? ' ' + extra : '') + '</p>' +
+      '</div>';
+  }
 
-    return '<div class="wheelbox">' + W.render(natal, 520) + '</div>' +
+  function chartBodyHtml() {
+    var pts = chartPts();
+    if (!chartSel || !chartFind(pts, chartSel)) { chartSel = pts[0].name; }
+    return '<div class="wheelbox">' + W.render(natal, 620, chartSel) +
+        chartChipsHtml(pts) + '</div>' +
       (natal.asc ? '' : card(null, '<p class="empty">' + T.ui.timeMissing + '</p>')) +
-      card(T.ui.positions, table([T.ui.point, T.ui.sign, T.ui.deg, T.ui.house,
-                                  T.ui.motion, T.ui.retroCol], rows)) +
-      card(T.ui.balance, bal) +
-      card(null, reads) +
-      card(T.ui.aspects, table(['A', T.ui.aspects, 'B', T.ui.orb, T.ui.tone], asp));
+      card(null, chartDetailHtml(pts)) +
+      card(T.ui.positions, chartPositionsHtml(pts)) +
+      card(T.ui.balance, chartBalanceHtml()) +
+      card(T.ui.aspects, chartAspectsHtml());
+  }
+
+  function rerenderChart() {
+    var body = el('chartBody');
+    if (!body) { return; }
+    body.innerHTML = chartBodyHtml();
+    body.classList.remove('fade-in');
+    void body.offsetWidth;
+    body.classList.add('fade-in');
+    bindChart();
+  }
+
+  function bindChart() {
+    var body = el('chartBody');
+    if (!body) { return; }
+    function select(name) {
+      if (!name || name === chartSel) { return; }
+      chartSel = name;
+      rerenderChart();
+    }
+    Array.prototype.slice.call(body.querySelectorAll('[data-point]')).forEach(function (node) {
+      node.addEventListener('click', function () { select(node.getAttribute('data-point')); });
+    });
+    /* <g role="button"> в SVG не активируется Enter/Space нативно, как это
+       делает <button> (чипы) — добавляем клавиатурную активацию вручную. */
+    Array.prototype.slice.call(body.querySelectorAll('.w-pt')).forEach(function (grp) {
+      grp.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
+          ev.preventDefault();
+          select(grp.getAttribute('data-point'));
+        }
+      });
+    });
+  }
+
+  views.chart = function () {
+    if (!natal) { return needProfile('needText') + skyNow(); }
+    return '<div class="chartbody" id="chartBody">' + chartBodyHtml() + '</div>';
   };
 
   views.match = function () {
@@ -1116,6 +1206,7 @@
     bindMcGrid('B');
     bindMcTabs();
     bindMoonBody();
+    bindChart();
 
     Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {
       b.addEventListener('click', function () {

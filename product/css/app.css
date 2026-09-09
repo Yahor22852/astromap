@@ -111,6 +111,8 @@ h1 {
   .main { padding: 92px 16px 56px; }
   h1 { font-size: 32px; }
   .view { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .wheelbox { padding: 16px; }
+  .ptcard { padding: 18px; }
 }
 
 /* --- карточки ------------------------------------------------------------- */
@@ -408,21 +410,76 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 .wheelbox {
   grid-column: 1 / -1;
   background: var(--surf); border: 1px solid var(--line);
-  border-radius: var(--r-card); padding: 18px;
-  display: flex; justify-content: center;
+  border-radius: var(--r-card); padding: 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
 }
-.wheel { width: 100%; max-width: 520px; height: auto; }
+.wheel { width: 100%; max-width: 640px; height: auto; }
 .w-ring { fill: none; stroke: rgba(255,255,255,.16); stroke-width: 1.2; }
 .w-ring--thin { stroke: rgba(255,255,255,.09); }
 .w-spoke { stroke: rgba(255,255,255,.12); stroke-width: 1; }
 .w-tick { stroke: rgba(255,255,255,.14); stroke-width: 1; }
 .w-sign { fill: var(--ink-faint); font-family: var(--sans); font-size: 13px; text-anchor: middle; }
-.w-asp { stroke-width: 1.1; }
-.w-stem { stroke: rgba(255,255,255,.14); stroke-width: 1; }
-.w-dot { fill: var(--surf-sel); stroke: var(--accent); stroke-width: 1.2; }
+.w-asp { stroke-width: 1.1; transition: stroke-width .2s ease, opacity .2s ease; }
+.w-asp--sel { stroke-width: 2.6; opacity: .95; }
+.w-asp--dim { opacity: .1; }
+.w-stem { stroke: rgba(255,255,255,.14); stroke-width: 1; transition: stroke .2s ease, stroke-width .2s ease; }
+.w-dot { fill: var(--surf-sel); stroke: var(--accent); stroke-width: 1.2;
+  transition: r .2s ease, stroke-width .2s ease, fill .2s ease; }
 .w-dot--r { stroke: var(--hard); }
-.w-code { fill: var(--ink); font-family: var(--sans); font-size: 13px; font-weight: 600; text-anchor: middle; }
+.w-code { fill: var(--ink); font-family: var(--sans); font-size: 13px; font-weight: 600; text-anchor: middle;
+  transition: font-size .2s ease; }
 .w-axis { stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 4 4; opacity: .7; }
+
+/* --- интерактивные точки колеса (вкладка Chart) ---------------------------
+   .w-pt — обёртка <g> вокруг стебля/точки/кода одной планеты или ASC/MC,
+   кликабельная и фокусируемая (tabindex, role="button" — см. wheel.js).
+   Наведение/фокус подсвечивают через drop-shadow: outline на SVG <g>
+   ведёт себя непредсказуемо в разных браузерах, а filter — надёжно
+   и не требует лишней геометрии. --sel/--dim подставляет сам wheel.js,
+   зная выбранную точку уже на этапе генерации разметки. */
+.w-pt { cursor: pointer; }
+.w-pt:hover, .w-pt:focus-visible { outline: none; filter: drop-shadow(0 0 7px var(--accent)); }
+.w-pt:hover .w-code, .w-pt:focus-visible .w-code { fill: var(--accent); }
+.w-pt--sel .w-dot { r: 17px; stroke-width: 2.2; fill: var(--accent); }
+.w-pt--sel .w-stem { stroke: var(--accent); stroke-width: 1.8; }
+.w-pt--sel .w-code { font-size: 14px; fill: var(--surf); font-weight: 700; }
+.w-pt--dim { opacity: .38; transition: opacity .2s ease; }
+.w-pt--dim:hover, .w-pt--dim:focus-visible { opacity: .85; }
+
+/* --- чипы-легенда планет внутри .wheelbox ---------------------------------
+   Переиспользуют .chip/.chip.on (те же пилюли, что у Гороскопа и быстрого
+   выбора знаков), но в обёртке с переносом строк: 13 точек (10 планет +
+   Node + ASC + MC) не помещаются в одну строку ни на одном развороте. */
+.chartchips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 640px; }
+.chartchips .chip { margin-left: 0; }
+
+/* --- карточка выбранной точки ---------------------------------------------
+   Реагирует на chartSel (клик по чипу/точке колеса/строке таблицы) —
+   то же визуальное решение, что .mp-sign на странице Луны (рамка-градиент
+   + иконка-знак), но без завязки на узкую центрированную колонку: здесь
+   карточка живёт в обычном двухколоночном гриде .view (card--wide). */
+.ptcard {
+  padding: 22px 24px; border-radius: 20px; border: 1px solid rgba(155,138,248,.28);
+  background: linear-gradient(160deg, rgba(155,138,248,.12), rgba(20,15,38,.4));
+}
+.ptcard__head { display: flex; align-items: center; gap: 14px; }
+.ptcard__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; border-radius: 12px; flex: 0 0 auto;
+  font-size: 21px; color: var(--ink); background: rgba(255,255,255,.06);
+}
+.ptcard__title { font-family: var(--serif); font-size: 22px; font-weight: 700; color: var(--ink); }
+.ptcard__sub { font-size: 13px; color: var(--ink-faint); margin-top: 2px; }
+.ptcard__text { margin-top: 14px; font-size: 15px; line-height: 1.6; color: var(--ink-dim); }
+
+/* --- кликабельные строки таблиц (Positions/Aspects) ------------------------
+   Тот же chartSel: строка своей планеты подсвечивается, клик по любой
+   строке выбирает эту точку — не только колесо и чипы реагируют на выбор,
+   но и уже существующие таблицы становятся частью интерактива без
+   лишней новой разметки. */
+.rowpt { cursor: pointer; transition: background .16s ease; }
+.rowpt:hover { background: rgba(255,255,255,.045); }
+.rowpt--sel { background: var(--nav-on); }
 
 .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .disc {
