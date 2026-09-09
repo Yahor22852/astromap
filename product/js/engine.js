@@ -230,16 +230,29 @@
     var stepMs = opts.stepHours ? opts.stepHours * 3600000 : 6 * 3600000;
     var events = [];
 
+    /* lon(b, ms) зависит только от тела и момента времени, а не от того,
+       с какой натальной точкой или аспектом мы его сейчас сравниваем —
+       раньше оно пересчитывалось заново на каждую пару (target, aspect),
+       то есть по ~targets.length*ASPECTS.length (обычно 50-65) раз больше,
+       чем нужно. На полгода/год это давало по 1-2 секунды синхронного
+       счёта на эфемеридах и подвисание вкладки. Считаем путь тела один раз
+       и переиспользуем для всех целей/аспектов. */
     bodies.forEach(function (b) {
+      var times = [], lons = [];
+      for (var ms = from.getTime(); ms <= to.getTime(); ms += stepMs) {
+        var d = new Date(ms);
+        times.push(d);
+        lons.push((b === 'Node') ? meanNode(d) : eclipticLon(b, d));
+      }
+
       targets.forEach(function (t) {
         ASPECTS.forEach(function (asp) {
           var prev = null, prevT = null;
-          for (var ms = from.getTime(); ms <= to.getTime(); ms += stepMs) {
-            var d = new Date(ms);
-            var lon = (b === 'Node') ? meanNode(d) : eclipticLon(b, d);
+          for (var i = 0; i < times.length; i++) {
+            var d2 = times[i], lon = lons[i];
             var diff = separation(lon, t.lon) - asp.angle;
             if (prev !== null && ((prev < 0 && diff >= 0) || (prev > 0 && diff <= 0))) {
-              var exact = refine(b, t.lon, asp.angle, prevT, d);
+              var exact = refine(b, t.lon, asp.angle, prevT, d2);
               events.push({
                 transit: b, natal: t.name, aspect: asp.key, tone: asp.tone,
                 exactAt: exact,
@@ -247,7 +260,7 @@
                 slow: !FAST[b]
               });
             }
-            prev = diff; prevT = d;
+            prev = diff; prevT = d2;
           }
         });
       });

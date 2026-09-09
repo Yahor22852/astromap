@@ -565,6 +565,13 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   background: var(--surf); border: 1px solid var(--line); border-radius: 12px;
   box-shadow: 0 18px 40px -18px rgba(0,0,0,.6);
 }
+/* .langmenu{display:flex} выше — авторский стиль и по правилам каскада
+   перебивает стандартное [hidden]{display:none} браузера (у них одинаковая
+   специфичность, но авторские стили всегда важнее User-Agent). Из-за этого
+   JS-переключение menu.hidden=true никак не пряталo меню визуально — окно
+   оставалось открытым после выбора языка. Проговариваем это правило явно,
+   как уже сделано для .mnav[hidden] ниже. */
+.langmenu[hidden] { display: none; }
 .langmenu__item {
   padding: 9px 12px; border: 0; border-radius: 8px; background: transparent;
   color: var(--ink-dim); font-family: var(--sans); font-size: 14px;
