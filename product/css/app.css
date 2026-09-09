@@ -394,6 +394,54 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 }
 .f select { font-family: var(--sans); font-size: 17px; }
 .f input:focus, .f select:focus { outline: none; border-bottom-color: var(--accent); }
+
+/* --- поиск города (профиль/партнёр) ---------------------------------------
+   .citypick заменяет обычный <select> городов: текстовый инпут фильтрует
+   CITIES_ALL по мере ввода (см. citySearch в app.js), выпадающий список —
+   обычный позиционированный блок под полем. Ручной ввод («не нашёл свой
+   город» — только смещение UTC, без DST, потому что для незнакомого места
+   правило перехода на летнее время не угадать) прячется за отдельной
+   кнопкой, чтобы не загромождать обычный путь выбора. */
+.citypick { position: relative; }
+.citypick__menu {
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 5;
+  margin-top: 4px; max-height: 260px; overflow-y: auto;
+  background: var(--surf-2, var(--surf)); border: 1px solid var(--line);
+  border-radius: 12px; box-shadow: 0 18px 40px -18px rgba(0,0,0,.6);
+}
+.citypick__opt {
+  padding: 10px 14px; font-family: var(--sans); font-size: 15px;
+  color: var(--ink-dim); cursor: pointer;
+}
+.citypick__opt.on, .citypick__opt:hover { background: var(--nav-on); color: var(--ink); }
+.citypick__empty { padding: 10px 14px; font-size: 14px; color: var(--ink-faint); }
+.citypick__manualtoggle {
+  margin-top: 8px; padding: 0; border: 0; background: transparent;
+  color: var(--ink-faint); font-family: var(--sans); font-size: 12px;
+  text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+}
+.citypick__manualtoggle:hover { color: var(--accent); }
+.citypick__manualbox {
+  margin-top: 10px; padding: 14px; border: 1px solid var(--line);
+  border-radius: 12px; display: grid; gap: 10px;
+}
+.citypick__manualname {
+  width: 100%; height: 40px; padding: 0 10px; box-sizing: border-box;
+  background: transparent; color: var(--ink); border: 1px solid rgba(255,255,255,.16);
+  border-radius: 8px; font-family: var(--sans); font-size: 15px;
+}
+.citypick__manualoffset {
+  width: 100%; height: 40px; padding: 0 10px; box-sizing: border-box;
+  background: var(--surf); color: var(--ink); border: 1px solid rgba(255,255,255,.16);
+  border-radius: 8px; font-family: var(--sans); font-size: 14px;
+}
+.citypick__manualapply {
+  height: 38px; padding: 0 16px; border: 1px solid var(--accent); border-radius: 8px;
+  background: transparent; color: var(--accent); font-family: var(--sans);
+  font-size: 13px; font-weight: 600; cursor: pointer; justify-self: start;
+  transition: background .18s ease, color .18s ease;
+}
+.citypick__manualapply:hover { background: var(--accent); color: var(--on-accent); }
 .btn {
   width: 100%; height: var(--h-btn); border: 0; border-radius: var(--r-btn);
   background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
@@ -493,7 +541,10 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 /* --- переключатель языка --------------------------------------------------
    Раньше стоял в подвале сайдбара (margin-top держал отступ от пунктов меню
    над ним). Теперь живёт внутри капсулы, в одну строку с пунктами меню. */
-.lang { display: flex; align-items: center; margin-left: 4px; padding-left: 10px; border-left: 1px solid var(--line-2); }
+.lang {
+  position: relative; display: flex; align-items: center;
+  margin-left: 4px; padding-left: 10px; border-left: 1px solid var(--line-2);
+}
 .lang__b {
   flex: 0 0 auto; padding: 7px 11px; border: 1px solid var(--line); border-radius: 999px;
   background: transparent; color: var(--ink-faint);
@@ -503,6 +554,25 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 .lang__b + .lang__b { margin-left: 5px; }
 .lang__b.on { background: var(--nav-on); color: var(--ink); border-color: var(--accent); }
 .lang__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --- меню языков: кнопка с текущим кодом раскрывает список названий на
+   родном языке (см. #langMenu в app.html) — десяти языкам, в отличие от
+   прежних двух, уже не хватит места как рядным пилюлям. */
+.langmenu {
+  position: absolute; top: 100%; right: 0; margin-top: 8px; z-index: 20;
+  min-width: 168px; max-height: 320px; overflow-y: auto;
+  padding: 6px; display: flex; flex-direction: column; gap: 2px;
+  background: var(--surf); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 18px 40px -18px rgba(0,0,0,.6);
+}
+.langmenu__item {
+  padding: 9px 12px; border: 0; border-radius: 8px; background: transparent;
+  color: var(--ink-dim); font-family: var(--sans); font-size: 14px;
+  text-align: left; cursor: pointer;
+}
+.langmenu__item:hover { background: var(--nav-on); color: var(--ink); }
+.langmenu__item.on { color: var(--accent); font-weight: 600; }
+.langmenu__item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 /* --- кнопка-ссылка в заглушках -------------------------------------------- */
 .btn--link {

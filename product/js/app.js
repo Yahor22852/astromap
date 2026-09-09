@@ -10,10 +10,18 @@
   var E = window.Engine, N = window.Numerology, T = window.T, W = window.Wheel;
   var Moon = window.Moon;
   var A = window.Astronomy;
-  var CITIES = (window.APP_LANG === 'pl') ? window.CITIES.pl : window.CITIES.en;
+  var CITIES_ALL = window.CITIES_ALL, COUNTRY_NAMES = window.COUNTRY_NAMES;
   var TZ = window.TZ;
 
   var KEY = 'astromap.app';
+  /* Языки, где принят десятичная запятая вместо точки (все добавленные,
+     кроме английского) — используется в fmtDeg(). Локали Intl для дат
+     календаря Луны и заголовков (moonLocale()) — свои полные коды. */
+  var COMMA_DECIMAL = { pl: 1, ru: 1, uk: 1, de: 1, es: 1, fr: 1, it: 1, pt: 1, tr: 1 };
+  var LOCALE_MAP = {
+    en: 'en-US', pl: 'pl-PL', ru: 'ru-RU', uk: 'uk-UA', de: 'de-DE',
+    es: 'es-ES', fr: 'fr-FR', it: 'it-IT', pt: 'pt-BR', tr: 'tr-TR'
+  };
   var el = function (id) { return document.getElementById(id); };
   var esc = function (s) {
     return String(s).replace(/[&<>"]/g, function (c) {
@@ -62,11 +70,16 @@
 
   /* --- расчёт ------------------------------------------------------------- */
   function cityOf(p) {
-    /* Город хранится объектом, а не индексом: индекс зависел бы от языка,
-       и переключение EN/PL меняло бы место рождения. Старые записи с
-       cityIdx мигрируем на объект при первом чтении. */
-    if (p.city && typeof p.city.lat === 'number') { return p.city; }
-    var c = CITIES[p.cityIdx] || CITIES[0];
+    /* Город хранится объектом, а не индексом (значение переживает и смену
+       языка интерфейса, и переход на большую мировую базу CITIES_ALL).
+       lat/lon могут отсутствовать (null) — это ручной ввод «не нашёл свой
+       город»: считаем планеты по указанному смещению UTC, но не считаем
+       Асцендент/дома, для которых нужны реальные координаты (chart() в
+       engine.js уже сам пропускает angles(), когда lat не число). Совсем
+       старые записи с cityIdx (до перехода на встроенный объект) сослаться
+       им больше не на что — уходят на нейтральный UTC+0. */
+    if (p.city && typeof p.city.tz !== 'undefined') { return p.city; }
+    var c = { n: '', lat: null, lon: null, tz: 0, dst: '' };
     p.city = c; delete p.cityIdx; save();
     return c;
   }
@@ -171,7 +184,7 @@
   /* --- вспомогательная разметка ------------------------------------------- */
   function fmtDeg(x) {
     var t = x.toFixed(2);
-    return (window.APP_LANG === 'pl' ? t.replace('.', ',') : t) + '\u00B0';
+    return (COMMA_DECIMAL[window.APP_LANG] ? t.replace('.', ',') : t) + '\u00B0';
   }
   function fmtDate(d) {
     var dd = d.getDate(), mm = d.getMonth() + 1;
@@ -931,7 +944,7 @@
      смена месяца перерисовывают только #moonBody — без полного route()
      и без сброса скролла/шапки, тем же приёмом, что уже использует
      переключатель периодов Гороскопа (#hzBody). */
-  function moonLocale() { return window.APP_LANG === 'pl' ? 'pl-PL' : 'en-US'; }
+  function moonLocale() { return LOCALE_MAP[window.APP_LANG] || 'en-US'; }
 
   function moonWeekdayLabels() {
     var fmt = new Intl.DateTimeFormat(moonLocale(), { weekday: 'short' });
@@ -1086,16 +1099,81 @@
       card(T.ui.stationing, table([T.ui.point, T.ui.dateCol, T.ui.motion], soon));
   };
 
+  /* --- поиск города: один общий список на все языки интерфейса -----------
+     CITIES_ALL — плоские кортежи [name, countryCode, lat, lon, tz] (см.
+     cities.js), отсортированы по населению по убыванию, так что при поиске
+     самые крупные совпадения естественным образом идут первыми без
+     отдельной сортировки на каждый запрос. */
+  var CITY_NORM = null;
+  function cityNorm(s) {
+    return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  }
+  function cityBuildIndex() {
+    if (CITY_NORM) { return; }
+    CITY_NORM = CITIES_ALL.map(function (c) { return cityNorm(c[0]); });
+  }
+  /* c — либо кортеж CITIES_ALL, либо уже сохранённый объект профиля
+     {n, cc?, lat, lon, tz, dst?} — обеим формам нужна одна и та же подпись
+     «Город, Страна» и в списке подсказок, и в поле при повторном открытии
+     формы. */
+  function cityLabelOf(c) {
+    if (!c) { return ''; }
+    if (Array.isArray(c)) {
+      return c[0] + (c[1] ? ', ' + (COUNTRY_NAMES[c[1]] || c[1]) : '');
+    }
+    return (c.n || '') + (c.cc ? ', ' + (COUNTRY_NAMES[c.cc] || c.cc) : '');
+  }
+  function citySearch(q) {
+    cityBuildIndex();
+    var nq = cityNorm(q);
+    if (nq.length < 2) { return []; }
+    var pre = [], sub = [];
+    for (var i = 0; i < CITIES_ALL.length; i++) {
+      var at = CITY_NORM[i].indexOf(nq);
+      if (at === 0) {
+        pre.push(CITIES_ALL[i]);
+        if (pre.length >= 30) { break; }
+      } else if (at > 0 && sub.length < 30) {
+        sub.push(CITIES_ALL[i]);
+      }
+    }
+    return pre.concat(sub).slice(0, 30);
+  }
+  function cityOffsetOptions(sel) {
+    var out = [];
+    for (var h = -12; h <= 14; h += 0.5) {
+      var sign = h < 0 ? '−' : '+';
+      var ah = Math.abs(h), hh = Math.floor(ah), mm = Math.round((ah - hh) * 60);
+      var label = 'UTC' + sign + (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+      out.push('<option value="' + h + '"' + (h === sel ? ' selected' : '') + '>' + label + '</option>');
+    }
+    return out.join('');
+  }
+
   function personForm(kind, p) {
     p = p || {};
-    var cur = (p.city && p.city.n) || (CITIES[p.cityIdx] && CITIES[p.cityIdx].n) || '';
-    var known = CITIES.some(function (c) { return c.n === cur; });
-    var cityOpts = (known || !cur ? '' :
-        '<option value="-1" selected>' + esc(cur) + '</option>') +
-      CITIES.map(function (c, i) {
-        return '<option value="' + i + '"' +
-          (c.n === cur ? ' selected' : '') + '>' + esc(c.n) + '</option>';
-      }).join('');
+    var curCity = p.city || null;
+    var curLabel = cityLabelOf(curCity);
+    var manualPrefill = (curCity && (curCity.lat === null || curCity.lat === undefined)) ? (curCity.n || '') : '';
+    var manualOffsetSel = (curCity && typeof curCity.tz === 'number') ? curCity.tz : 0;
+    var cityField =
+      '<div class="f citypick">' +
+        '<span>' + T.ui.city + '</span>' +
+        '<input type="text" class="citypick__input" autocomplete="off" role="combobox" ' +
+          'aria-expanded="false" aria-autocomplete="list" aria-label="' + esc(T.ui.city) + '" ' +
+          'placeholder="' + esc(T.ui.cityPlaceholder) + '" value="' + esc(curLabel) + '">' +
+        '<input type="hidden" name="cityJson" value="' + esc(curCity ? JSON.stringify(curCity) : '') + '">' +
+        '<div class="citypick__menu" role="listbox" hidden></div>' +
+        '<button type="button" class="citypick__manualtoggle">' + T.ui.cityManual + '</button>' +
+        '<div class="citypick__manualbox" hidden>' +
+          '<input type="text" class="citypick__manualname" autocomplete="off" ' +
+            'placeholder="' + esc(T.ui.cityManualName) + '" aria-label="' + esc(T.ui.cityManualName) + '" ' +
+            'value="' + esc(manualPrefill) + '">' +
+          '<select class="citypick__manualoffset" aria-label="' + esc(T.ui.cityManualOffset) + '">' +
+            cityOffsetOptions(manualOffsetSel) + '</select>' +
+          '<button type="button" class="citypick__manualapply">' + T.ui.cityManualApply + '</button>' +
+        '</div>' +
+      '</div>';
     return '<form class="form" data-kind="' + kind + '">' +
       '<label class="f"><span>' + T.ui.partnerName + '</span>' +
         '<input name="name" value="' + esc(p.name || '') + '" autocomplete="off"></label>' +
@@ -1107,11 +1185,89 @@
         '<input name="time" type="time" value="' + (p.timeKnown ?
           ((p.h < 10 ? '0' : '') + p.h + ':' + (p.min < 10 ? '0' : '') + p.min) : '') +
         '"></label>' +
-      '<label class="f"><span>' + T.ui.city + '</span>' +
-        '<select name="city">' + cityOpts + '</select></label>' +
+      cityField +
       '<button class="btn" type="submit">' +
         (kind === 'partner' ? T.ui.partnerAdd : T.ui.save) + '</button>' +
       '</form>';
+  }
+
+  /* Клик/Enter по подсказке, ручной ввод смещения — всё меняет только
+     скрытое поле cityJson, которое читает обработчик submit ниже; сама
+     форма остаётся обычной, без отдельного состояния вроде chartSel. */
+  function bindCityPick() {
+    Array.prototype.slice.call(document.querySelectorAll('.citypick')).forEach(function (wrap) {
+      var input = wrap.querySelector('.citypick__input');
+      var hidden = wrap.querySelector('input[name="cityJson"]');
+      var menu = wrap.querySelector('.citypick__menu');
+      var manualToggle = wrap.querySelector('.citypick__manualtoggle');
+      var manualBox = wrap.querySelector('.citypick__manualbox');
+      var manualName = wrap.querySelector('.citypick__manualname');
+      var manualOffset = wrap.querySelector('.citypick__manualoffset');
+      var manualApply = wrap.querySelector('.citypick__manualapply');
+      var results = [], active = -1;
+
+      function closeMenu() {
+        menu.hidden = true; menu.innerHTML = '';
+        input.setAttribute('aria-expanded', 'false');
+        input.removeAttribute('aria-activedescendant');
+        active = -1;
+      }
+      function setActive(i) {
+        var opts = Array.prototype.slice.call(menu.querySelectorAll('.citypick__opt'));
+        opts.forEach(function (o, oi) { o.classList.toggle('on', oi === i); });
+        active = i;
+        if (opts[i]) { input.setAttribute('aria-activedescendant', opts[i].id); }
+      }
+      function selectResult(i) {
+        var c = results[i];
+        if (!c) { return; }
+        input.value = cityLabelOf(c);
+        hidden.value = JSON.stringify({ n: c[0], cc: c[1], lat: c[2], lon: c[3], tz: c[4] });
+        closeMenu();
+      }
+      function renderMenu() {
+        if (!results.length) {
+          menu.innerHTML = '<div class="citypick__empty">' + T.ui.cityNoMatch + '</div>';
+        } else {
+          menu.innerHTML = results.map(function (c, i) {
+            return '<div class="citypick__opt" role="option" id="cityopt-' + i + '" data-idx="' + i + '">' +
+              esc(cityLabelOf(c)) + '</div>';
+          }).join('');
+          Array.prototype.slice.call(menu.querySelectorAll('.citypick__opt')).forEach(function (opt) {
+            opt.addEventListener('mousedown', function (ev) {
+              ev.preventDefault(); /* не терять фокус раньше клика по подсказке */
+              selectResult(+opt.getAttribute('data-idx'));
+            });
+          });
+        }
+        menu.hidden = false;
+        input.setAttribute('aria-expanded', 'true');
+      }
+      input.addEventListener('input', function () {
+        hidden.value = '';
+        results = citySearch(input.value);
+        if (!results.length && cityNorm(input.value).length < 2) { closeMenu(); return; }
+        renderMenu();
+      });
+      input.addEventListener('keydown', function (ev) {
+        if (menu.hidden) { return; }
+        if (ev.key === 'ArrowDown') { ev.preventDefault(); setActive(Math.min(active + 1, results.length - 1)); }
+        else if (ev.key === 'ArrowUp') { ev.preventDefault(); setActive(Math.max(active - 1, 0)); }
+        else if (ev.key === 'Enter') { if (active >= 0) { ev.preventDefault(); selectResult(active); } }
+        else if (ev.key === 'Escape') { closeMenu(); }
+      });
+      input.addEventListener('blur', function () { setTimeout(closeMenu, 120); });
+
+      manualToggle.addEventListener('click', function () { manualBox.hidden = !manualBox.hidden; });
+      manualApply.addEventListener('click', function () {
+        var name = manualName.value.trim();
+        if (!name) { manualName.focus(); return; }
+        hidden.value = JSON.stringify({ n: name, lat: null, lon: null, tz: parseFloat(manualOffset.value), dst: '' });
+        input.value = name;
+        closeMenu();
+        manualBox.hidden = true;
+      });
+    });
   }
 
   views.profile = function () {
@@ -1180,9 +1336,12 @@
           h: tp ? tp[0] : null, min: tp ? tp[1] : null,
           timeKnown: !!tp,
           /* -1 = город из другого языкового списка, оставляем прежний объект */
-          city: (+f.city.value >= 0)
-            ? CITIES[+f.city.value]
-            : ((kind === 'profile' ? S.profile : S.partner) || {}).city
+          city: (function () {
+            if (f.cityJson && f.cityJson.value) {
+              try { return JSON.parse(f.cityJson.value); } catch (e) { /* игнор */ }
+            }
+            return ((kind === 'profile' ? S.profile : S.partner) || {}).city;
+          })()
         };
         var first = (kind === 'profile') && !S.profile;
         if (kind === 'profile') { S.profile = obj; } else { S.partner = obj; }
@@ -1207,6 +1366,7 @@
     bindMcTabs();
     bindMoonBody();
     bindChart();
+    bindCityPick();
 
     Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {
       b.addEventListener('click', function () {
@@ -1240,17 +1400,35 @@
   });
   el('disc').textContent = T.ui.disclaimer;
 
-  /* Переключатель языка. Перезагружаем страницу вместо горячей замены:
-     тексты и список городов подставляются на старте, и точечная подмена
-     оставила бы часть экрана на прежнем языке. Хеш сохраняется. */
-  Array.prototype.slice.call(document.querySelectorAll('.lang__b')).forEach(function (b) {
-    b.classList.toggle('on', b.dataset.lang === window.APP_LANG);
-    b.addEventListener('click', function () {
-      if (b.dataset.lang === window.APP_LANG) { return; }
-      try { localStorage.setItem('astromap.lang', b.dataset.lang); } catch (e) {}
-      location.reload();
+  /* Переключатель языка: кнопка с текущим кодом раскрывает список всех
+     поддерживаемых языков (их родные названия — см. #langMenu в app.html).
+     Перезагружаем страницу вместо горячей замены: тексты и список городов
+     подставляются на старте, и точечная подмена оставила бы часть экрана
+     на прежнем языке. Хеш сохраняется. */
+  (function () {
+    var toggle = el('langToggle'), menu = el('langMenu');
+    if (!toggle || !menu) { return; }
+    toggle.textContent = String(window.APP_LANG || 'en').toUpperCase();
+    function closeLangMenu() { menu.hidden = true; toggle.setAttribute('aria-expanded', 'false'); }
+    toggle.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      var open = toggle.getAttribute('aria-expanded') === 'true';
+      if (open) { closeLangMenu(); return; }
+      menu.hidden = false; toggle.setAttribute('aria-expanded', 'true');
     });
-  });
+    document.addEventListener('click', function (ev) {
+      if (!menu.hidden && ev.target !== toggle && !menu.contains(ev.target)) { closeLangMenu(); }
+    });
+    Array.prototype.slice.call(menu.querySelectorAll('.langmenu__item')).forEach(function (b) {
+      b.classList.toggle('on', b.dataset.lang === window.APP_LANG);
+      b.addEventListener('click', function () {
+        closeLangMenu();
+        if (b.dataset.lang === window.APP_LANG) { return; }
+        try { localStorage.setItem('astromap.lang', b.dataset.lang); } catch (e) {}
+        location.reload();
+      });
+    });
+  })();
 
   /* Мобильное меню: капсула навигации сворачивается в гамбургер ниже 900px
      (см. media-запрос в app.css). Пункты те же .nav__i, что и в капсуле —

@@ -6,12 +6,25 @@
 <title>AstroMap</title>
 <script>
 /* Язык выбирается до загрузки текстов: texts.js читает window.APP_LANG.
-   По умолчанию английский, выбор пользователя хранится в localStorage
-   и общий с воронкой — ключ astromap.lang. */
+   SUPPORTED — держать в паре с ключами T_ALL в texts.js и с пунктами
+   меню #langMenu ниже. Явный выбор пользователя хранится в localStorage
+   (ключ astromap.lang, общий с воронкой) и переживает обновления;
+   при первом визите, пока такого выбора ещё нет, один раз подставляем
+   язык браузера (navigator.languages) — это не геолокация (той нужно
+   разрешение и часто внешний сервис, которого у статичного сайта нет),
+   а стандартный для веба сигнал предпочтения языка. */
 (function () {
-  var l = 'en';
-  try { l = localStorage.getItem('astromap.lang') || 'en'; } catch (e) {}
-  if (l !== 'pl' && l !== 'en') { l = 'en'; }
+  var SUPPORTED = ['en', 'pl', 'ru', 'uk', 'de', 'es', 'fr', 'it', 'pt', 'tr'];
+  var l = null;
+  try { l = localStorage.getItem('astromap.lang'); } catch (e) {}
+  if (!l) {
+    var cands = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
+    for (var i = 0; i < cands.length && !l; i++) {
+      var code = String(cands[i]).slice(0, 2).toLowerCase();
+      if (SUPPORTED.indexOf(code) >= 0) { l = code; }
+    }
+  }
+  if (!l || SUPPORTED.indexOf(l) < 0) { l = 'en'; }
   window.APP_LANG = l;
   document.documentElement.lang = l;
 })();
@@ -56,8 +69,20 @@
         <a class="nav__i" href="#profile"  data-t="ui.nav.profile"></a>
       </nav>
       <div class="lang" role="group" aria-label="Language">
-        <button class="lang__b" data-lang="en" type="button">EN</button>
-        <button class="lang__b" data-lang="pl" type="button">PL</button>
+        <button class="lang__b lang__toggle" id="langToggle" type="button"
+          aria-haspopup="listbox" aria-expanded="false" aria-controls="langMenu">EN</button>
+        <div class="langmenu" id="langMenu" role="listbox" hidden>
+          <button class="langmenu__item" type="button" data-lang="en" role="option">English</button>
+          <button class="langmenu__item" type="button" data-lang="pl" role="option">Polski</button>
+          <button class="langmenu__item" type="button" data-lang="ru" role="option">Русский</button>
+          <button class="langmenu__item" type="button" data-lang="uk" role="option">Українська</button>
+          <button class="langmenu__item" type="button" data-lang="de" role="option">Deutsch</button>
+          <button class="langmenu__item" type="button" data-lang="es" role="option">Español</button>
+          <button class="langmenu__item" type="button" data-lang="fr" role="option">Français</button>
+          <button class="langmenu__item" type="button" data-lang="it" role="option">Italiano</button>
+          <button class="langmenu__item" type="button" data-lang="pt" role="option">Português</button>
+          <button class="langmenu__item" type="button" data-lang="tr" role="option">Türkçe</button>
+        </div>
       </div>
       <button class="topbar__burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mnav">
         <span></span><span></span><span></span>
