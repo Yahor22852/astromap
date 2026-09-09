@@ -54,7 +54,26 @@
 })();
 </script>
 
-<div class="shell">
+<div class="gate" id="gate" hidden>
+  <form class="gate__card" id="gateForm" novalidate>
+    <h1 class="gate__title" data-t="ui.gateTitle"></h1>
+    <p class="gate__sub" data-t="ui.gateSubtitle"></p>
+    <label class="gate__field">
+      <span data-t="ui.gateEmail"></span>
+      <input type="email" name="gateEmail" id="gateEmail" autocomplete="email" required>
+    </label>
+    <label class="gate__field">
+      <span data-t="ui.gateLicense"></span>
+      <input type="text" name="gateLicense" id="gateLicense" autocomplete="off" spellcheck="false" required>
+      <small class="gate__hint" data-t="ui.gateLicenseHint"></small>
+    </label>
+    <button class="gate__submit" id="gateSubmit" type="submit" data-t="ui.gateSubmit"></button>
+    <p class="gate__status" id="gateStatus" role="status" aria-live="polite" hidden></p>
+    <a class="gate__buy" id="gateBuy" href="#" data-t="ui.gateBuy" hidden></a>
+  </form>
+</div>
+
+<div class="shell" id="shell" hidden>
   <header class="topbar">
     <div class="topbar__pill">
       <a class="brand" href="#today">AstroMap</a>

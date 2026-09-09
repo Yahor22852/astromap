@@ -756,3 +756,59 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   .mp-adv { flex-wrap: wrap; padding: 14px 16px; min-height: 0; }
   .mp-adv__status { margin-left: 74px; margin-top: -4px; }
 }
+
+/* --- гейт доступа (оплата на Gumroad) -------------------------------------
+   Полноэкранный оверлей поверх .shell: показывается вместо всего продукта,
+   пока product/js/app.js не подтвердит лицензионный ключ через воркер
+   license-verify.js. .shell и .gate оба [hidden] по умолчанию в HTML —
+   ровно один из них снимает JS при старте (см. initAccessGate()). */
+.gate {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.gate__card {
+  width: 100%; max-width: 380px; padding: 32px 28px;
+  background: var(--surf); border: 1px solid var(--line); border-radius: 20px;
+  box-shadow: 0 24px 60px -24px rgba(0,0,0,.6);
+}
+.gate__title {
+  font-family: var(--serif); font-size: 26px; font-weight: 600;
+  color: var(--ink); margin: 0 0 8px;
+}
+.gate__sub {
+  font-size: 14px; line-height: 1.5; color: var(--ink-dim); margin: 0 0 22px;
+}
+.gate__field { display: block; margin-bottom: 16px; }
+.gate__field span {
+  display: block; font-size: 13px; color: var(--ink-dim); margin-bottom: 4px;
+}
+.gate__field input {
+  width: 100%; height: 44px; padding: 0 12px; box-sizing: border-box;
+  background: transparent; color: var(--ink);
+  border: 1px solid rgba(255,255,255,.16); border-radius: 8px;
+  font-family: var(--sans); font-size: 15px;
+  transition: border-color .2s ease;
+}
+.gate__field input:focus { outline: none; border-color: var(--accent); }
+.gate__hint { display: block; font-size: 12px; color: var(--ink-faint); margin-top: 6px; }
+.gate__submit {
+  width: 100%; height: var(--h-btn); border: 0; border-radius: var(--r-btn);
+  background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
+  color: var(--on-accent); font-family: var(--sans);
+  font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 6px;
+  box-shadow: 0 8px 22px -8px rgba(155,138,248,.55);
+  transition: transform .18s cubic-bezier(.4,0,.2,1), box-shadow .25s ease, opacity .2s ease;
+}
+.gate__submit:hover { transform: translateY(-1px); box-shadow: 0 12px 28px -6px rgba(155,138,248,.65); }
+.gate__submit:disabled { opacity: .6; cursor: default; transform: none; }
+.gate__status {
+  margin: 14px 0 0; font-size: 13px; line-height: 1.5; color: var(--ink-dim);
+}
+.gate__status--error { color: #ff9b9b; }
+.gate__buy {
+  display: block; margin-top: 16px; text-align: center;
+  font-size: 13px; color: var(--ink-faint); text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.gate__buy:hover { color: var(--accent); }
+.gate[hidden] { display: none; }

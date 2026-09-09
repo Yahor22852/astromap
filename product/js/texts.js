@@ -93,7 +93,18 @@
       save: 'Zapisz', edit: 'Zmień', calc: 'Policz',
       disclaimer: 'Treść ma charakter rozrywkowy i nie zastępuje porady specjalisty.',
       noProfile: 'Uzupełnij dane urodzenia, żeby policzyć kartę.',
-      timeMissing: 'Bez godziny urodzenia nie liczymy Ascendentu, MC i domów.'
+      timeMissing: 'Bez godziny urodzenia nie liczymy Ascendentu, MC i domów.',
+      gateTitle: 'Odblokuj dostęp',
+      gateSubtitle: 'Wpisz e-mail i klucz licencyjny z potwierdzenia zakupu, aby odblokować aplikację.',
+      gateEmail: 'E-mail',
+      gateLicense: 'Klucz licencyjny',
+      gateLicenseHint: 'Wysłany na e-mail po zakupie — widoczny też w Twojej Bibliotece Gumroad.',
+      gateSubmit: 'Odblokuj',
+      gateChecking: 'Sprawdzamy dostęp…',
+      gateBuy: 'Nie masz jeszcze dostępu? Kup tutaj',
+      gateErrorInvalid: 'Nie udało się dopasować tego e-maila i klucza. Sprawdź oba pola i spróbuj ponownie.',
+      gateErrorInactive: 'Ta subskrypcja nie jest teraz aktywna (zakończona, anulowana lub zwrócona).',
+      gateErrorNetwork: 'Nie udało się połączyć z serwerem dostępu. Sprawdź połączenie i spróbuj ponownie.'
     },
 
     signs: ['Baran', 'Byk', 'Bliźnięta', 'Rak', 'Lew', 'Panna',
@@ -401,7 +412,18 @@
       save: 'Save', edit: 'Edit', calc: 'Calculate',
       disclaimer: 'This content is for entertainment and does not replace professional advice.',
       noProfile: 'Fill in your birth details to calculate the chart.',
-      timeMissing: 'Without a birth time we don\u2019t calculate the Ascendant, MC or houses.'
+      timeMissing: 'Without a birth time we don\u2019t calculate the Ascendant, MC or houses.',
+      gateTitle: 'Unlock your access',
+      gateSubtitle: 'Enter the email and license key from your purchase receipt to unlock the app.',
+      gateEmail: 'Email',
+      gateLicense: 'License key',
+      gateLicenseHint: 'Sent to your email after checkout — also visible in your Gumroad Library.',
+      gateSubmit: 'Unlock',
+      gateChecking: 'Checking access…',
+      gateBuy: 'Don’t have access yet? Get it here',
+      gateErrorInvalid: 'We couldn’t match that email and license key. Double-check both and try again.',
+      gateErrorInactive: 'This subscription isn’t active right now (ended, cancelled, or refunded).',
+      gateErrorNetwork: 'Couldn’t reach the access server. Check your connection and try again.'
     },
 
     signs: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
@@ -707,7 +729,18 @@ var RU = {
       save: 'Сохранить', edit: 'Изменить', calc: 'Посчитать',
       disclaimer: 'Этот контент создан для развлечения и не заменяет профессиональную консультацию.',
       noProfile: 'Заполните данные рождения, чтобы посчитать карту.',
-      timeMissing: 'Без времени рождения мы не считаем Асцендент, MC и дома.'
+      timeMissing: 'Без времени рождения мы не считаем Асцендент, MC и дома.',
+      gateTitle: 'Разблокируйте доступ',
+      gateSubtitle: 'Введите email и лицензионный ключ из письма после оплаты, чтобы открыть приложение.',
+      gateEmail: 'Email',
+      gateLicense: 'Лицензионный ключ',
+      gateLicenseHint: 'Пришёл на почту после оплаты — также виден в вашей библиотеке Gumroad.',
+      gateSubmit: 'Разблокировать',
+      gateChecking: 'Проверяем доступ…',
+      gateBuy: 'Ещё нет доступа? Оформить здесь',
+      gateErrorInvalid: 'Не удалось найти совпадение по этому email и ключу. Проверьте оба поля и попробуйте снова.',
+      gateErrorInactive: 'Эта подписка сейчас не активна (закончилась, отменена или возвращена).',
+      gateErrorNetwork: 'Не удалось связаться с сервером проверки доступа. Проверьте соединение и попробуйте снова.'
     },
 
     signs: ['Овен', 'Телец', 'Близнецы', 'Рак', 'Лев', 'Дева',
@@ -1005,7 +1038,18 @@ var UK = {
       save: 'Зберегти', edit: 'Змінити', calc: 'Порахувати',
       disclaimer: 'Цей контент створено для розваги і він не замінює професійну консультацію.',
       noProfile: 'Заповніть дані народження, щоб порахувати карту.',
-      timeMissing: 'Без часу народження ми не рахуємо Асцендент, MC чи доми.'
+      timeMissing: 'Без часу народження ми не рахуємо Асцендент, MC чи доми.',
+      gateTitle: 'Розблокуйте доступ',
+      gateSubtitle: 'Введіть email і ліцензійний ключ з листа після оплати, щоб відкрити застосунок.',
+      gateEmail: 'Email',
+      gateLicense: 'Ліцензійний ключ',
+      gateLicenseHint: 'Надійшов на пошту після оплати — також видно у вашій бібліотеці Gumroad.',
+      gateSubmit: 'Розблокувати',
+      gateChecking: 'Перевіряємо доступ…',
+      gateBuy: 'Ще немає доступу? Оформити тут',
+      gateErrorInvalid: 'Не вдалося знайти збіг за цим email і ключем. Перевірте обидва поля і спробуйте ще раз.',
+      gateErrorInactive: 'Ця підписка зараз не активна (закінчилась, скасована або повернена).',
+      gateErrorNetwork: 'Не вдалося з’язатися із сервером перевірки доступу. Перевірте з’єднання і спробуйте ще раз.'
     },
 
     signs: ['Овен', 'Телець', 'Близнюки', 'Рак', 'Лев', 'Діва',
@@ -1303,7 +1347,18 @@ var DE = {
       save: 'Speichern', edit: 'Bearbeiten', calc: 'Berechnen',
       disclaimer: 'Dieser Inhalt dient der Unterhaltung und ersetzt keine professionelle Beratung.',
       noProfile: 'Tragen Sie Ihre Geburtsdaten ein, um die Karte zu berechnen.',
-      timeMissing: 'Ohne Geburtszeit berechnen wir weder Aszendent noch MC oder Häuser.'
+      timeMissing: 'Ohne Geburtszeit berechnen wir weder Aszendent noch MC oder Häuser.',
+      gateTitle: 'Zugang freischalten',
+      gateSubtitle: 'Gib die E-Mail-Adresse und den Lizenzschlüssel aus deiner Kaufbestätigung ein, um die App freizuschalten.',
+      gateEmail: 'E-Mail',
+      gateLicense: 'Lizenzschlüssel',
+      gateLicenseHint: 'Wurde nach dem Kauf per E-Mail verschickt — auch in deiner Gumroad-Bibliothek sichtbar.',
+      gateSubmit: 'Freischalten',
+      gateChecking: 'Zugang wird geprüft…',
+      gateBuy: 'Noch keinen Zugang? Hier bekommen',
+      gateErrorInvalid: 'Diese E-Mail und dieser Lizenzschlüssel passen nicht zusammen. Beides prüfen und erneut versuchen.',
+      gateErrorInactive: 'Dieses Abo ist gerade nicht aktiv (beendet, gekündigt oder erstattet).',
+      gateErrorNetwork: 'Der Zugangsserver war nicht erreichbar. Verbindung prüfen und erneut versuchen.'
     },
 
     signs: ['Widder', 'Stier', 'Zwillinge', 'Krebs', 'Löwe', 'Jungfrau',
@@ -1601,7 +1656,18 @@ var ES = {
       save: 'Guardar', edit: 'Editar', calc: 'Calcular',
       disclaimer: 'Este contenido es de entretenimiento y no sustituye el asesoramiento profesional.',
       noProfile: 'Completa tus datos de nacimiento para calcular la carta.',
-      timeMissing: 'Sin hora de nacimiento no calculamos el Ascendente, el MC ni las casas.'
+      timeMissing: 'Sin hora de nacimiento no calculamos el Ascendente, el MC ni las casas.',
+      gateTitle: 'Desbloquea tu acceso',
+      gateSubtitle: 'Introduce el email y la clave de licencia de tu recibo de compra para desbloquear la app.',
+      gateEmail: 'Email',
+      gateLicense: 'Clave de licencia',
+      gateLicenseHint: 'Se envió a tu email tras la compra — también visible en tu Biblioteca de Gumroad.',
+      gateSubmit: 'Desbloquear',
+      gateChecking: 'Comprobando acceso…',
+      gateBuy: '¿Aún no tienes acceso? Consíguelo aquí',
+      gateErrorInvalid: 'No hemos podido validar ese email y esa clave juntos. Revisa ambos campos e inténtalo de nuevo.',
+      gateErrorInactive: 'Esta suscripción no está activa ahora mismo (finalizada, cancelada o reembolsada).',
+      gateErrorNetwork: 'No se pudo contactar con el servidor de acceso. Revisa tu conexión e inténtalo de nuevo.'
     },
 
     signs: ['Aries', 'Tauro', 'Géminis', 'Cáncer', 'Leo', 'Virgo',
@@ -1899,7 +1965,18 @@ var FR = {
       save: 'Enregistrer', edit: 'Modifier', calc: 'Calculer',
       disclaimer: 'Ce contenu est proposé à titre de divertissement et ne remplace pas un avis professionnel.',
       noProfile: 'Renseignez vos données de naissance pour calculer la carte.',
-      timeMissing: 'Sans heure de naissance, nous ne calculons ni l’Ascendant, ni le MC, ni les maisons.'
+      timeMissing: 'Sans heure de naissance, nous ne calculons ni l’Ascendant, ni le MC, ni les maisons.',
+      gateTitle: 'Débloquez votre accès',
+      gateSubtitle: 'Entrez l’email et la clé de licence de votre reçu d’achat pour débloquer l’application.',
+      gateEmail: 'Email',
+      gateLicense: 'Clé de licence',
+      gateLicenseHint: 'Envoyée par email après l’achat — également visible dans votre bibliothèque Gumroad.',
+      gateSubmit: 'Débloquer',
+      gateChecking: 'Vérification de l’accès…',
+      gateBuy: 'Pas encore accès ? Se procurer ici',
+      gateErrorInvalid: 'Impossible de faire correspondre cet email et cette clé. Vérifiez les deux champs et réessayez.',
+      gateErrorInactive: 'Cet abonnement n’est pas actif actuellement (terminé, annulé ou remboursé).',
+      gateErrorNetwork: 'Impossible de joindre le serveur d’accès. Vérifiez votre connexion et réessayez.'
     },
 
     signs: ['Bélier', 'Taureau', 'Gémeaux', 'Cancer', 'Lion', 'Vierge',
@@ -2197,7 +2274,18 @@ var IT = {
       save: 'Salva', edit: 'Modifica', calc: 'Calcola',
       disclaimer: 'Questo contenuto è a scopo di intrattenimento e non sostituisce una consulenza professionale.',
       noProfile: 'Inserisci i tuoi dati di nascita per calcolare il tema natale.',
-      timeMissing: 'Senza l’ora di nascita non calcoliamo l’Ascendente, il MC o le case.'
+      timeMissing: 'Senza l’ora di nascita non calcoliamo l’Ascendente, il MC o le case.',
+      gateTitle: 'Sblocca il tuo accesso',
+      gateSubtitle: 'Inserisci l’email e la chiave di licenza dalla tua ricevuta d’acquisto per sbloccare l’app.',
+      gateEmail: 'Email',
+      gateLicense: 'Chiave di licenza',
+      gateLicenseHint: 'Inviata via email dopo l’acquisto — visibile anche nella tua Libreria Gumroad.',
+      gateSubmit: 'Sblocca',
+      gateChecking: 'Verifica dell’accesso…',
+      gateBuy: 'Non hai ancora accesso? Ottienilo qui',
+      gateErrorInvalid: 'Non siamo riusciti ad abbinare questa email e questa chiave. Controlla entrambi i campi e riprova.',
+      gateErrorInactive: 'Questo abbonamento non è attivo al momento (terminato, annullato o rimborsato).',
+      gateErrorNetwork: 'Impossibile contattare il server di accesso. Controlla la connessione e riprova.'
     },
 
     signs: ['Ariete', 'Toro', 'Gemelli', 'Cancro', 'Leone', 'Vergine',
@@ -2495,7 +2583,18 @@ var PT = {
       save: 'Salvar', edit: 'Editar', calc: 'Calcular',
       disclaimer: 'Este conteúdo é para entretenimento e não substitui aconselhamento profissional.',
       noProfile: 'Preencha seus dados de nascimento para calcular o mapa astral.',
-      timeMissing: 'Sem a hora de nascimento não calculamos o Ascendente, o MC nem as casas.'
+      timeMissing: 'Sem a hora de nascimento não calculamos o Ascendente, o MC nem as casas.',
+      gateTitle: 'Desbloqueie seu acesso',
+      gateSubtitle: 'Digite o email e a chave de licença do seu recibo de compra para desbloquear o app.',
+      gateEmail: 'Email',
+      gateLicense: 'Chave de licença',
+      gateLicenseHint: 'Enviada por email após a compra — também visível na sua Biblioteca Gumroad.',
+      gateSubmit: 'Desbloquear',
+      gateChecking: 'Verificando acesso…',
+      gateBuy: 'Ainda não tem acesso? Obtenha aqui',
+      gateErrorInvalid: 'Não conseguimos combinar esse email com essa chave. Confira os dois campos e tente novamente.',
+      gateErrorInactive: 'Esta assinatura não está ativa no momento (encerrada, cancelada ou reembolsada).',
+      gateErrorNetwork: 'Não foi possível contatar o servidor de acesso. Verifique sua conexão e tente novamente.'
     },
 
     signs: ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
@@ -2793,7 +2892,18 @@ var TR = {
       save: 'Kaydet', edit: 'Düzenle', calc: 'Hesapla',
       disclaimer: 'Bu içerik eğlence amaçlıdır ve profesyonel tavsiyenin yerini tutmaz.',
       noProfile: 'Haritayı hesaplamak için doğum bilgilerinizi girin.',
-      timeMissing: 'Doğum saati olmadan Yükseleni, MC’yi veya evleri hesaplamıyoruz.'
+      timeMissing: 'Doğum saati olmadan Yükseleni, MC’yi veya evleri hesaplamıyoruz.',
+      gateTitle: 'Erişiminizi açın',
+      gateSubtitle: 'Uygulamanın kilidini açmak için satın alma makbuzunuzdaki e-postayı ve lisans anahtarını girin.',
+      gateEmail: 'E-posta',
+      gateLicense: 'Lisans anahtarı',
+      gateLicenseHint: 'Satın alma sonrası e-postanıza gönderildi — Gumroad Kitaplığınızda da görünür.',
+      gateSubmit: 'Kilidi aç',
+      gateChecking: 'Erişim kontrol ediliyor…',
+      gateBuy: 'Henüz erişiminiz yok mu? Buradan edinin',
+      gateErrorInvalid: 'Bu e-posta ile anahtar eşleşmedi. Her iki alanı da kontrol edip tekrar deneyin.',
+      gateErrorInactive: 'Bu abonelik şu anda aktif değil (sona erdi, iptal edildi veya iade edildi).',
+      gateErrorNetwork: 'Erişim sunucusuna ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.'
     },
 
     signs: ['Koç', 'Boğa', 'İkizler', 'Yengeç', 'Aslan', 'Başak',

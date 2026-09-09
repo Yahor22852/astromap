@@ -14,6 +14,17 @@
   var TZ = window.TZ;
 
   var KEY = 'astromap.app';
+  /* --- гейт доступа (оплата на Gumroad) -----------------------------------
+     Продукт целиком закрыт лицензионным ключом: пока не подтверждён через
+     воркер license-verify.js (см. cf-worker/), показывается только #gate —
+     #shell со всем приложением остаётся [hidden]. Оба URL ниже пустые до
+     настройки: LICENSE_API — обязателен (без него разблокировать нечем),
+     GATE_CHECKOUT_URL — необязателен, просто прячет ссылку «ещё нет
+     доступа», если её некуда вести. */
+  var LICENSE_API = ''; /* TODO: URL воркера license-verify.js, напр. https://astromap-license-verify.<você>.workers.dev */
+  var GATE_CHECKOUT_URL = ''; /* TODO: ссылка на продукт/чекаут Gumroad */
+  var ACCESS_KEY = 'astromap.access';
+  var ACCESS_REVALIDATE_MS = 24 * 3600 * 1000; /* не чаще раза в сутки дёргаем воркер повторно на уже открытой сессии */
   /* Языки, где принят десятичная запятая вместо точки (все добавленные,
      кроме английского) — используется в fmtDeg(). Локали Intl для дат
      календаря Луны и заголовков (moonLocale()) — свои полные коды. */
@@ -37,17 +48,21 @@
       var raw = localStorage.getItem(KEY);
       if (raw) { S = JSON.parse(raw); return; }
     } catch (e) { console.error('astromap: чтение состояния', e); }
-    /* Импорт из воронки — единственный раз, при первом входе после оплаты. */
+    /* Импорт из воронки — единственный раз, при первом входе после оплаты.
+       Воронка кладёт сюда сам объект города {n,lat,lon,tz,dst} (см. flow.js,
+       persist()) — раньше передавался только числовой cityIdx, который
+       годился только пока у продукта был тот же список городов, что и у
+       воронки. После перехода продукта на мировую базу (CITIES_ALL) эти
+       индексы разошлись, и импорт молча падал в catch ниже. Города воронки
+       используют тот же числовой tz (не IANA-строку) — cityOf() в продукте
+       уже понимает оба формата через typeof city.tz. */
     try {
       var f = localStorage.getItem('astromap.funnel');
       if (f) {
         var p = JSON.parse(f);
         if (p && p.dob && p.dob.y) {
-          /* Город берём из того списка, на котором работала воронка: индексы
-             в польском и английском списках разные. */
-          var srcList = (p.lang === 'pl') ? window.CITIES.pl : window.CITIES.en;
-          var srcCity = srcList[(p.cityIdx === null || p.cityIdx === undefined) ? 0 : p.cityIdx]
-                        || srcList[0];
+          var srcCity = (p.city && typeof p.city.tz !== 'undefined') ? p.city :
+            { n: '', lat: null, lon: null, tz: 0, dst: '' };
           S.profile = {
             name: '', y: p.dob.y, m: p.dob.m, d: p.dob.d,
             h: (p.time && p.time.known) ? p.time.h : null,
@@ -1389,76 +1404,188 @@
     });
   }
 
-  /* --- старт -------------------------------------------------------------- */
-  load();
-  recalc();
+  /* --- старт ---------------------------------------------------------------
+     Раньше это был просто хвост IIFE, выполнявшийся сразу при загрузке
+     скрипта. Теперь всё завёрнуто в startApp() и запускается только после
+     initAccessGate() — либо сразу (в кэше уже есть подтверждённый доступ),
+     либо по успешной отправке формы в #gate. */
+  function startApp() {
+    load();
+    recalc();
 
-  document.querySelectorAll('[data-t]').forEach(function (n) {
-    var path = n.getAttribute('data-t').split('.');
-    var v = path.reduce(function (o, k) { return o ? o[k] : null; }, T);
-    if (typeof v === 'string') { n.textContent = v; }
-  });
-  el('disc').textContent = T.ui.disclaimer;
+    document.querySelectorAll('[data-t]').forEach(function (n) {
+      var path = n.getAttribute('data-t').split('.');
+      var v = path.reduce(function (o, k) { return o ? o[k] : null; }, T);
+      if (typeof v === 'string') { n.textContent = v; }
+    });
+    el('disc').textContent = T.ui.disclaimer;
 
-  /* Переключатель языка: кнопка с текущим кодом раскрывает список всех
-     поддерживаемых языков (их родные названия — см. #langMenu в app.html).
-     Перезагружаем страницу вместо горячей замены: тексты и список городов
-     подставляются на старте, и точечная подмена оставила бы часть экрана
-     на прежнем языке. Хеш сохраняется. */
-  (function () {
-    var toggle = el('langToggle'), menu = el('langMenu');
-    if (!toggle || !menu) { return; }
-    toggle.textContent = String(window.APP_LANG || 'en').toUpperCase();
-    function closeLangMenu() { menu.hidden = true; toggle.setAttribute('aria-expanded', 'false'); }
-    toggle.addEventListener('click', function (ev) {
-      ev.stopPropagation();
-      var open = toggle.getAttribute('aria-expanded') === 'true';
-      if (open) { closeLangMenu(); return; }
-      menu.hidden = false; toggle.setAttribute('aria-expanded', 'true');
+    /* Переключатель языка: кнопка с текущим кодом раскрывает список всех
+       поддерживаемых языков (их родные названия — см. #langMenu в app.html).
+       Перезагружаем страницу вместо горячей замены: тексты и список городов
+       подставляются на старте, и точечная подмена оставила бы часть экрана
+       на прежнем языке. Хеш сохраняется. */
+    (function () {
+      var toggle = el('langToggle'), menu = el('langMenu');
+      if (!toggle || !menu) { return; }
+      toggle.textContent = String(window.APP_LANG || 'en').toUpperCase();
+      function closeLangMenu() { menu.hidden = true; toggle.setAttribute('aria-expanded', 'false'); }
+      toggle.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var open = toggle.getAttribute('aria-expanded') === 'true';
+        if (open) { closeLangMenu(); return; }
+        menu.hidden = false; toggle.setAttribute('aria-expanded', 'true');
+      });
+      document.addEventListener('click', function (ev) {
+        if (!menu.hidden && ev.target !== toggle && !menu.contains(ev.target)) { closeLangMenu(); }
+      });
+      Array.prototype.slice.call(menu.querySelectorAll('.langmenu__item')).forEach(function (b) {
+        b.classList.toggle('on', b.dataset.lang === window.APP_LANG);
+        b.addEventListener('click', function () {
+          closeLangMenu();
+          if (b.dataset.lang === window.APP_LANG) { return; }
+          try { localStorage.setItem('astromap.lang', b.dataset.lang); } catch (e) {}
+          location.reload();
+        });
+      });
+    })();
+
+    /* Мобильное меню: капсула навигации сворачивается в гамбургер ниже 900px
+       (см. media-запрос в app.css). Пункты те же .nav__i, что и в капсуле —
+       router выше уже переключает .on сразу на обоих наборах. */
+    (function () {
+      var burger = el('burger'), menu = el('mnav');
+      if (!burger || !menu) { return; }
+      function close() {
+        menu.hidden = true;
+        burger.setAttribute('aria-expanded', 'false');
+      }
+      burger.addEventListener('click', function () {
+        var open = burger.getAttribute('aria-expanded') === 'true';
+        if (open) { close(); return; }
+        menu.hidden = false;
+        burger.setAttribute('aria-expanded', 'true');
+      });
+      Array.prototype.slice.call(menu.querySelectorAll('.nav__i')).forEach(function (a) {
+        a.addEventListener('click', close);
+      });
+      window.addEventListener('hashchange', close);
+    })();
+
+    /* На ресайзе переизмеряем ширину/позицию активной кнопки периода —
+       .segbar не пересоздаётся при resize, но её кнопки могут менять размер. */
+    window.addEventListener('resize', function () {
+      if (location.hash === '#horoscope') { positionHzIndicator(true); }
+      if (location.hash === '#match') { positionMcIndicator(true); }
     });
-    document.addEventListener('click', function (ev) {
-      if (!menu.hidden && ev.target !== toggle && !menu.contains(ev.target)) { closeLangMenu(); }
-    });
-    Array.prototype.slice.call(menu.querySelectorAll('.langmenu__item')).forEach(function (b) {
-      b.classList.toggle('on', b.dataset.lang === window.APP_LANG);
-      b.addEventListener('click', function () {
-        closeLangMenu();
-        if (b.dataset.lang === window.APP_LANG) { return; }
-        try { localStorage.setItem('astromap.lang', b.dataset.lang); } catch (e) {}
-        location.reload();
+
+    window.addEventListener('hashchange', route);
+    route();
+  }
+
+  /* --- гейт доступа: чтение/запись состояния, живая проверка, форма -------- */
+  function loadAccess() {
+    try { return JSON.parse(localStorage.getItem(ACCESS_KEY) || 'null'); } catch (e) { return null; }
+  }
+  function saveAccess(a) {
+    try { localStorage.setItem(ACCESS_KEY, JSON.stringify(a)); } catch (e) { /* игнор */ }
+  }
+  function clearAccess() {
+    try { localStorage.removeItem(ACCESS_KEY); } catch (e) { /* игнор */ }
+  }
+  /* Живой запрос к воркеру при каждой (ре)проверке — никакого состояния
+     подписки нигде не кэшируется на сервере, поэтому отменённая/просроченная
+     подписка отражается сразу на следующей проверке, без вебхуков. */
+  function verifyAccess(email, licenseKey) {
+    return fetch(LICENSE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, licenseKey: licenseKey })
+    }).then(function (r) { return r.json(); });
+  }
+  function gateErrorText(reason) {
+    if (reason === 'subscription_ended' || reason === 'refunded' || reason === 'disputed') {
+      return T.ui.gateErrorInactive;
+    }
+    return T.ui.gateErrorInvalid;
+  }
+  function setGateStatus(text, isError) {
+    var st = el('gateStatus');
+    if (!st) { return; }
+    if (!text) { st.hidden = true; st.textContent = ''; return; }
+    st.hidden = false; st.textContent = text;
+    st.classList.toggle('gate__status--error', !!isError);
+  }
+  function showShell() {
+    var gate = el('gate'), shell = el('shell');
+    if (gate) { gate.hidden = true; }
+    if (shell) { shell.hidden = false; }
+  }
+  function showGateOnly(message) {
+    var gate = el('gate'), shell = el('shell');
+    if (shell) { shell.hidden = true; }
+    if (gate) { gate.hidden = false; }
+    if (message) { setGateStatus(message, true); }
+  }
+  function bindGate() {
+    var form = el('gateForm');
+    if (!form) { return; }
+    var buyLink = el('gateBuy');
+    if (buyLink) {
+      if (GATE_CHECKOUT_URL) { buyLink.href = GATE_CHECKOUT_URL; buyLink.hidden = false; }
+      else { buyLink.hidden = true; }
+    }
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var email = form.gateEmail.value.trim();
+      var licenseKey = form.gateLicense.value.trim();
+      if (!email || !licenseKey) { return; }
+      var submitBtn = el('gateSubmit');
+      if (submitBtn) { submitBtn.disabled = true; }
+      setGateStatus(T.ui.gateChecking, false);
+      verifyAccess(email, licenseKey).then(function (res) {
+        if (submitBtn) { submitBtn.disabled = false; }
+        if (res && res.ok && res.active) {
+          saveAccess({ email: email, licenseKey: licenseKey, verifiedAt: Date.now() });
+          setGateStatus('', false);
+          showShell();
+          startApp();
+        } else {
+          setGateStatus(gateErrorText(res && res.reason), true);
+        }
+      }).catch(function () {
+        if (submitBtn) { submitBtn.disabled = false; }
+        setGateStatus(T.ui.gateErrorNetwork, true);
       });
     });
-  })();
-
-  /* Мобильное меню: капсула навигации сворачивается в гамбургер ниже 900px
-     (см. media-запрос в app.css). Пункты те же .nav__i, что и в капсуле —
-     router выше уже переключает .on сразу на обоих наборах. */
-  (function () {
-    var burger = el('burger'), menu = el('mnav');
-    if (!burger || !menu) { return; }
-    function close() {
-      menu.hidden = true;
-      burger.setAttribute('aria-expanded', 'false');
+  }
+  /* Раз в сутки на уже открытой сессии тихо перепроверяем ключ в фоне: если
+     Gumroad теперь говорит active:false явно (не сетевая ошибка) — запираем
+     обратно на #gate. Сетевую ошибку игнорируем: не отбираем уже открытый
+     доступ из-за обрыва связи, следующий заход попробует снова. */
+  function revalidateInBackground(access) {
+    verifyAccess(access.email, access.licenseKey).then(function (res) {
+      if (res && res.ok && res.active) {
+        saveAccess({ email: access.email, licenseKey: access.licenseKey, verifiedAt: Date.now() });
+      } else if (res && res.ok && res.active === false) {
+        clearAccess();
+        showGateOnly(gateErrorText(res.reason));
+      }
+    }).catch(function () { /* оффлайн/сеть — молчим, ничего не меняем */ });
+  }
+  function initAccessGate() {
+    bindGate();
+    var access = loadAccess();
+    if (access && access.email && access.licenseKey) {
+      showShell();
+      startApp();
+      if (Date.now() - (access.verifiedAt || 0) > ACCESS_REVALIDATE_MS) {
+        revalidateInBackground(access);
+      }
+    } else {
+      showGateOnly();
     }
-    burger.addEventListener('click', function () {
-      var open = burger.getAttribute('aria-expanded') === 'true';
-      if (open) { close(); return; }
-      menu.hidden = false;
-      burger.setAttribute('aria-expanded', 'true');
-    });
-    Array.prototype.slice.call(menu.querySelectorAll('.nav__i')).forEach(function (a) {
-      a.addEventListener('click', close);
-    });
-    window.addEventListener('hashchange', close);
-  })();
+  }
 
-  /* На ресайзе переизмеряем ширину/позицию активной кнопки периода —
-     .segbar не пересоздаётся при resize, но её кнопки могут менять размер. */
-  window.addEventListener('resize', function () {
-    if (location.hash === '#horoscope') { positionHzIndicator(true); }
-    if (location.hash === '#match') { positionMcIndicator(true); }
-  });
-
-  window.addEventListener('hashchange', route);
-  route();
+  initAccessGate();
 })();
