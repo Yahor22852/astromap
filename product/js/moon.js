@@ -58,6 +58,63 @@
     return cells;
   }
 
+  /* --- главные фазы вперёд --------------------------------------------------
+     astronomy-engine сам умеет искать четверти (SearchMoonQuarter даёт
+     ближайшую, NextMoonQuarter — следующую за ней), поэтому сканировать
+     угол фазы вручную не нужно. quarter: 0 новолуние, 1 первая четверть,
+     2 полнолуние, 3 последняя четверть — переводим в тот же индекс из
+     восьми фаз, которым живут T.moonPhase и остальной продукт.
+
+     Знак считаем на сам момент фазы, а не на дату запроса: «полнолуние в
+     Овне» — это про положение Луны в момент полнолуния. */
+  var QUARTER_TO_PHASE = { 0: 0, 1: 2, 2: 4, 3: 6 };
+
+  function quartersFrom(date, count) {
+    var out = [];
+    var q = A.SearchMoonQuarter(date);
+    for (var i = 0; i < count && q; i++) {
+      var d = q.time.date;
+      out.push({
+        quarter: q.quarter,
+        phaseIndex: QUARTER_TO_PHASE[q.quarter],
+        date: d,
+        sign: E.bodyAt('Moon', d).sign,
+        illum: A.Illumination('Moon', d).phase_fraction
+      });
+      q = A.NextMoonQuarter(q);
+    }
+    return out;
+  }
+
+  /* --- ближайшая смена знака ------------------------------------------------
+     Луна проходит знак примерно за двое с половиной суток, поэтому шаг в два
+     часа гарантированно не перепрыгнет границу, а деление пополам доводит
+     момент до минут. Нужно для обратного отсчёта «Луна входит в Скорпион
+     через 4 ч 22 мин» — единственного места в продукте, где время суток
+     действительно имеет значение. */
+  function nextSignChange(date) {
+    var from = E.bodyAt('Moon', date).sign.index;
+    var step = 2 * 3600000;
+    var a = date.getTime();
+    for (var i = 1; i <= 48; i++) {          /* с запасом: максимум ~4 суток */
+      var t = date.getTime() + i * step;
+      var idx = E.bodyAt('Moon', new Date(t)).sign.index;
+      if (idx !== from) {
+        var lo = a, hi = t;
+        for (var k = 0; k < 22; k++) {
+          var m = (lo + hi) / 2;
+          if (E.bodyAt('Moon', new Date(m)).sign.index === from) { lo = m; } else { hi = m; }
+        }
+        /* Новый знак берём по hi, а не по середине: середина лежит ровно на
+           границе и с равной вероятностью попадает в старый знак — тогда
+           «Луна входит в Скорпион» превращалось бы во «входит в Весы». */
+        return { date: new Date((lo + hi) / 2), from: from, to: E.bodyAt('Moon', new Date(hi)).sign };
+      }
+      a = t;
+    }
+    return null;
+  }
+
   /* --- рендер диска Луны ---------------------------------------------------
      Геометрия проверена численно (площадь освещённой «линзы» равна illum *
      площадь круга при любом illum от 0 до 1, шаг 0.05): дуга обода —
@@ -164,6 +221,7 @@
 
   g.Moon = {
     infoFor: infoFor, monthGrid: monthGrid, moonHtml: moonHtml,
-    adviceFor: adviceFor, adviceOrder: ORDER, phaseBucketOf: phaseBucketOf
+    adviceFor: adviceFor, adviceOrder: ORDER, phaseBucketOf: phaseBucketOf,
+    quartersFrom: quartersFrom, nextSignChange: nextSignChange
   };
 })(typeof window !== 'undefined' ? window : globalThis);

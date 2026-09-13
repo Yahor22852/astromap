@@ -227,35 +227,11 @@
     return buildCycle(body, next.date, end.date, date, false);
   }
 
-  /* --- персональная привязка ------------------------------------------------
-     Дом считается только когда известно время рождения: без асцендента дома
-     не определены, и подставлять их нечем. Аспекты к наталу берём из того
-     же findAspect, что использует весь остальной продукт, чтобы орбисы и
-     тона нигде не разошлись. */
-  function personalFor(natal, body, date) {
-    if (!natal) { return null; }
-    var p = E.bodyAt(body, date);
-    var house = null;
-    if (natal.asc && natal.houses) {
-      house = ((p.sign.index - natal.asc.sign.index + 12) % 12) + 1;
-    }
-    var targets = natal.points.slice();
-    if (natal.asc) { targets.push(natal.asc, natal.mc); }
-    var aspects = [];
-    targets.forEach(function (t) {
-      var a = E.findAspect(p, t);
-      if (!a) { return; }
-      aspects.push({
-        natal: t.name, aspect: a.aspect, tone: a.tone, orb: a.orb,
-        applying: a.applying,
-        weight: (t.weight || 5) - a.orb
-      });
-    });
-    aspects.sort(function (x, y) { return y.weight - x.weight; });
-    return { point: p, house: house, sign: p.sign, aspects: aspects };
-  }
+  /* Персональная привязка переехала в engine.contactsFor(): тот же вопрос —
+     дом и контакты с картой — задаёт и раздел Луны, и всё, что появится
+     дальше, поэтому ответ должен быть один на продукт.
 
-  /* Насколько цикл важен лично: сумма веса натальных контактов. Нужна, чтобы
+     Насколько цикл важен лично: сумма веса натальных контактов. Нужна, чтобы
      из нескольких одновременных ретроградов выбрать один главный, а не
      показывать их равнозначным списком. Без карты возвращаем 0 — тогда
      экран честно сортирует по скорости тела, а не делает вид, что знает
@@ -276,7 +252,7 @@
   function statusAt(date, natal) {
     return BODIES.map(function (b) {
       var p = E.bodyAt(b, date);
-      var pers = personalFor(natal, b, date);
+      var pers = E.contactsFor(natal, b, date);
       return {
         body: b, retro: p.retro, sign: p.sign, speed: p.speed,
         personal: pers, relevance: relevance(pers)
@@ -320,7 +296,6 @@
   return {
     BODIES: BODIES,
     cycleFor: cycleFor,
-    personalFor: personalFor,
     relevance: relevance,
     statusAt: statusAt,
     nextTurnRetro: nextTurnRetro,

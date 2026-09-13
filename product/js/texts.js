@@ -341,7 +341,12 @@
       11: { n: '11. dom', t: 'przyjaciele, środowiska, plany' },
       12: { n: '12. dom', t: 'samotność, wnętrze, zamykanie spraw' }
     },
-    rx: {
+    sec: {
+      upcomingPhases: 'Najbliższe fazy',
+      signChange: 'Zmiana znaku',
+      hoursShort: 'godz.',
+      minShort: 'min',
+      moonAndYou: 'Księżyc a ty',
       retroNow: 'Retrogradne teraz',
       mostRelevant: 'Najsilniej dotyka twojej mapy',
       mostRelevantNoChart: 'Najszybsza z cofających się',
@@ -733,7 +738,12 @@
       11: { n: '11th house', t: 'friends, circles, plans' },
       12: { n: '12th house', t: 'solitude, inner life, endings' }
     },
-    rx: {
+    sec: {
+      upcomingPhases: 'Upcoming phases',
+      signChange: 'Sign change',
+      hoursShort: 'h',
+      minShort: 'm',
+      moonAndYou: 'Moon and you',
       retroNow: 'Retrograde now',
       mostRelevant: 'Touches your chart most',
       mostRelevantNoChart: 'Fastest of those moving back',
@@ -1126,7 +1136,12 @@ var RU = {
       11: { n: '11-й дом', t: 'друзья, круги общения, планы' },
       12: { n: '12-й дом', t: 'уединение, внутреннее, завершения' }
     },
-    rx: {
+    sec: {
+      upcomingPhases: 'Ближайшие фазы',
+      signChange: 'Смена знака',
+      hoursShort: 'ч',
+      minShort: 'мин',
+      moonAndYou: 'Луна и вы',
       retroNow: 'Ретроградны сейчас',
       mostRelevant: 'Сильнее всего задевает вашу карту',
       mostRelevantNoChart: 'Самая быстрая из идущих назад',
@@ -1514,7 +1529,12 @@ var UK = {
       11: { n: '11-й дім', t: 'друзі, кола спілкування, плани' },
       12: { n: '12-й дім', t: 'усамітнення, внутрішнє, завершення' }
     },
-    rx: {
+    sec: {
+      upcomingPhases: 'Найближчі фази',
+      signChange: 'Зміна знака',
+      hoursShort: 'год',
+      minShort: 'хв',
+      moonAndYou: 'Місяць і ви',
       retroNow: 'Ретроградні зараз',
       mostRelevant: 'Найсильніше зачіпає вашу карту',
       mostRelevantNoChart: 'Найшвидша з тих, що йдуть назад',
@@ -1902,7 +1922,12 @@ var DE = {
       11: { n: '11. Haus', t: 'Freunde, Kreise, Pläne' },
       12: { n: '12. Haus', t: 'Rückzug, Innenleben, Abschlüsse' }
     },
-    rx: {
+    sec: {
+      upcomingPhases: 'Nächste Phasen',
+      signChange: 'Zeichenwechsel',
+      hoursShort: 'Std.',
+      minShort: 'Min.',
+      moonAndYou: 'Mond und Sie',
       retroNow: 'Jetzt rückläufig',
       mostRelevant: 'Berührt Ihr Horoskop am stärksten',
       mostRelevantNoChart: 'Die schnellste der rückläufigen',
@@ -2290,7 +2315,12 @@ var ES = {
       11: { n: 'Casa 11', t: 'amigos, círculos, planes' },
       12: { n: 'Casa 12', t: 'soledad, vida interior, cierres' }
     },
-    rx: {
+    sec: {
+      upcomingPhases: 'Próximas fases',
+      signChange: 'Cambio de signo',
+      hoursShort: 'h',
+      minShort: 'min',
+      moonAndYou: 'La Luna y usted',
       retroNow: 'Retrógrados ahora',
       mostRelevant: 'Lo que más toca su carta',
       mostRelevantNoChart: 'El más rápido de los que retroceden',
@@ -2678,7 +2708,12 @@ var FR = {
       11: { n: 'Maison 11', t: 'amis, cercles, projets' },
       12: { n: 'Maison 12', t: 'retrait, vie intérieure, fins de cycle' }
     },
-    rx: {
+    sec: {
+      upcomingPhases: 'Prochaines phases',
+      signChange: 'Changement de signe',
+      hoursShort: 'h',
+      minShort: 'min',
+      moonAndYou: 'La Lune et vous',
       retroNow: 'Rétrogrades en ce moment',
       mostRelevant: 'Ce qui touche le plus votre thème',
       mostRelevantNoChart: 'La plus rapide de celles qui reculent',
@@ -3066,7 +3101,12 @@ var IT = {
       11: { n: 'Casa 11', t: 'amici, cerchie, progetti' },
       12: { n: 'Casa 12', t: 'solitudine, vita interiore, chiusure' }
     },
-    rx: {
+    sec: {
+      upcomingPhases: 'Prossime fasi',
+      signChange: 'Cambio di segno',
+      hoursShort: 'h',
+      minShort: 'min',
+      moonAndYou: 'La Luna e te',
       retroNow: 'Retrogradi ora',
       mostRelevant: 'Tocca di più il tuo tema',
       mostRelevantNoChart: 'Il più veloce fra quelli che tornano indietro',
@@ -3454,7 +3494,12 @@ var PT = {
       11: { n: 'Casa 11', t: 'amigos, círculos, planos' },
       12: { n: 'Casa 12', t: 'recolhimento, vida interior, encerramentos' }
     },
-    rx: {
+    sec: {
+      upcomingPhases: 'Próximas fases',
+      signChange: 'Mudança de signo',
+      hoursShort: 'h',
+      minShort: 'min',
+      moonAndYou: 'A Lua e você',
       retroNow: 'Retrógrados agora',
       mostRelevant: 'O que mais toca o seu mapa',
       mostRelevantNoChart: 'O mais rápido entre os que recuam',
@@ -3842,7 +3887,12 @@ var TR = {
       11: { n: '11. ev', t: 'arkadaşlar, çevreler, planlar' },
       12: { n: '12. ev', t: 'inziva, iç dünya, kapanışlar' }
     },
-    rx: {
+    sec: {
+      upcomingPhases: 'Yaklaşan evreler',
+      signChange: 'Burç değişimi',
+      hoursShort: 'sa',
+      minShort: 'dk',
+      moonAndYou: 'Ay ve siz',
       retroNow: 'Şu anda retro',
       mostRelevant: 'Haritanıza en çok dokunan',
       mostRelevantNoChart: 'Geri gidenler arasında en hızlısı',

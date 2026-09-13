@@ -825,32 +825,33 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 .view--rx { display: block; }
 .rx { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
 
-/* Дата раздела. Локальная, но вынесена в отдельную панель наверху — это то
-   место, куда подключится общий контекст времени, когда он появится. */
-.rx-datebar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.rx-datebar__nav {
+/* Панель даты. Общая для всех разделов, которые умеют перематывать время
+   (см. dateBarHtml в app.js): читает и меняет Clock, раздел после этого
+   перерисовывает себя сам. */
+.datebar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.datebar__nav {
   width: 38px; height: 38px; flex: none; border-radius: 999px; cursor: pointer;
   background: rgba(255,255,255,.04); border: 1px solid var(--line);
   color: var(--ink); font-size: 16px; line-height: 1;
   transition: background .2s ease, border-color .2s ease;
 }
-.rx-datebar__nav:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.2); }
-.rx-datebar__nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.datebar__nav:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.2); }
+.datebar__nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Дата стоит вплотную к своим стрелкам, а кнопка «сегодня» уходит вправо:
    если растянуть саму дату, стрелка «вперёд» оторвётся к краю экрана и
    перестанет читаться как пара к «назад». */
-.rx-datebar__d {
+.datebar__d {
   font-family: var(--serif); font-size: 22px; color: var(--ink);
   min-width: 0; flex: 0 1 auto;
 }
-.rx-datebar__today { margin-left: auto; }
-.rx-datebar__today {
+.datebar__today { margin-left: auto; }
+.datebar__today {
   flex: none; padding: 8px 16px; border-radius: 999px; cursor: pointer;
   background: transparent; border: 1px solid var(--accent); color: var(--accent);
   font-family: var(--sans); font-size: 13px; font-weight: 600;
 }
-.rx-datebar__today:hover { background: rgba(155,138,248,.12); }
-.rx-datebar__today:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.datebar__today:hover { background: rgba(155,138,248,.12); }
+.datebar__today:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Сводка: одно крупное число и одна строка про главную планету. Намеренно
    не карточка — это заголовок раздела, а не ещё один блок в списке. */
@@ -939,7 +940,8 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 .rx-tl__lg--pre::before, .rx-tl__lg--post::before { background: rgba(185,174,249,.5); }
 .rx-tl__lg--retro::before { background: var(--hard); }
 
-/* Карточки нижнего ряда */
+/* Общий персональный слой: дом и контакты с картой. Классы без префикса
+   раздела, потому что этот блок теперь и в Ретроградах, и в Луне. */
 /* Правая колонка чуть шире: в ней живёт капсула из семи сфер жизни, и в
    равных колонках она начинает скроллиться уже на десктопе. */
 .rx-cols { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 18px; align-items: start; }
@@ -947,32 +949,32 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   background: var(--surf); border: 1px solid var(--line-2);
   border-radius: var(--r-card); padding: var(--pad);
 }
-.rx-card__t {
+.pcard__t {
   margin: 0 0 12px; font-size: 12px; font-weight: 700;
   letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
 }
-.rx-card__t--gap { margin-top: 24px; }
-.rx-muted { margin: 0; font-size: 14px; color: var(--ink-faint); }
+.pcard__t--gap { margin-top: 24px; }
+.pmuted { margin: 0; font-size: 14px; color: var(--ink-faint); }
 
-.rx-house { display: flex; flex-direction: column; gap: 4px; }
-.rx-house__n { font-family: var(--serif); font-size: 26px; color: var(--ink); }
-.rx-house__t { font-size: 15px; color: var(--ink-dim); }
+.phouse { display: flex; flex-direction: column; gap: 4px; }
+.phouse__n { font-family: var(--serif); font-size: 26px; color: var(--ink); }
+.phouse__t { font-size: 15px; color: var(--ink-dim); }
 
-.rx-asp { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.rx-asp__i + .rx-asp__i { border-top: 1px solid var(--line-2); }
-.rx-asp__b {
+.pasp { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.pasp__i + .pasp__i { border-top: 1px solid var(--line-2); }
+.pasp__b {
   display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px;
   width: 100%; cursor: pointer;
   padding: 12px 0; background: transparent; border: 0; text-align: left;
   color: var(--ink); font-family: var(--sans); font-size: 15px;
 }
-.rx-asp__b:hover .rx-asp__go { color: var(--accent); transform: translateX(2px); }
-.rx-asp__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
-.rx-asp__main { flex: 1 1 auto; min-width: 0; }
-.rx-asp__meta { flex: none; font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
-.rx-asp__go { flex: none; color: var(--ink-faint); transition: transform .2s ease, color .2s ease; }
+.pasp__b:hover .pasp__go { color: var(--accent); transform: translateX(2px); }
+.pasp__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.pasp__main { flex: 1 1 auto; min-width: 0; }
+.pasp__meta { flex: none; font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.pasp__go { flex: none; color: var(--ink-faint); transition: transform .2s ease, color .2s ease; }
 
-.rx-openchart { margin-top: 18px; }
+.pcard__go { margin-top: 18px; }
 
 .rx-segbar { margin-bottom: 16px; }
 .rx-mean .p:first-child { margin-top: 0; }
@@ -1002,14 +1004,80 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   .rx-hero__h { font-size: 28px; }
   .rx-hero__sign { font-size: 19px; display: block; margin-top: 2px; }
   .rx-sum__count b { font-size: 42px; }
-  .rx-datebar__d { font-size: 19px; }
+  .datebar__d { font-size: 19px; }
 }
 @media (max-width: 560px) {
   /* Орбис и «сходится/расходится» уходят на свою строку: в одну строку с
      названием аспекта они не помещаются и не дают строке сжаться. */
-  .rx-asp__meta { flex: 1 1 100%; }
-  .rx-asp__go { margin-left: auto; }
+  .pasp__meta { flex: 1 1 100%; }
+  .pasp__go { margin-left: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .rx-asp__go, .rx-date__go { transition: none; }
+  .pasp__go, .rx-date__go { transition: none; }
+}
+
+/* --- Луна: ближайшая смена знака и главные фазы ----------------------------
+   Обе полосы стоят между героем и календарём: сначала «что меняется прямо
+   сейчас», потом «что дальше», и только затем месяц целиком. */
+.mp-next {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px;
+  margin: 20px auto 0; padding: 14px 18px; max-width: 520px;
+  background: var(--surf); border: 1px solid var(--line-2); border-radius: var(--r-card);
+}
+.mp-next__l {
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint);
+  flex: 1 1 100%;
+}
+.mp-next__v { font-size: 16px; color: var(--ink); }
+.mp-next__in {
+  margin-left: auto; font-size: 13px; color: var(--moon-light);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+.mp-phases { margin-top: 26px; }
+.mp-phases__t {
+  margin: 0 0 12px; font-size: 12px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
+}
+/* Четыре фазы в ряд на десктопе, горизонтальная лента на телефоне: колонкой
+   они занимают пол-экрана и отодвигают календарь ниже сгиба. */
+.mp-phases__row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.mp-ph {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
+  padding: 16px 10px; border-radius: var(--r-card); text-align: center;
+  background: var(--surf); border: 1px solid var(--line-2); color: var(--ink);
+  font-family: var(--sans);
+  transition: border-color .2s ease, transform .2s ease;
+}
+.mp-ph:hover { border-color: var(--accent); transform: translateY(-2px); }
+.mp-ph:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mp-ph__n { margin-top: 6px; font-size: 14px; font-weight: 600; }
+.mp-ph__d { font-size: 12px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.mp-ph__s { font-size: 12px; color: var(--ink-faint); }
+
+.mp-me {
+  margin-top: 26px; padding: var(--pad);
+  background: var(--surf); border: 1px solid var(--line-2); border-radius: var(--r-card);
+}
+.mp-me__t {
+  margin: 0 0 16px; font-family: var(--serif); font-size: 26px; font-weight: 600; color: var(--ink);
+}
+
+/* Панель даты в Луне центрируется вместе с остальной колонкой раздела. */
+.view--moon .datebar { justify-content: center; }
+.view--moon .datebar__today { margin-left: 0; }
+
+@media (max-width: 700px) {
+  .mp-phases__row {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    margin-inline: -16px; padding-inline: 16px;
+  }
+  .mp-phases__row::-webkit-scrollbar { display: none; }
+  .mp-ph { flex: 0 0 132px; scroll-snap-align: start; }
+  .mp-me__t { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mp-ph { transition: none; }
+  .mp-ph:hover { transform: none; }
 }

@@ -8,7 +8,7 @@
   'use strict';
 
   var E = window.Engine, N = window.Numerology, T = window.T, W = window.Wheel;
-  var Moon = window.Moon, R = window.Retro;
+  var Moon = window.Moon, R = window.Retro, Clock = window.Clock;
   var A = window.Astronomy;
   var CITIES_ALL = window.CITIES_ALL, COUNTRY_NAMES = window.COUNTRY_NAMES;
   var TZ = window.TZ;
@@ -218,6 +218,115 @@
     return '<span class="tag tag--' + t + '">' + T.toneWord[t] + '</span>';
   }
 
+  /* --- общая панель даты ----------------------------------------------------
+     Один элемент управления временем на все разделы: он читает и меняет
+     Clock (см. clock.js), а раздел только перерисовывает себя после этого.
+     Раньше такая панель жила внутри Ретроградов; Луне понадобилась такая же,
+     и второй копии быть не должно.
+
+     data-clockjump принимает метку времени в миллисекундах и переносит на
+     точный момент — по нему работают и ключевые даты цикла в Ретроградах, и
+     ближайшие фазы в Луне. */
+  function localeDate(d) {
+    return new Intl.DateTimeFormat(moonLocale(),
+      { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+  }
+  function shortDate(d) {
+    var dd = d.getDate(), mm = d.getMonth() + 1;
+    return (dd < 10 ? '0' : '') + dd + '.' + (mm < 10 ? '0' : '') + mm;
+  }
+  function clockTime(d) {
+    var h = d.getHours(), mi = d.getMinutes();
+    return (h < 10 ? '0' : '') + h + ':' + (mi < 10 ? '0' : '') + mi;
+  }
+
+  function dateBarHtml() {
+    return '<div class="datebar">' +
+      '<button type="button" class="datebar__nav" data-clockstep="-1" aria-label="' +
+        esc(T.ui.prevMonth) + '">←</button>' +
+      '<span class="datebar__d">' + localeDate(Clock.get()) + '</span>' +
+      '<button type="button" class="datebar__nav" data-clockstep="1" aria-label="' +
+        esc(T.ui.nextMonth) + '">→</button>' +
+      (Clock.isToday() ? '' :
+        '<button type="button" class="datebar__today" data-clocktoday="1">' + T.sec.today + '</button>') +
+      '</div>';
+  }
+
+  /* --- общий персональный слой ---------------------------------------------
+     «Где это идёт по моей карте и чего касается» — один и тот же вопрос в
+     Ретроградах, в Луне и во всём, что появится дальше. Разметка ответа тоже
+     должна быть одна, иначе дом в одном разделе и дом в другом начнут
+     выглядеть по-разному без всякой причины.
+
+     Дом показывается только при известном времени рождения; вместо него
+     честная строка о том, что дома не рассчитаны, а не выдуманный номер. */
+  function personalHtml(body) {
+    var c = E.contactsFor(natal, body, Clock.get());
+    if (!c) { return ''; }
+    var houseHtml = c.house
+      ? '<div class="phouse"><span class="phouse__n">' + T.houses[c.house].n + '</span>' +
+        '<span class="phouse__t">' + T.houses[c.house].t + '</span></div>'
+      : '<p class="pmuted">' + T.sec.houseUnknown + '</p>';
+
+    var asp = c.aspects.slice(0, 4);
+    var aspHtml = asp.length ? '<ul class="pasp">' + asp.map(function (a) {
+      return '<li class="pasp__i"><button type="button" class="pasp__b" data-gopoint="' + a.natal + '">' +
+        '<span class="pasp__main">' + T.aspects[a.aspect] + ' <b>' + pName(a.natal) + '</b></span>' +
+        toneTag(a.tone) +
+        '<span class="pasp__meta">' + T.sec.orb + ' ' + fmtDeg(a.orb) + ' · ' +
+          (a.applying ? T.sec.applying : T.sec.separating) + '</span>' +
+        '<span class="pasp__go" aria-hidden="true">›</span></button></li>';
+    }).join('') + '</ul>' : '<p class="pmuted">' + T.sec.noContacts + '</p>';
+
+    return '<h3 class="pcard__t">' + T.sec.house + '</h3>' + houseHtml +
+      '<h3 class="pcard__t pcard__t--gap">' + T.sec.contacts + '</h3>' + aspHtml +
+      '<button type="button" class="btn btn--link pcard__go" data-gochart="' + body + '">' +
+        T.sec.openChart + '</button>';
+  }
+
+  function personalNeedHtml() {
+    return '<p class="p">' + T.sec.needProfile + '</p>' +
+      '<a class="btn btn--link" href="#profile">' + T.ui.needBtn + '</a>';
+  }
+
+  /* Переходы в карту одинаковы везде, поэтому и обработчик один. Идём через
+     адрес, а не через прямое присваивание chartSel: состояние раздела теперь
+     живёт в хеше, и ссылка на «карту с выбранной Венерой» должна работать
+     и если её просто открыть. */
+  function bindGoChart(scope) {
+    if (!scope) { return; }
+    Array.prototype.slice.call(scope.querySelectorAll('[data-gochart],[data-gopoint]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        go('chart', [b.getAttribute('data-gochart') || b.getAttribute('data-gopoint')]);
+      });
+    });
+  }
+
+  /* scope — контейнер раздела, rerender — как он себя перерисовывает.
+     Обработчики вешаются на уже отрисованную разметку, поэтому вызывается
+     после каждой перерисовки, как и остальные bind*. */
+  function bindDateBar(scope, rerender) {
+    if (!scope) { return; }
+    var each = function (sel, fn) {
+      Array.prototype.slice.call(scope.querySelectorAll(sel)).forEach(fn);
+    };
+    each('[data-clockstep]', function (b) {
+      b.addEventListener('click', function () {
+        Clock.step(+b.getAttribute('data-clockstep'));
+        rerender();
+      });
+    });
+    each('[data-clocktoday]', function (b) {
+      b.addEventListener('click', function () { Clock.today(); rerender(); });
+    });
+    each('[data-clockjump]', function (b) {
+      b.addEventListener('click', function () {
+        Clock.set(new Date(+b.getAttribute('data-clockjump')));
+        rerender();
+      });
+    });
+  }
+
   /* Экран без данных не должен быть пустым: объясняем, что нужно, даём
      кнопку прямо в профиль и добавляем карточку, которая считается без
      персональных данных. */
@@ -257,7 +366,7 @@
     var tp = T.tPlanet[t.transit];
     if (!tp) { return ''; }
     return tp.subj + ' ' + T.tone[t.tone] + ' ' + T.nPoint[t.natal] +
-           ' \u2014 ' + tp.theme + '. ' + tp.advice;
+           ' — ' + tp.theme + '. ' + tp.advice;
   }
 
   /* --- экраны ------------------------------------------------------------- */
@@ -809,6 +918,7 @@
   function rerenderChart() {
     var body = el('chartBody');
     if (!body) { return; }
+    syncHash('chart', [chartSel]);
     body.innerHTML = chartBodyHtml();
     body.classList.remove('fade-in');
     void body.offsetWidth;
@@ -940,7 +1050,7 @@
   };
 
   /* --- страница «Фаза Луны»: интерактивный лунный календарь --------------
-     Один источник состояния (moonSelected) -> вся остальная разметка
+     Один источник состояния (дата в Clock) -> вся остальная разметка
      пересчитывается из него: герой, бейдж освещённости, знак, карточка
      интерпретации и советы дня (см. ТЗ п.11). Клик по дню календаря или
      смена месяца перерисовывают только #moonBody — без полного route()
@@ -966,20 +1076,30 @@
   }
   function isoDay(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
 
-  /* Выбранный день переживает переключение видимого месяца: смена месяца
-     двигает только календарную сетку, герой/знак/советы остаются на
-     выбранной дате, пока пользователь не кликнет другой день. */
-  var moonSelected = null, moonViewY = null, moonViewM = null;
+  /* Видимый месяц календаря — отдельное состояние от выбранной даты: листать
+     месяцы можно, не теряя выбранный день, герой и советы остаются на нём.
+     Сама выбранная дата теперь общая на продукт и живёт в Clock, поэтому
+     переход отсюда в Ретрограды (и обратно) сохраняет день. */
+  var moonViewY = null, moonViewM = null;
   function moonEnsureState() {
-    if (moonSelected) { return; }
-    var now = new Date();
-    moonSelected = now; moonViewY = now.getFullYear(); moonViewM = now.getMonth();
+    var d = Clock.get();
+    if (moonViewY === null) { moonViewY = d.getFullYear(); moonViewM = d.getMonth(); }
+  }
+  /* После прыжка по дате (панель, фаза, кнопка «сегодня») календарь должен
+     показывать месяц выбранного дня — иначе выделенной ячейки не видно. */
+  function moonSyncMonth() {
+    var d = Clock.get();
+    moonViewY = d.getFullYear(); moonViewM = d.getMonth();
   }
 
+  /* Заголовок «Фаза Луны сегодня» верен только для сегодняшнего дня: с тех
+     пор как дату можно перематывать, для любого другого дня он врал бы. Для
+     остальных дней заголовком становится сама дата, а дублировавшая её
+     строка сверху убрана — дату теперь показывает панель. */
   function moonHeroHtml(info) {
     return '<div class="mp-hero">' +
-      '<p class="mp-date">' + moonHeroDateStr(info.date) + '</p>' +
-      '<h2 class="mp-title">' + T.ui.moonHeroTitle + '</h2>' +
+      '<h2 class="mp-title">' +
+        (Clock.isToday() ? T.ui.moonHeroTitle : moonHeroDateStr(info.date)) + '</h2>' +
       '<div class="mp-moon">' + Moon.moonHtml(300, info.illum, info.waxing, 'hero') +
         '<span class="mp-illum"><b>' + Math.round(info.illum * 100) + '%</b> ' + T.ui.illuminated + '</span>' +
       '</div>' +
@@ -997,7 +1117,7 @@
       var cls = 'mp-cal__cell';
       if (!c.inMonth) { cls += ' mp-cal__cell--out'; }
       if (sameDay(c.date, today)) { cls += ' mp-cal__cell--today'; }
-      var sel = sameDay(c.date, moonSelected);
+      var sel = sameDay(c.date, Clock.get());
       if (sel) { cls += ' mp-cal__cell--sel'; }
       var ph = T.moonPhase[c.info.phaseIndex];
       var label = c.date.getDate() + ' ' + moonMonthName(c.date.getFullYear(), c.date.getMonth()) +
@@ -1039,15 +1159,64 @@
     return '<div class="mp-advice"><h2 class="mp-advice__title">' + T.ui.dailyAdviceTitle + '</h2>' + items + '</div>';
   }
 
+  /* Ближайшая смена знака — единственное место в продукте, где важно время
+     суток, поэтому здесь и обратный отсчёт. Считаем от «сейчас», когда
+     выбран сегодняшний день, и от самой даты во всех остальных случаях:
+     иначе для выбранного дня в прошлом отсчёт был бы отрицательным. */
+  function moonNextHtml() {
+    var base = Clock.isToday() ? new Date() : Clock.get();
+    var sc = Moon.nextSignChange(base);
+    if (!sc) { return ''; }
+    var left = '';
+    if (Clock.isToday()) {
+      var ms = sc.date.getTime() - Date.now();
+      if (ms > 0) {
+        var h = Math.floor(ms / 3600000), mi = Math.round((ms % 3600000) / 60000);
+        left = '<span class="mp-next__in">' + h + ' ' + T.sec.hoursShort + ' ' +
+               mi + ' ' + T.sec.minShort + '</span>';
+      }
+    }
+    return '<div class="mp-next">' +
+      '<span class="mp-next__l">' + T.sec.signChange + '</span>' +
+      '<span class="mp-next__v">' + ZODIAC_GLYPHS[sc.to.index] + ' ' + T.signs[sc.to.index] +
+        ' · ' + shortDate(sc.date) + ', ' + clockTime(sc.date) + '</span>' + left +
+      '</div>';
+  }
+
+  /* Четыре ближайшие главные фазы с точным временем. Каждая кликабельна и
+     переносит на свой момент — это и есть «перемотка» лунного месяца. */
+  function moonPhasesHtml() {
+    var list = Moon.quartersFrom(Clock.get(), 4);
+    if (!list.length) { return ''; }
+    var items = list.map(function (q) {
+      var ph = T.moonPhase[q.phaseIndex];
+      return '<button type="button" class="mp-ph" data-clockjump="' + q.date.getTime() + '">' +
+        Moon.moonHtml(38, q.illum, q.quarter < 2, 'cal') +
+        '<span class="mp-ph__n">' + ph.n + '</span>' +
+        '<span class="mp-ph__d">' + shortDate(q.date) + ', ' + clockTime(q.date) + '</span>' +
+        '<span class="mp-ph__s">' + ZODIAC_GLYPHS[q.sign.index] + ' ' + T.signs[q.sign.index] + '</span>' +
+        '</button>';
+    }).join('');
+    return '<section class="mp-phases"><h3 class="mp-phases__t">' + T.sec.upcomingPhases + '</h3>' +
+      '<div class="mp-phases__row">' + items + '</div></section>';
+  }
+
+  function moonMeHtml() {
+    return '<section class="mp-me"><h3 class="mp-me__t">' + T.sec.moonAndYou + '</h3>' +
+      (natal ? personalHtml('Moon') : personalNeedHtml()) + '</section>';
+  }
+
   function moonBodyHtml() {
     moonEnsureState();
-    var info = Moon.infoFor(moonSelected);
-    return moonHeroHtml(info) + moonCalHtml() + moonSignHtml(info) + moonAdviceHtml(info);
+    var info = Moon.infoFor(Clock.get());
+    return dateBarHtml() + moonHeroHtml(info) + moonNextHtml() + moonPhasesHtml() +
+      moonCalHtml() + moonMeHtml() + moonSignHtml(info) + moonAdviceHtml(info);
   }
 
   function rerenderMoon() {
     var body = el('moonBody');
     if (!body) { return; }
+    syncHash('moon', [Clock.isToday() ? null : Clock.toKey()]);
     body.innerHTML = moonBodyHtml();
     body.classList.remove('fade-in');
     void body.offsetWidth;
@@ -1058,11 +1227,13 @@
   function bindMoonBody() {
     var body = el('moonBody');
     if (!body) { return; }
+    bindDateBar(body, function () { moonSyncMonth(); rerenderMoon(); });
+    bindGoChart(body);
     Array.prototype.slice.call(body.querySelectorAll('.mp-cal__cell')).forEach(function (btn) {
       btn.addEventListener('click', function () {
         var p = btn.dataset.iso.split('-').map(Number);
-        moonSelected = new Date(p[0], p[1] - 1, p[2]);
-        moonViewY = moonSelected.getFullYear(); moonViewM = moonSelected.getMonth();
+        Clock.set(new Date(p[0], p[1] - 1, p[2], 12, 0, 0, 0));
+        moonSyncMonth();
         rerenderMoon();
       });
     });
@@ -1080,36 +1251,21 @@
     return '<div class="mp-page" id="moonBody">' + moonBodyHtml() + '</div>';
   };
 
-  /* --- \u0420\u0435\u0442\u0440\u043e\u0433\u0440\u0430\u0434\u044b: \u043f\u0440\u043e\u0432\u043e\u0434\u043d\u0438\u043a \u043f\u043e \u0446\u0438\u043a\u043b\u0430\u043c -------------------------------------
-     \u0420\u0430\u0437\u0434\u0435\u043b \u0441\u043e\u0431\u0440\u0430\u043d \u0432\u043e\u043a\u0440\u0443\u0433 \u0442\u0440\u0451\u0445 \u0441\u043b\u043e\u0451\u0432, \u0430 \u043d\u0435 \u0432\u043e\u043a\u0440\u0443\u0433 \u0441\u043f\u0438\u0441\u043a\u0430 \u043f\u043b\u0430\u043d\u0435\u0442:
-       1. \u0441\u043e\u0431\u044b\u0442\u0438\u0435   \u2014 \u00ab\u0421\u0430\u0442\u0443\u0440\u043d \u0440\u0435\u0442\u0440\u043e\u0433\u0440\u0430\u0434\u0435\u043d \u0432 \u0420\u044b\u0431\u0430\u0445\u00bb, \u0448\u043a\u0430\u043b\u0430 \u0446\u0438\u043a\u043b\u0430
-       2. \u043b\u0438\u0447\u043d\u043e\u0435    \u2014 \u0434\u043e\u043c \u043a\u0430\u0440\u0442\u044b \u0438 \u0442\u0435\u043a\u0443\u0449\u0438\u0435 \u0430\u0441\u043f\u0435\u043a\u0442\u044b \u043a \u043d\u0430\u0442\u0430\u043b\u044c\u043d\u044b\u043c \u0442\u043e\u0447\u043a\u0430\u043c
-       3. \u0441\u043c\u044b\u0441\u043b     \u2014 \u0441 \u0447\u0435\u043c \u043f\u0435\u0440\u0438\u043e\u0434 \u0442\u0440\u0430\u0434\u0438\u0446\u0438\u043e\u043d\u043d\u043e \u0441\u0432\u044f\u0437\u044b\u0432\u0430\u044e\u0442, \u0441 \u0444\u0438\u043b\u044c\u0442\u0440\u043e\u043c \u043f\u043e \u0441\u0444\u0435\u0440\u0435
+  /* --- Ретрограды: проводник по циклам -------------------------------------
+     Раздел собран вокруг трёх слоёв, а не вокруг списка планет:
+       1. событие   — «Сатурн ретрограден в Рыбах», шкала цикла
+       2. личное    — дом карты и текущие аспекты к натальным точкам
+       3. смысл     — с чем период традиционно связывают, с фильтром по сфере
 
-     \u0421\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u0435 \u0440\u0430\u0437\u0434\u0435\u043b\u0430 \u2014 \u0442\u0440\u0438 \u043f\u0435\u0440\u0435\u043c\u0435\u043d\u043d\u044b\u0435 (\u0434\u0430\u0442\u0430, \u043f\u043b\u0430\u043d\u0435\u0442\u0430, \u0441\u0444\u0435\u0440\u0430); \u043b\u044e\u0431\u0430\u044f \u0438\u0437 \u043d\u0438\u0445
-     \u043f\u0435\u0440\u0435\u0440\u0438\u0441\u043e\u0432\u044b\u0432\u0430\u0435\u0442 \u0442\u043e\u043b\u044c\u043a\u043e #rxBody, \u0431\u0435\u0437 route() \u0438 \u0431\u0435\u0437 \u0441\u0431\u0440\u043e\u0441\u0430 \u0441\u043a\u0440\u043e\u043b\u043b\u0430 \u2014 \u0442\u0435\u043c \u0436\u0435
-     \u043f\u0440\u0438\u0451\u043c\u043e\u043c, \u0447\u0442\u043e #moonBody \u0438 #chartBody.
-
-     \u0414\u0430\u0442\u0430 \u0437\u0434\u0435\u0441\u044c \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u0430\u044f, \u043d\u043e \u043d\u0430\u043c\u0435\u0440\u0435\u043d\u043d\u043e \u0441\u0434\u0435\u043b\u0430\u043d\u0430 \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u043e\u0439 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c\u044e \u0441
-     \u043a\u043d\u043e\u043f\u043a\u0430\u043c\u0438 \u00ab\u043d\u0430\u0437\u0430\u0434 / \u0441\u0435\u0433\u043e\u0434\u043d\u044f / \u0432\u043f\u0435\u0440\u0451\u0434\u00bb: \u043a\u043e\u0433\u0434\u0430 \u043f\u043e\u044f\u0432\u0438\u0442\u0441\u044f \u043e\u0431\u0449\u0438\u0439 \u043a\u043e\u043d\u0442\u0435\u043a\u0441\u0442
-     \u0432\u0440\u0435\u043c\u0435\u043d\u0438 \u043d\u0430 \u0432\u0435\u0441\u044c \u043f\u0440\u043e\u0434\u0443\u043a\u0442, \u044d\u0442\u043e\u0442 \u0440\u0430\u0437\u0434\u0435\u043b \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0438\u0442\u0441\u044f \u043a \u043d\u0435\u043c\u0443 \u0437\u0430\u043c\u0435\u043d\u043e\u0439 rxDate,
-     \u0430 \u043d\u0435 \u043f\u0435\u0440\u0435\u043f\u0438\u0441\u044b\u0432\u0430\u043d\u0438\u0435\u043c \u044d\u043a\u0440\u0430\u043d\u0430. */
+     Состояние раздела — планета и сфера; дата общая на продукт и живёт в
+     Clock. Любое из трёх перерисовывает только #rxBody, без route() и без
+     сброса скролла — тем же приёмом, что #moonBody и #chartBody. */
   var RX_AREAS = ['overview', 'love', 'career', 'money', 'communication', 'energy', 'inner'];
-  var rxDate = null, rxBody = null, rxArea = 'overview';
+  var rxBody = null, rxArea = 'overview';
 
-  function rxLocaleDate(d) {
-    return new Intl.DateTimeFormat(moonLocale(),
-      { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
-  }
-  function rxShortDate(d) {
-    var dd = d.getDate(), mm = d.getMonth() + 1;
-    return (dd < 10 ? '0' : '') + dd + '.' + (mm < 10 ? '0' : '') + mm;
-  }
-  function rxIsToday(d) { return sameDay(d, new Date()); }
-
-  /* \u0413\u043b\u0430\u0432\u043d\u0430\u044f \u043f\u043b\u0430\u043d\u0435\u0442\u0430 \u0440\u0430\u0437\u0434\u0435\u043b\u0430: \u043f\u0440\u0438 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u043d\u043e\u043c \u043f\u0440\u043e\u0444\u0438\u043b\u0435 \u2014 \u0442\u0430, \u0447\u0442\u043e \u0441\u0438\u043b\u044c\u043d\u0435\u0435 \u0432\u0441\u0435\u0433\u043e
-     \u0437\u0430\u0434\u0435\u0432\u0430\u0435\u0442 \u043a\u0430\u0440\u0442\u0443, \u0438\u043d\u0430\u0447\u0435 \u0441\u0430\u043c\u0430\u044f \u0431\u044b\u0441\u0442\u0440\u0430\u044f (\u0435\u0451 \u0446\u0438\u043a\u043b \u0431\u043b\u0438\u0436\u0435 \u0438 \u043d\u0430\u0433\u043b\u044f\u0434\u043d\u0435\u0435). \u0420\u0435\u0442\u0440\u043e-
-     \u0433\u0440\u0430\u0434\u043d\u044b\u0435 \u0432\u0441\u0435\u0433\u0434\u0430 \u043f\u0440\u0438\u043e\u0440\u0438\u0442\u0435\u0442\u043d\u0435\u0435 \u0438\u0434\u0443\u0449\u0438\u0445 \u043f\u0440\u044f\u043c\u043e. */
+  /* Главная планета раздела: при заполненном профиле — та, что сильнее всего
+     задевает карту, иначе самая быстрая (её цикл ближе и нагляднее). Ретро-
+     градные всегда приоритетнее идущих прямо. */
   function rxDefaultBody(st) {
     var retro = st.filter(function (s) { return s.retro; });
     var pool = retro.length ? retro : st;
@@ -1124,15 +1280,14 @@
   }
 
   function rxEnsureState(st) {
-    if (!rxDate) { rxDate = new Date(); }
     var known = st.some(function (s) { return s.body === rxBody; });
     if (!known) { rxBody = rxDefaultBody(st); }
   }
 
-  /* \u0428\u043a\u0430\u043b\u0430 \u0446\u0438\u043a\u043b\u0430: \u043f\u0440\u0435\u0434\u0442\u0435\u043d\u044c \u2014 \u0440\u0435\u0442\u0440\u043e\u0433\u0440\u0430\u0434 \u2014 \u043f\u043e\u0441\u043b\u0435\u0442\u0435\u043d\u044c \u0432 \u0440\u0435\u0430\u043b\u044c\u043d\u044b\u0445 \u043f\u0440\u043e\u043f\u043e\u0440\u0446\u0438\u044f\u0445,
-     \u0441 \u043c\u0430\u0440\u043a\u0435\u0440\u043e\u043c \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u043e\u0439 \u0434\u0430\u0442\u044b. \u0415\u0441\u043b\u0438 \u0442\u0435\u043d\u044c \u043d\u0435 \u043f\u043e\u0441\u0447\u0438\u0442\u0430\u043b\u0430\u0441\u044c (\u043a\u0440\u0430\u0435\u0432\u043e\u0439 \u0441\u043b\u0443\u0447\u0430\u0439 \u0443
-     \u0433\u0440\u0430\u043d\u0438\u0446\u044b \u043f\u043e\u0438\u0441\u043a\u0430), \u0448\u043a\u0430\u043b\u044b \u043f\u0440\u043e\u0441\u0442\u043e \u043d\u0435\u0442 \u2014 \u0440\u0438\u0441\u043e\u0432\u0430\u0442\u044c \u0435\u0451 \u043f\u043e \u0432\u044b\u0434\u0443\u043c\u0430\u043d\u043d\u044b\u043c \u0433\u0440\u0430\u043d\u0438\u0446\u0430\u043c
-     \u043d\u0435\u043b\u044c\u0437\u044f. */
+  /* Шкала цикла: предтень — ретроград — послетень в реальных пропорциях,
+     с маркером выбранной даты. Если тень не посчиталась (краевой случай у
+     границы поиска), шкалы просто нет — рисовать её по выдуманным границам
+     нельзя. */
   function rxTimelineHtml(c) {
     if (!c.shadowStart || !c.shadowEnd) { return ''; }
     var t0 = c.shadowStart.getTime(), t1 = c.shadowEnd.getTime();
@@ -1140,7 +1295,7 @@
     if (span <= 0) { return ''; }
     var at = function (d) { return (d.getTime() - t0) / span * 100; };
     var r0 = at(c.stationRetro), r1 = at(c.stationDirect);
-    var raw = (rxDate.getTime() - t0) / span * 100;
+    var raw = (Clock.get().getTime() - t0) / span * 100;
     var now = Math.max(0, Math.min(100, raw));
     var outside = raw < -0.5 || raw > 100.5;
 
@@ -1150,54 +1305,54 @@
     };
     var tick = function (pos, d) {
       return '<span class="rx-tl__tick" style="left:' + pos.toFixed(2) + '%">' +
-        rxShortDate(d) + '</span>';
+        shortDate(d) + '</span>';
     };
 
     return '<div class="rx-tl">' +
       '<div class="rx-tl__bar">' +
-        seg(0, r0, 'pre', T.rx.phase.pre) +
-        seg(r0, r1, 'retro', T.rx.phase.retro) +
-        seg(r1, 100, 'post', T.rx.phase.post) +
+        seg(0, r0, 'pre', T.sec.phase.pre) +
+        seg(r0, r1, 'retro', T.sec.phase.retro) +
+        seg(r1, 100, 'post', T.sec.phase.post) +
         '<span class="rx-tl__now' + (outside ? ' rx-tl__now--out' : '') +
           '" style="left:' + now.toFixed(2) + '%">' +
-          '<span class="rx-tl__nowlabel">' + (rxIsToday(rxDate) ? T.rx.today : rxShortDate(rxDate)) +
+          '<span class="rx-tl__nowlabel">' + (Clock.isToday() ? T.sec.today : shortDate(Clock.get())) +
         '</span></span>' +
       '</div>' +
       '<div class="rx-tl__ticks">' + tick(0, c.shadowStart) + tick(r0, c.stationRetro) +
         tick(r1, c.stationDirect) + tick(100, c.shadowEnd) + '</div>' +
       '<div class="rx-tl__legend">' +
-        '<span class="rx-tl__lg rx-tl__lg--pre">' + T.rx.phase.pre + '</span>' +
-        '<span class="rx-tl__lg rx-tl__lg--retro">' + T.rx.phase.retro + '</span>' +
-        '<span class="rx-tl__lg rx-tl__lg--post">' + T.rx.phase.post + '</span>' +
+        '<span class="rx-tl__lg rx-tl__lg--pre">' + T.sec.phase.pre + '</span>' +
+        '<span class="rx-tl__lg rx-tl__lg--retro">' + T.sec.phase.retro + '</span>' +
+        '<span class="rx-tl__lg rx-tl__lg--post">' + T.sec.phase.post + '</span>' +
       '</div></div>';
   }
 
-  /* \u0421\u0447\u0451\u0442\u0447\u0438\u043a \u043f\u043e\u0434 \u0448\u043a\u0430\u043b\u043e\u0439 \u0437\u0430\u0432\u0438\u0441\u0438\u0442 \u043e\u0442 \u0444\u0430\u0437\u044b: \u0432\u043d\u0443\u0442\u0440\u0438 \u0440\u0435\u0442\u0440\u043e\u0433\u0440\u0430\u0434\u0430 \u043e\u0441\u043c\u044b\u0441\u043b\u0435\u043d\u043d\u043e
-     \u00ab\u043f\u0440\u043e\u0448\u043b\u043e / \u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c\u00bb, \u0434\u043e \u043d\u0435\u0433\u043e \u2014 \u00ab\u0434\u043e \u0440\u0430\u0437\u0432\u043e\u0440\u043e\u0442\u0430\u00bb, \u0432 \u043f\u043e\u0441\u043b\u0435\u0442\u0435\u043d\u0438 \u2014 \u0441\u043a\u043e\u043b\u044c\u043a\u043e
-     \u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c \u0434\u043e \u043a\u043e\u043d\u0446\u0430 \u0442\u0435\u043d\u0438. \u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0442\u044c \u00ab\u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c 0\u00bb \u0432 \u043f\u0440\u0435\u0434\u0442\u0435\u043d\u0438 \u0431\u044b\u043b\u043e \u0431\u044b
-     \u0444\u043e\u0440\u043c\u0430\u043b\u044c\u043d\u043e \u0432\u0435\u0440\u043d\u043e \u0438 \u043f\u0440\u0438 \u044d\u0442\u043e\u043c \u0431\u0435\u0441\u0441\u043c\u044b\u0441\u043b\u0435\u043d\u043d\u043e. */
+  /* Счётчик под шкалой зависит от фазы: внутри ретрограда осмысленно
+     «прошло / осталось», до него — «до разворота», в послетени — сколько
+     осталось до конца тени. Показывать «осталось 0» в предтени было бы
+     формально верно и при этом бессмысленно. */
   function rxCountersHtml(c) {
     var items = [];
     if (c.phase === 'retro') {
-      items.push([T.rx.elapsed, c.daysElapsed]);
-      items.push([T.rx.remaining, c.daysRemaining]);
+      items.push([T.sec.elapsed, c.daysElapsed]);
+      items.push([T.sec.remaining, c.daysRemaining]);
     } else if (c.phase === 'pre' || c.phase === 'upcoming') {
-      items.push([T.rx.untilRetro, c.daysUntilRetro]);
-      items.push([T.rx.cycle, c.retroDays]);
+      items.push([T.sec.untilRetro, c.daysUntilRetro]);
+      items.push([T.sec.cycle, c.retroDays]);
     } else if (c.phase === 'post' && c.shadowEnd) {
-      var left = Math.max(0, Math.round((c.shadowEnd.getTime() - rxDate.getTime()) / 86400000));
-      items.push([T.rx.remaining, left]);
-      items.push([T.rx.cycle, c.retroDays]);
+      var left = Math.max(0, Math.round((c.shadowEnd.getTime() - Clock.get().getTime()) / 86400000));
+      items.push([T.sec.remaining, left]);
+      items.push([T.sec.cycle, c.retroDays]);
     }
     if (!items.length) { return ''; }
     return '<div class="rx-counts">' + items.map(function (it) {
-      return '<span class="rx-count"><b>' + it[1] + '</b> <span>' + T.rx.dayShort +
+      return '<span class="rx-count"><b>' + it[1] + '</b> <span>' + T.sec.dayShort +
         ' \u00b7 ' + it[0] + '</span></span>';
     }).join('') + '</div>';
   }
 
   function rxPickerHtml(st) {
-    return '<div class="rx-pick" role="tablist" aria-label="' + esc(T.rx.pickPlanet) + '">' +
+    return '<div class="rx-pick" role="tablist" aria-label="' + esc(T.sec.pickPlanet) + '">' +
       st.map(function (s) {
         var state = s.retro ? 'retro' : 'direct';
         return '<button type="button" class="rx-pick__b' + (s.body === rxBody ? ' on' : '') +
@@ -1209,92 +1364,55 @@
       }).join('') + '</div>';
   }
 
-  /* \u0421\u043b\u043e\u0439 2 \u2014 \u043b\u0438\u0447\u043d\u043e\u0435. \u0414\u043e\u043c \u0441\u0447\u0438\u0442\u0430\u0435\u0442\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u0440\u0438 \u0438\u0437\u0432\u0435\u0441\u0442\u043d\u043e\u043c \u0432\u0440\u0435\u043c\u0435\u043d\u0438 \u0440\u043e\u0436\u0434\u0435\u043d\u0438\u044f:
-     \u0431\u0435\u0437 \u0430\u0441\u0446\u0435\u043d\u0434\u0435\u043d\u0442\u0430 \u0434\u043e\u043c\u043e\u0432 \u043d\u0435\u0442, \u0438 \u043f\u043e\u0434\u0441\u0442\u0430\u0432\u043b\u044f\u0442\u044c \u0438\u0445 \u043d\u0435\u0447\u0435\u043c. */
+  /* Слой 2 — личное. Разметка общая для всех разделов, см. personalHtml(). */
   function rxPersonalHtml(s) {
     if (!natal) {
-      return '<section class="rx-card rx-card--need"><p class="p">' + T.rx.needProfile + '</p>' +
-        '<a class="btn btn--link" href="#profile">' + T.ui.needBtn + '</a></section>';
+      return '<section class="rx-card rx-card--need">' + personalNeedHtml() + '</section>';
     }
-    var pers = s.personal;
-    var houseHtml;
-    if (pers && pers.house) {
-      var h = T.houses[pers.house];
-      houseHtml = '<div class="rx-house"><span class="rx-house__n">' + h.n + '</span>' +
-        '<span class="rx-house__t">' + h.t + '</span></div>';
-    } else {
-      houseHtml = '<p class="rx-muted">' + T.rx.houseUnknown + '</p>';
-    }
-
-    var asp = (pers && pers.aspects || []).slice(0, 4);
-    var aspHtml = asp.length ? '<ul class="rx-asp">' + asp.map(function (a) {
-      return '<li class="rx-asp__i"><button type="button" class="rx-asp__b" data-rxpoint="' + a.natal + '">' +
-        '<span class="rx-asp__main">' + T.aspects[a.aspect] + ' <b>' + pName(a.natal) + '</b></span>' +
-        toneTag(a.tone) +
-        '<span class="rx-asp__meta">' + T.rx.orb + ' ' + fmtDeg(a.orb) + ' \u00b7 ' +
-          (a.applying ? T.rx.applying : T.rx.separating) + '</span>' +
-        '<span class="rx-asp__go" aria-hidden="true">\u203a</span></button></li>';
-    }).join('') + '</ul>' : '<p class="rx-muted">' + T.rx.noContacts + '</p>';
-
-    return '<section class="rx-card">' +
-      '<h3 class="rx-card__t">' + T.rx.house + '</h3>' + houseHtml +
-      '<h3 class="rx-card__t rx-card__t--gap">' + T.rx.contacts + '</h3>' + aspHtml +
-      '<button type="button" class="btn btn--link rx-openchart" data-rxchart="' + s.body + '">' +
-        T.rx.openChart + '</button>' +
-      '</section>';
+    return '<section class="rx-card">' + personalHtml(s.body) + '</section>';
   }
 
-  /* \u0421\u043b\u043e\u0439 3 \u2014 \u0441\u043c\u044b\u0441\u043b. \u0421\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0439 \u0442\u0435\u043a\u0441\u0442 \u043f\u043b\u0430\u043d\u0435\u0442\u044b (T.retro) \u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u043c \u0442\u043e\u043b\u044c\u043a\u043e
-     \u043a\u043e\u0433\u0434\u0430 \u043e\u043d\u0430 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0438\u0434\u0451\u0442 \u043d\u0430\u0437\u0430\u0434; \u0432 \u0442\u0435\u043d\u0438 \u0438 \u0434\u043e \u0446\u0438\u043a\u043b\u0430 \u0447\u0435\u0441\u0442\u043d\u0435\u0435 \u043e\u0431\u044a\u044f\u0441\u043d\u0438\u0442\u044c
-     \u0444\u0430\u0437\u0443, \u0430 \u043d\u0435 \u043f\u0435\u0440\u0435\u0441\u043a\u0430\u0437\u044b\u0432\u0430\u0442\u044c \u0440\u0435\u0442\u0440\u043e\u0433\u0440\u0430\u0434\u043d\u0443\u044e \u0445\u0430\u0440\u0430\u043a\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043a\u0443. */
+  /* Слой 3 — смысл. Собственный текст планеты (T.retro) показываем только
+     когда она действительно идёт назад; в тени и до цикла честнее объяснить
+     фазу, а не пересказывать ретроградную характеристику. */
   function rxMeaningHtml(s, c) {
     var tabs = RX_AREAS.map(function (k) {
       return '<button type="button" class="segbar__b' + (rxArea === k ? ' on' : '') +
-        '" data-rxarea="' + k + '"><span class="segbar__t">' + T.rx.areas[k] + '</span></button>';
+        '" data-rxarea="' + k + '"><span class="segbar__t">' + T.sec.areas[k] + '</span></button>';
     }).join('');
-    var body = '<p class="p">' + T.rx.phaseNote[c.phase] + '</p>';
+    var body = '<p class="p">' + T.sec.phaseNote[c.phase] + '</p>';
     if (s.retro && T.retro[s.body]) { body += '<p class="p">' + T.retro[s.body] + '</p>'; }
-    body += '<p class="p">' + T.rx.areaText[rxArea] + '</p>';
+    body += '<p class="p">' + T.sec.areaText[rxArea] + '</p>';
     return '<section class="rx-card">' +
-      '<h3 class="rx-card__t">' + T.rx.meaning + '</h3>' +
+      '<h3 class="pcard__t">' + T.sec.meaning + '</h3>' +
       '<div class="segbar rx-segbar" id="rxSegbar"><span class="segbar__ind" id="rxSegbarInd"></span>' +
         tabs + '</div>' +
       '<div class="rx-mean" id="rxMean">' + body + '</div>' +
-      '<p class="note">' + T.rx.traditionNote + '</p>' +
+      '<p class="note">' + T.sec.traditionNote + '</p>' +
       '</section>';
   }
 
   function rxDatesHtml(c) {
     var rows = R.keyDates(c).map(function (k) {
-      var isPast = k.date.getTime() < rxDate.getTime();
+      var isPast = k.date.getTime() < Clock.get().getTime();
       return '<li class="rx-date' + (isPast ? ' rx-date--past' : '') + '">' +
-        '<button type="button" class="rx-date__b" data-rxjump="' + k.date.getTime() + '">' +
+        '<button type="button" class="rx-date__b" data-clockjump="' + k.date.getTime() + '">' +
         '<span class="rx-date__d">' + fmtDate(k.date) + '</span>' +
-        '<span class="rx-date__l">' + T.rx.kd[k.key] + '</span>' +
+        '<span class="rx-date__l">' + T.sec.kd[k.key] + '</span>' +
         '<span class="rx-date__go" aria-hidden="true">\u203a</span></button></li>';
     }).join('');
-    return '<section class="rx-card"><h3 class="rx-card__t">' + T.rx.keyDates + '</h3>' +
+    return '<section class="rx-card"><h3 class="pcard__t">' + T.sec.keyDates + '</h3>' +
       '<ul class="rx-dates">' + rows + '</ul></section>';
-  }
-
-  function rxDateBarHtml() {
-    return '<div class="rx-datebar">' +
-      '<button type="button" class="rx-datebar__nav" data-rxstep="-1" aria-label="' + esc(T.ui.prevMonth) + '">\u2190</button>' +
-      '<span class="rx-datebar__d">' + rxLocaleDate(rxDate) + '</span>' +
-      '<button type="button" class="rx-datebar__nav" data-rxstep="1" aria-label="' + esc(T.ui.nextMonth) + '">\u2192</button>' +
-      (rxIsToday(rxDate) ? '' :
-        '<button type="button" class="rx-datebar__today" data-rxtoday="1">' + T.rx.today + '</button>') +
-      '</div>';
   }
 
   function rxSummaryHtml(st) {
     var retro = st.filter(function (s) { return s.retro; });
     if (!retro.length) {
-      var next = R.nextRetrograde(rxDate);
+      var next = R.nextRetrograde(Clock.get());
       return '<section class="rx-sum rx-sum--none">' +
-        '<h2 class="rx-sum__h">' + T.rx.noneTitle + '</h2>' +
-        '<p class="rx-sum__p">' + T.rx.noneText +
-          (next ? ' ' + T.rx.nextIs + ': <b>' + pName(next.body) + '</b>, ' +
+        '<h2 class="rx-sum__h">' + T.sec.noneTitle + '</h2>' +
+        '<p class="rx-sum__p">' + T.sec.noneText +
+          (next ? ' ' + T.sec.nextIs + ': <b>' + pName(next.body) + '</b>, ' +
             fmtDate(next.stationRetro) + '.' : '') + '</p></section>';
     }
     var lead = null;
@@ -1302,34 +1420,33 @@
       if (!lead || (natal ? s.relevance > lead.relevance : Math.abs(s.speed) > Math.abs(lead.speed))) { lead = s; }
     });
     return '<section class="rx-sum">' +
-      '<div class="rx-sum__count"><b>' + retro.length + '</b><span>' + T.rx.retroNow + '</span></div>' +
-      '<div class="rx-sum__lead"><span>' + (natal ? T.rx.mostRelevant : T.rx.mostRelevantNoChart) +
+      '<div class="rx-sum__count"><b>' + retro.length + '</b><span>' + T.sec.retroNow + '</span></div>' +
+      '<div class="rx-sum__lead"><span>' + (natal ? T.sec.mostRelevant : T.sec.mostRelevantNoChart) +
         '</span><b>' + pName(lead.body) + '</b></div>' +
       '</section>';
   }
 
   function rxBodyHtml() {
-    if (!rxDate) { rxDate = new Date(); }
-    var st = R.statusAt(rxDate, natal);
+    var st = R.statusAt(Clock.get(), natal);
     rxEnsureState(st);
     var s = null;
     st.forEach(function (x) { if (x.body === rxBody) { s = x; } });
-    var c = R.cycleFor(rxBody, rxDate);
+    var c = R.cycleFor(rxBody, Clock.get());
 
     var hero;
     if (c) {
       hero = '<section class="rx-hero">' +
-        '<p class="rx-hero__eyebrow">' + T.rx.phase[c.phase] + '</p>' +
+        '<p class="rx-hero__eyebrow">' + T.sec.phase[c.phase] + '</p>' +
         '<h2 class="rx-hero__h">' + pName(s.body) + ' <span class="rx-hero__sign">' +
-          T.rx.inSign + ' ' + signName(s.sign) + '</span></h2>' +
+          T.sec.inSign + ' ' + signName(s.sign) + '</span></h2>' +
         rxCountersHtml(c) + rxTimelineHtml(c) +
         '</section>';
     } else {
       hero = '<section class="rx-hero"><h2 class="rx-hero__h">' + pName(s.body) + '</h2>' +
-        '<p class="rx-muted">' + T.ui.noRetro + '</p></section>';
+        '<p class="pmuted">' + T.ui.noRetro + '</p></section>';
     }
 
-    return rxDateBarHtml() + rxSummaryHtml(st) + rxPickerHtml(st) + hero +
+    return dateBarHtml() + rxSummaryHtml(st) + rxPickerHtml(st) + hero +
       '<div class="rx-cols">' + rxPersonalHtml(s) +
       (c ? rxMeaningHtml(s, c) + rxDatesHtml(c) : '') + '</div>';
   }
@@ -1337,6 +1454,7 @@
   function rerenderRetro() {
     var body = el('rxBody');
     if (!body) { return; }
+    syncHash('retro', [rxBody, Clock.isToday() ? null : Clock.toKey()]);
     body.innerHTML = rxBodyHtml();
     body.classList.remove('fade-in');
     void body.offsetWidth;
@@ -1358,56 +1476,28 @@
         rerenderRetro();
       });
     });
-    pick('[data-rxstep]', function (b) {
-      b.addEventListener('click', function () {
-        rxDate = new Date(rxDate.getTime() + (+b.getAttribute('data-rxstep')) * 86400000);
-        rerenderRetro();
-      });
-    });
-    pick('[data-rxtoday]', function (b) {
-      b.addEventListener('click', function () { rxDate = new Date(); rerenderRetro(); });
-    });
-    pick('[data-rxjump]', function (b) {
-      b.addEventListener('click', function () {
-        rxDate = new Date(+b.getAttribute('data-rxjump'));
-        rerenderRetro();
-      });
-    });
-    /* \u0421\u043c\u0435\u043d\u0430 \u0441\u0444\u0435\u0440\u044b \u043c\u0435\u043d\u044f\u0435\u0442 \u0442\u043e\u043b\u044c\u043a\u043e \u0442\u0435\u043a\u0441\u0442 \u2014 \u043f\u0435\u0440\u0435\u0440\u0438\u0441\u043e\u0432\u044b\u0432\u0430\u0442\u044c \u0432\u0435\u0441\u044c \u0440\u0430\u0437\u0434\u0435\u043b \u043d\u0435\u0437\u0430\u0447\u0435\u043c,
-       \u0438\u043d\u0430\u0447\u0435 \u0441\u043a\u043e\u043b\u044c\u0437\u044f\u0449\u0438\u0439 \u0438\u043d\u0434\u0438\u043a\u0430\u0442\u043e\u0440 \u0434\u0451\u0440\u043d\u0435\u0442\u0441\u044f \u0432\u043c\u0435\u0441\u0442\u043e \u0430\u043d\u0438\u043c\u0430\u0446\u0438\u0438. */
+    bindDateBar(body, rerenderRetro);
+    /* Смена сферы меняет только текст — перерисовывать весь раздел незачем,
+       иначе скользящий индикатор дёрнется вместо анимации. */
     pick('[data-rxarea]', function (b) {
       b.addEventListener('click', function () {
         if (b.classList.contains('on')) { return; }
         rxArea = b.getAttribute('data-rxarea');
         pick('[data-rxarea]', function (x) { x.classList.toggle('on', x === b); });
         positionSegIndicator('rxSegbar', 'rxSegbarInd', false);
-        var st = R.statusAt(rxDate, natal), s = null;
+        var st = R.statusAt(Clock.get(), natal), s = null;
         st.forEach(function (x) { if (x.body === rxBody) { s = x; } });
-        var c = R.cycleFor(rxBody, rxDate);
+        var c = R.cycleFor(rxBody, Clock.get());
         var mean = el('rxMean');
         if (mean && c && s) {
-          var html = '<p class="p">' + T.rx.phaseNote[c.phase] + '</p>';
+          var html = '<p class="p">' + T.sec.phaseNote[c.phase] + '</p>';
           if (s.retro && T.retro[s.body]) { html += '<p class="p">' + T.retro[s.body] + '</p>'; }
-          html += '<p class="p">' + T.rx.areaText[rxArea] + '</p>';
+          html += '<p class="p">' + T.sec.areaText[rxArea] + '</p>';
           mean.innerHTML = html;
         }
       });
     });
-    /* \u041a\u0440\u043e\u0441\u0441-\u043f\u0435\u0440\u0435\u0445\u043e\u0434 \u0432 \u043a\u0430\u0440\u0442\u0443: chartSel \u2014 \u0442\u043e \u0436\u0435 \u0441\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u0435, \u043a\u043e\u0442\u043e\u0440\u044b\u043c \u0436\u0438\u0432\u0451\u0442
-       \u0432\u043a\u043b\u0430\u0434\u043a\u0430 Chart, \u043f\u043e\u044d\u0442\u043e\u043c\u0443 \u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e \u0432\u044b\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0435\u0433\u043e \u043f\u0435\u0440\u0435\u0434 \u0441\u043c\u0435\u043d\u043e\u0439 \u0445\u0435\u0448\u0430,
-       \u0438 \u043a\u0430\u0440\u0442\u0430 \u043e\u0442\u043a\u0440\u043e\u0435\u0442\u0441\u044f \u0443\u0436\u0435 \u0441 \u043d\u0443\u0436\u043d\u043e\u0439 \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u043e\u0439 \u0442\u043e\u0447\u043a\u043e\u0439. */
-    pick('[data-rxchart]', function (b) {
-      b.addEventListener('click', function () {
-        chartSel = b.getAttribute('data-rxchart');
-        location.hash = '#chart';
-      });
-    });
-    pick('[data-rxpoint]', function (b) {
-      b.addEventListener('click', function () {
-        chartSel = b.getAttribute('data-rxpoint');
-        location.hash = '#chart';
-      });
-    });
+    bindGoChart(body);
   }
 
   views.retro = function () {
@@ -1610,11 +1700,62 @@
   /* --- роутер ------------------------------------------------------------- */
   var ORDER = ['today', 'horoscope', 'chart', 'match', 'numbers', 'moon', 'retro', 'profile'];
 
+  /* --- адрес раздела с состоянием ------------------------------------------
+     Хеш теперь не только имя раздела, но и то, что в нём выбрано:
+
+       #chart/Venus            карта с выбранной Венерой
+       #retro/Mercury          Ретрограды с выбранным Меркурием
+       #moon/2026-09-26        Луна на день полнолуния
+       #retro/Mercury/2026-10-24  и то, и другое
+
+     Порядок хвостов не важен: дата узнаётся по форме YYYY-MM-DD, всё
+     остальное считается выбранной точкой. Благодаря этому переход между
+     разделами передаёт контекст, а ссылку можно просто открыть — раньше
+     кросс-переход работал только изнутри, подменой переменной.
+
+     Смена состояния внутри раздела правит адрес через replaceState: обычное
+     присваивание location.hash дало бы hashchange и полную перерисовку
+     раздела поверх той, которую он уже сделал сам. */
+  function parseHash() {
+    var raw = (location.hash || '').replace(/^#/, '');
+    var parts = raw.split('/').filter(function (x) { return x !== ''; });
+    return { name: parts[0] || '', args: parts.slice(1) };
+  }
+
+  function go(name, args) {
+    location.hash = '#' + [name].concat(args || []).join('/');
+  }
+
+  function syncHash(name, args) {
+    var next = '#' + [name].concat((args || []).filter(Boolean)).join('/');
+    if (location.hash === next) { return; }
+    try { history.replaceState(null, '', next); } catch (e) { /* игнор */ }
+  }
+
+  /* Раскладывает хвосты адреса по состоянию разделов. Точка проверяется по
+     списку известных имён: мусор в адресе не должен выбирать несуществующую
+     планету и ронять раздел. */
+  var POINT_NAMES = E.BODIES.concat(['Node', 'ASC', 'MC']);
+  function applyHashState(name, args) {
+    args.forEach(function (a) {
+      if (Clock.isKey(a)) {
+        var d = Clock.fromKey(a);
+        if (d) { Clock.set(d); moonSyncMonth(); }
+        return;
+      }
+      if (POINT_NAMES.indexOf(a) < 0) { return; }
+      if (name === 'chart') { chartSel = a; }
+      if (name === 'retro' && R.BODIES.indexOf(a) >= 0) { rxBody = a; }
+    });
+  }
+
   function route() {
     /* Без данных открываем профиль: остальные экраны без него не считаются. */
     var fallback = S.profile ? 'today' : 'profile';
-    var h = (location.hash || ('#' + fallback)).slice(1);
+    var parsed = parseHash();
+    var h = parsed.name || fallback;
     if (ORDER.indexOf(h) < 0) { h = fallback; }
+    applyHashState(h, parsed.args);
     document.querySelectorAll('.nav__i').forEach(function (a) {
       a.classList.toggle('on', a.getAttribute('href') === '#' + h);
     });
@@ -1632,6 +1773,13 @@
     view.classList.remove('fade-in');
     void view.offsetWidth;
     view.classList.add('fade-in');
+    /* Досыпаем состояние в адрес сразу после первой отрисовки: до неё раздел
+       ещё не выбрал планету/точку по умолчанию, а после — ссылку уже можно
+       копировать, не трогая ничего руками. */
+    var dateArg = Clock.isToday() ? null : Clock.toKey();
+    if (h === 'retro') { syncHash('retro', [rxBody, dateArg]); }
+    if (h === 'moon') { syncHash('moon', [dateArg]); }
+    if (h === 'chart') { syncHash('chart', [chartSel]); }
     if (h === 'retro') { positionSegIndicator('rxSegbar', 'rxSegbarInd', true); }
     if (h === 'horoscope') { positionHzIndicator(true); hzAiEnhance(hzPeriod); }
     if (h === 'match') { positionMcIndicator(true); if (mcSignA != null && mcSignB != null) { mcAiEnhance(); } }

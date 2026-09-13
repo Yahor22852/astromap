@@ -305,6 +305,43 @@
     return out.sort(function (x, y) { return y.weight - x.weight; });
   }
 
+  /* --- привязка транзитной точки к натальной карте -------------------------
+     Один вопрос, который задаёт каждый раздел продукта: где сейчас идёт это
+     тело относительно карты человека и чего оно касается. Раньше ответ
+     собирался отдельно в каждом разделе; теперь он один.
+
+     Дом считается только при известном времени рождения: без асцендента
+     домов нет, и подставить их нечем — возвращаем null, а раздел сам решает,
+     что показать вместо. Дома знаковые (whole-sign), как и во всей карте,
+     поэтому дом равен смещению знака от знака асцендента. */
+  function houseOfSign(natal, signIndex) {
+    if (!natal || !natal.asc) { return null; }
+    return ((signIndex - natal.asc.sign.index + 12) % 12) + 1;
+  }
+
+  /* Аспекты транзитного тела ко всем точкам карты, отсортированные так, что
+     первым идёт самый весомый: вес точки минус орбис — тот же принцип, что
+     в activeTransits(), чтобы разделы не расходились в том, какой контакт
+     считать главным. */
+  function contactsFor(natal, body, date) {
+    if (!natal) { return null; }
+    var p = bodyAt(body, date);
+    var targets = natal.points.slice();
+    if (natal.asc) { targets.push(natal.asc, natal.mc); }
+    var aspects = [];
+    targets.forEach(function (t) {
+      if (t.name === body) { return; }        /* транзит к самому себе не контакт */
+      var a = findAspect(p, t);
+      if (!a) { return; }
+      aspects.push({
+        natal: t.name, aspect: a.aspect, tone: a.tone, orb: a.orb,
+        applying: a.applying, weight: (t.weight || 5) - a.orb
+      });
+    });
+    aspects.sort(function (x, y) { return y.weight - x.weight; });
+    return { point: p, sign: p.sign, house: houseOfSign(natal, p.sign.index), aspects: aspects };
+  }
+
   /* --- синастрия ----------------------------------------------------------
      Две отдельные величины, их нельзя складывать:
      IMPORTANCE — насколько пара планет вообще важна для отношений;
@@ -406,6 +443,7 @@
     signOf: signOf, bodyAt: bodyAt, angles: angles, chart: chart,
     chartAspects: chartAspects, findAspect: findAspect, separation: separation,
     transitEvents: transitEvents, activeTransits: activeTransits,
+    houseOfSign: houseOfSign, contactsFor: contactsFor,
     synastry: synastry, composite: composite, midpoint: midpoint,
     meanNode: meanNode
   };
