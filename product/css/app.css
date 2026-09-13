@@ -811,4 +811,8 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   text-underline-offset: 2px;
 }
 .gate__buy:hover { color: var(--accent); }
+/* display:block выше перебивает атрибут [hidden], поэтому ссылку «ещё нет
+   доступа» приходится гасить явно — без этого она видна и тогда, когда
+   GATE_CHECKOUT_URL не задан и вести ей некуда. */
+.gate__buy[hidden] { display: none; }
 .gate[hidden] { display: none; }

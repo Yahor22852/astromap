@@ -25,6 +25,13 @@
   var GATE_CHECKOUT_URL = ''; /* TODO: ссылка на продукт/чекаут Gumroad */
   var ACCESS_KEY = 'astromap.access';
   var ACCESS_REVALIDATE_MS = 24 * 3600 * 1000; /* не чаще раза в сутки дёргаем воркер повторно на уже открытой сессии */
+  /* Обход гейта для разработки: открыть app.html?dev=<DEV_WORD> один раз —
+     флаг ляжет в localStorage, параметр из адреса уберётся, и дальше продукт
+     открывается по обычной ссылке на этом браузере. Снять: ?dev=off.
+     Это НЕ защита (весь гейт клиентский и обходится через devtools) — просто
+     чтобы не упираться в форму, пока Gumroad и воркер не настроены. */
+  var DEV_WORD = 'zodiac-dev-7714';
+  var DEV_KEY = 'astromap.dev';
   /* Языки, где принят десятичная запятая вместо точки (все добавленные,
      кроме английского) — используется в fmtDeg(). Локали Intl для дат
      календаря Луны и заголовков (moonLocale()) — свои полные коды. */
@@ -1409,15 +1416,23 @@
      скрипта. Теперь всё завёрнуто в startApp() и запускается только после
      initAccessGate() — либо сразу (в кэше уже есть подтверждённый доступ),
      либо по успешной отправке формы в #gate. */
-  function startApp() {
-    load();
-    recalc();
-
+  /* Подстановка переводов в статическую разметку. Вынесено из startApp(),
+     потому что гейт рисуется ДО запуска приложения: пока этот проход жил
+     внутри startApp(), у #gate оставались пустыми заголовок, подписи полей
+     и кнопка — до гейта переводы просто не доходили. */
+  function applyStaticTexts() {
     document.querySelectorAll('[data-t]').forEach(function (n) {
       var path = n.getAttribute('data-t').split('.');
       var v = path.reduce(function (o, k) { return o ? o[k] : null; }, T);
       if (typeof v === 'string') { n.textContent = v; }
     });
+  }
+
+  function startApp() {
+    load();
+    recalc();
+
+    applyStaticTexts();
     el('disc').textContent = T.ui.disclaimer;
 
     /* Переключатель языка: кнопка с текущим кодом раскрывает список всех
@@ -1573,7 +1588,33 @@
       }
     }).catch(function () { /* оффлайн/сеть — молчим, ничего не меняем */ });
   }
+  /* Читает ?dev= из адреса, запоминает/снимает флаг и вычищает параметр из
+     истории, чтобы он не болтался в ссылке и не попал в закладки/шаринг.
+     Возвращает: открыт ли продукт по dev-обходу. */
+  function devBypassActive() {
+    var param = null;
+    try { param = new URLSearchParams(window.location.search).get('dev'); } catch (e) {}
+    if (param !== null) {
+      try {
+        if (param === DEV_WORD) { localStorage.setItem(DEV_KEY, '1'); }
+        else if (param === 'off') { localStorage.removeItem(DEV_KEY); }
+      } catch (e) {}
+      try {
+        var u = new URL(window.location.href);
+        u.searchParams.delete('dev');
+        window.history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+      } catch (e) {}
+    }
+    try { return localStorage.getItem(DEV_KEY) === '1'; } catch (e) { return false; }
+  }
+
   function initAccessGate() {
+    applyStaticTexts();
+    if (devBypassActive()) {
+      showShell();
+      startApp();
+      return;
+    }
     bindGate();
     var access = loadAccess();
     if (access && access.email && access.licenseKey) {
