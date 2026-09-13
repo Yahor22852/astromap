@@ -816,3 +816,200 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
    GATE_CHECKOUT_URL не задан и вести ей некуда. */
 .gate__buy[hidden] { display: none; }
 .gate[hidden] { display: none; }
+
+/* --- Ретрограды: проводник по циклам --------------------------------------
+   Раздел выходит из общей двухколоночной сетки .view: сводка и шкала цикла
+   должны идти во всю ширину, а карточки под ними — раскладываться в две
+   колонки только когда ширины реально хватает. Поэтому .view--rx, как и
+   .view--moon, переключается в блок, а раскладка живёт внутри .rx. */
+.view--rx { display: block; }
+.rx { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+
+/* Дата раздела. Локальная, но вынесена в отдельную панель наверху — это то
+   место, куда подключится общий контекст времени, когда он появится. */
+.rx-datebar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rx-datebar__nav {
+  width: 38px; height: 38px; flex: none; border-radius: 999px; cursor: pointer;
+  background: rgba(255,255,255,.04); border: 1px solid var(--line);
+  color: var(--ink); font-size: 16px; line-height: 1;
+  transition: background .2s ease, border-color .2s ease;
+}
+.rx-datebar__nav:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.2); }
+.rx-datebar__nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Дата стоит вплотную к своим стрелкам, а кнопка «сегодня» уходит вправо:
+   если растянуть саму дату, стрелка «вперёд» оторвётся к краю экрана и
+   перестанет читаться как пара к «назад». */
+.rx-datebar__d {
+  font-family: var(--serif); font-size: 22px; color: var(--ink);
+  min-width: 0; flex: 0 1 auto;
+}
+.rx-datebar__today { margin-left: auto; }
+.rx-datebar__today {
+  flex: none; padding: 8px 16px; border-radius: 999px; cursor: pointer;
+  background: transparent; border: 1px solid var(--accent); color: var(--accent);
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+}
+.rx-datebar__today:hover { background: rgba(155,138,248,.12); }
+.rx-datebar__today:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Сводка: одно крупное число и одна строка про главную планету. Намеренно
+   не карточка — это заголовок раздела, а не ещё один блок в списке. */
+.rx-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 32px; }
+.rx-sum__count { display: flex; align-items: baseline; gap: 10px; }
+.rx-sum__count b { font-family: var(--serif); font-size: 52px; line-height: 1; color: var(--ink); }
+.rx-sum__count span { font-size: 15px; color: var(--ink-dim); max-width: 15ch; }
+.rx-sum__lead { display: flex; flex-direction: column; gap: 2px; }
+.rx-sum__lead span { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); }
+.rx-sum__lead b { font-size: 20px; color: var(--accent); }
+.rx-sum--none { flex-direction: column; align-items: flex-start; gap: 6px; }
+.rx-sum__h { font-family: var(--serif); font-size: 28px; font-weight: 600; margin: 0; color: var(--ink); }
+.rx-sum__p { margin: 0; font-size: 15px; color: var(--ink-dim); }
+.rx-sum__p b { color: var(--ink); }
+
+/* Выбор планеты. Точка слева кодирует состояние не только цветом, но и
+   заливкой: у ретроградной она сплошная, у прямой — полая, чтобы состояние
+   читалось и без цветовосприятия. */
+.rx-pick { display: flex; flex-wrap: wrap; gap: 8px; }
+.rx-pick__b {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 9px 14px; border-radius: 999px;
+  background: rgba(255,255,255,.03); border: 1px solid var(--line);
+  color: var(--ink-dim); font-family: var(--sans); font-size: 14px;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+.rx-pick__b:hover { color: var(--ink); border-color: rgba(255,255,255,.22); }
+.rx-pick__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rx-pick__b.on { background: var(--surf-sel); border-color: var(--accent); color: var(--ink); }
+.rx-pick__dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.rx-pick__dot--retro { background: var(--hard); }
+.rx-pick__dot--direct { background: transparent; border: 1px solid var(--ink-faint); }
+.rx-pick__r { font-size: 11px; font-weight: 700; color: var(--hard); letter-spacing: .04em; }
+
+/* Герой выбранной планеты */
+.rx-hero {
+  background: var(--surf); border: 1px solid var(--line-2);
+  border-radius: var(--r-card); padding: var(--pad);
+}
+.rx-hero__eyebrow {
+  margin: 0 0 6px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent);
+}
+.rx-hero__h { margin: 0; font-family: var(--serif); font-size: 34px; font-weight: 600; line-height: 1.15; }
+.rx-hero__sign { color: var(--ink-dim); font-size: 24px; }
+
+.rx-counts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 16px; }
+.rx-count { display: flex; align-items: baseline; gap: 7px; }
+.rx-count b { font-size: 26px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.rx-count span { font-size: 13px; color: var(--ink-faint); }
+
+/* Шкала цикла. Ширины сегментов — реальные пропорции предтени, ретрограда
+   и послетени, поэтому у Меркурия она выглядит иначе, чем у Плутона: это
+   и есть информация, а не украшение. */
+.rx-tl { margin-top: 22px; }
+.rx-tl__bar {
+  position: relative; height: 12px; border-radius: 999px;
+  background: rgba(255,255,255,.05); overflow: visible;
+}
+.rx-tl__seg { position: absolute; top: 0; bottom: 0; }
+.rx-tl__seg--pre  { background: rgba(185,174,249,.30); border-radius: 999px 0 0 999px; }
+.rx-tl__seg--retro { background: linear-gradient(90deg, var(--hard), rgba(240,146,138,.72)); }
+.rx-tl__seg--post { background: rgba(185,174,249,.30); border-radius: 0 999px 999px 0; }
+.rx-tl__now {
+  position: absolute; top: -5px; bottom: -5px; width: 2px; background: var(--ink);
+  box-shadow: 0 0 10px rgba(255,255,255,.55);
+}
+.rx-tl__now--out { opacity: .35; }
+.rx-tl__nowlabel {
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  white-space: nowrap; font-size: 11px; color: var(--ink);
+  background: var(--nav); border: 1px solid var(--line); border-radius: 999px;
+  padding: 2px 8px;
+}
+.rx-tl__ticks { position: relative; height: 20px; margin-top: 10px; }
+.rx-tl__tick {
+  position: absolute; transform: translateX(-50%); white-space: nowrap;
+  font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums;
+}
+/* Крайние подписи прижимаются к краям, иначе вылезают за карточку. */
+.rx-tl__tick:first-child { transform: none; }
+.rx-tl__tick:last-child { transform: translateX(-100%); }
+.rx-tl__legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 4px; }
+.rx-tl__lg { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-faint); }
+.rx-tl__lg::before { content: ''; width: 10px; height: 6px; border-radius: 999px; }
+.rx-tl__lg--pre::before, .rx-tl__lg--post::before { background: rgba(185,174,249,.5); }
+.rx-tl__lg--retro::before { background: var(--hard); }
+
+/* Карточки нижнего ряда */
+/* Правая колонка чуть шире: в ней живёт капсула из семи сфер жизни, и в
+   равных колонках она начинает скроллиться уже на десктопе. */
+.rx-cols { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 18px; align-items: start; }
+.rx-card {
+  background: var(--surf); border: 1px solid var(--line-2);
+  border-radius: var(--r-card); padding: var(--pad);
+}
+.rx-card__t {
+  margin: 0 0 12px; font-size: 12px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
+}
+.rx-card__t--gap { margin-top: 24px; }
+.rx-muted { margin: 0; font-size: 14px; color: var(--ink-faint); }
+
+.rx-house { display: flex; flex-direction: column; gap: 4px; }
+.rx-house__n { font-family: var(--serif); font-size: 26px; color: var(--ink); }
+.rx-house__t { font-size: 15px; color: var(--ink-dim); }
+
+.rx-asp { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rx-asp__i + .rx-asp__i { border-top: 1px solid var(--line-2); }
+.rx-asp__b {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px;
+  width: 100%; cursor: pointer;
+  padding: 12px 0; background: transparent; border: 0; text-align: left;
+  color: var(--ink); font-family: var(--sans); font-size: 15px;
+}
+.rx-asp__b:hover .rx-asp__go { color: var(--accent); transform: translateX(2px); }
+.rx-asp__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.rx-asp__main { flex: 1 1 auto; min-width: 0; }
+.rx-asp__meta { flex: none; font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.rx-asp__go { flex: none; color: var(--ink-faint); transition: transform .2s ease, color .2s ease; }
+
+.rx-openchart { margin-top: 18px; }
+
+.rx-segbar { margin-bottom: 16px; }
+.rx-mean .p:first-child { margin-top: 0; }
+
+.rx-dates { list-style: none; margin: 0; padding: 0; }
+.rx-date + .rx-date { border-top: 1px solid var(--line-2); }
+.rx-date__b {
+  display: flex; align-items: baseline; gap: 14px; width: 100%; cursor: pointer;
+  padding: 12px 0; background: transparent; border: 0; text-align: left;
+  color: var(--ink); font-family: var(--sans); font-size: 15px;
+}
+.rx-date__b:hover .rx-date__go { color: var(--accent); transform: translateX(2px); }
+.rx-date__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.rx-date__d { flex: none; font-variant-numeric: tabular-nums; color: var(--ink); }
+.rx-date__l { flex: 1 1 auto; color: var(--ink-dim); font-size: 14px; }
+.rx-date__go { flex: none; color: var(--ink-faint); transition: transform .2s ease, color .2s ease; }
+/* Прошедшие даты гасим, но оставляем кликабельными — по ним удобно
+   вернуться к началу цикла и посмотреть, что было. */
+.rx-date--past .rx-date__d, .rx-date--past .rx-date__l { color: var(--ink-faint); }
+
+@media (max-width: 900px) {
+  /* minmax(0, 1fr), а не 1fr: у элементов грида min-width по умолчанию auto,
+     и колонка раздувается под самый широкий неразрывный ряд внутри карточки
+     вместо того, чтобы сжаться. Именно из-за 1fr раздел уезжал вбок на
+     390px почти на 300 пикселей. */
+  .rx-cols { grid-template-columns: minmax(0, 1fr); }
+  .rx-hero__h { font-size: 28px; }
+  .rx-hero__sign { font-size: 19px; display: block; margin-top: 2px; }
+  .rx-sum__count b { font-size: 42px; }
+  .rx-datebar__d { font-size: 19px; }
+}
+@media (max-width: 560px) {
+  /* Орбис и «сходится/расходится» уходят на свою строку: в одну строку с
+     названием аспекта они не помещаются и не дают строке сжаться. */
+  .rx-asp__meta { flex: 1 1 100%; }
+  .rx-asp__go { margin-left: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rx-asp__go, .rx-date__go { transition: none; }
+}

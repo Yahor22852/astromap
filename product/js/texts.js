@@ -326,7 +326,86 @@
       communication: { title: 'Komunikacja',     desc: 'Rozmowy dziś płyną zwykle łatwiej' },
       learning:      { title: 'Nauka',           desc: 'Dobra koncentracja na przyswajanie nowości' }
     },
-    moonStatus: { favorable: 'Sprzyjający', neutral: 'Neutralny', unfavorable: 'Niesprzyjający' }
+    moonStatus: { favorable: 'Sprzyjający', neutral: 'Neutralny', unfavorable: 'Niesprzyjający' },
+    houses: {
+      1: { n: '1. dom', t: 'ty sam, początek, sposób wchodzenia w sytuację' },
+      2: { n: '2. dom', t: 'pieniądze, zasoby, wartości' },
+      3: { n: '3. dom', t: 'rozmowy, najbliższe otoczenie, nauka' },
+      4: { n: '4. dom', t: 'dom, rodzina, korzenie' },
+      5: { n: '5. dom', t: 'twórczość, dzieci, przyjemność' },
+      6: { n: '6. dom', t: 'praca codzienna, rytm dnia, zdrowie' },
+      7: { n: '7. dom', t: 'partnerstwo, bliskie relacje' },
+      8: { n: '8. dom', t: 'wspólne zasoby, kryzysy, głębia' },
+      9: { n: '9. dom', t: 'sens, dalekie podróże, poglądy' },
+      10: { n: '10. dom', t: 'kariera, status, rola publiczna' },
+      11: { n: '11. dom', t: 'przyjaciele, środowiska, plany' },
+      12: { n: '12. dom', t: 'samotność, wnętrze, zamykanie spraw' }
+    },
+    rx: {
+      retroNow: 'Retrogradne teraz',
+      mostRelevant: 'Najsilniej dotyka twojej mapy',
+      mostRelevantNoChart: 'Najszybsza z cofających się',
+      noneTitle: 'Żadna planeta nie jest teraz retrogradna',
+      noneText: 'Wszystkie poruszają się wprost.',
+      nextIs: 'Najbliższy zwrot',
+      pickPlanet: 'Planeta',
+      cycle: 'Cykl',
+      today: 'dziś',
+      elapsed: 'minęło',
+      remaining: 'zostało',
+      untilRetro: 'do zwrotu',
+      dayShort: 'dni',
+      inSign: 'w znaku',
+      house: 'Dom',
+      houseUnknown: 'Domy nieobliczone — w profilu brakuje godziny urodzenia',
+      contacts: 'Powiązania z twoją mapą',
+      noContacts: 'Teraz planeta nie tworzy aspektów do punktów twojej mapy',
+      applying: 'zbliża się',
+      separating: 'oddala się',
+      orb: 'Orbis',
+      areaTitle: 'Obszar',
+      keyDates: 'Kluczowe daty',
+      openChart: 'Pokaż w mapie',
+      needProfile: 'Uzupełnij profil, żeby zobaczyć, jak retrogrady układają się na twojej mapie',
+      meaning: 'Co to znaczy',
+      traditionNote: 'Astrologia jest językiem opisu, nie prognozą. Poniżej to, z czym okres bywa tradycyjnie wiązany.',
+      phase: {
+        pre: 'Cień wstępny',
+        retro: 'Retrogradacja',
+        post: 'Cień końcowy',
+        upcoming: 'Jeszcze przed nami'
+      },
+      phaseNote: {
+        pre: 'Planeta idzie jeszcze wprost, ale weszła już w odcinek, który przejdzie trzy razy.',
+        retro: 'Ruch wsteczny: planeta wraca po odcinku, który już przeszła.',
+        post: 'Ruch znów jest wprost, ale po tym samym odcinku — po raz trzeci.',
+        upcoming: 'Cykl jeszcze się nie zaczął.'
+      },
+      kd: {
+        shadowStart: 'Początek cienia',
+        stationRetro: 'Zwrot wstecz',
+        stationDirect: 'Zwrot wprost',
+        shadowEnd: 'Koniec cienia'
+      },
+      areas: {
+        overview: 'Ogólnie',
+        love: 'Miłość',
+        career: 'Praca',
+        money: 'Pieniądze',
+        communication: 'Komunikacja',
+        energy: 'Energia',
+        inner: 'Wnętrze'
+      },
+      areaText: {
+        overview: 'Okres retrogradacji tradycyjnie wiąże się z powrotem do spraw odłożonych i przeglądem tego, co wydawało się już rozstrzygnięte.',
+        love: 'W relacjach częściej dają o sobie znać rozmowy niedokończone i tematy, do których wracacie nie pierwszy raz.',
+        career: 'W sprawach zawodowych to raczej czas przeglądu ustaleń i domykania zaczętego niż startu nowego.',
+        money: 'W finansach warto sprawdzić powtórnie warunki i wyliczenia — zwłaszcza w tym, co podpisano wcześniej.',
+        communication: 'Rozmowy częściej wymagają doprecyzowania: to, co wydawało się jasne, dobrze powiedzieć drugi raz.',
+        energy: 'Tempo bywa nierówne: sprawy idą nie po prostej, lecz z nawrotami.',
+        inner: 'Dobry moment, żeby zauważyć powtarzające się reakcje i to, do czego wracacie myślami.'
+      }
+    }
   };
 
   var EN = {
@@ -639,7 +718,86 @@
       communication: { title: 'Communication', desc: 'Conversations tend to go more smoothly' },
       learning:      { title: 'Learning',      desc: 'Good focus for absorbing something new' }
     },
-    moonStatus: { favorable: 'Favorable', neutral: 'Neutral', unfavorable: 'Unfavorable' }
+    moonStatus: { favorable: 'Favorable', neutral: 'Neutral', unfavorable: 'Unfavorable' },
+    houses: {
+      1: { n: '1st house', t: 'yourself, beginnings, how you enter a situation' },
+      2: { n: '2nd house', t: 'money, resources, values' },
+      3: { n: '3rd house', t: 'conversations, immediate surroundings, learning' },
+      4: { n: '4th house', t: 'home, family, roots' },
+      5: { n: '5th house', t: 'creativity, children, pleasure' },
+      6: { n: '6th house', t: 'daily work, routine, health' },
+      7: { n: '7th house', t: 'partnership, close relationships' },
+      8: { n: '8th house', t: 'shared resources, crises, depth' },
+      9: { n: '9th house', t: 'meaning, long journeys, beliefs' },
+      10: { n: '10th house', t: 'career, status, public role' },
+      11: { n: '11th house', t: 'friends, circles, plans' },
+      12: { n: '12th house', t: 'solitude, inner life, endings' }
+    },
+    rx: {
+      retroNow: 'Retrograde now',
+      mostRelevant: 'Touches your chart most',
+      mostRelevantNoChart: 'Fastest of those moving back',
+      noneTitle: 'No planet is retrograde right now',
+      noneText: 'All of them are moving direct.',
+      nextIs: 'Next station',
+      pickPlanet: 'Planet',
+      cycle: 'Cycle',
+      today: 'today',
+      elapsed: 'elapsed',
+      remaining: 'remaining',
+      untilRetro: 'until it turns',
+      dayShort: 'days',
+      inSign: 'in',
+      house: 'House',
+      houseUnknown: 'Houses not calculated — your profile has no birth time',
+      contacts: 'Contacts with your chart',
+      noContacts: 'Right now this planet makes no aspects to points in your chart',
+      applying: 'applying',
+      separating: 'separating',
+      orb: 'Orb',
+      areaTitle: 'Area',
+      keyDates: 'Key dates',
+      openChart: 'Show in chart',
+      needProfile: 'Complete your profile to see how retrogrades land on your own chart',
+      meaning: 'What this means',
+      traditionNote: 'Astrology is a language of description, not a forecast. Below is what this period is traditionally associated with.',
+      phase: {
+        pre: 'Pre-shadow',
+        retro: 'Retrograde',
+        post: 'Post-shadow',
+        upcoming: 'Still ahead'
+      },
+      phaseNote: {
+        pre: 'The planet still moves forward, but it has entered the stretch it will cover three times.',
+        retro: 'Backward motion: the planet retraces ground it has already covered.',
+        post: 'Motion is direct again, but over the same stretch — for the third time.',
+        upcoming: 'The cycle has not started yet.'
+      },
+      kd: {
+        shadowStart: 'Shadow begins',
+        stationRetro: 'Turns retrograde',
+        stationDirect: 'Turns direct',
+        shadowEnd: 'Shadow ends'
+      },
+      areas: {
+        overview: 'Overview',
+        love: 'Love',
+        career: 'Career',
+        money: 'Money',
+        communication: 'Communication',
+        energy: 'Energy',
+        inner: 'Inner world'
+      },
+      areaText: {
+        overview: 'A retrograde period is traditionally associated with returning to what was set aside and revisiting what seemed already settled.',
+        love: 'In relationships, unfinished conversations and themes you are returning to more than once tend to become more noticeable.',
+        career: 'At work this reads as a time for reviewing agreements and finishing what is started, rather than launching something new.',
+        money: 'With money it is worth re-checking terms and figures — particularly on anything signed earlier.',
+        communication: 'Conversations more often need a second pass: what seemed clear is worth saying again.',
+        energy: 'The pace can feel uneven — things move in loops rather than a straight line.',
+        inner: 'A good moment to notice recurring reactions and what your mind keeps coming back to.'
+      }
+    }
   };
 
   /* --- остальные языки --------------------------------------------------
@@ -953,7 +1111,86 @@ var RU = {
       communication: { title: 'Общение',        desc: 'Разговоры обычно идут более гладко' },
       learning:      { title: 'Обучение',       desc: 'Хороший фокус для усвоения нового' }
     },
-    moonStatus: { favorable: 'Благоприятно', neutral: 'Нейтрально', unfavorable: 'Неблагоприятно' }
+    moonStatus: { favorable: 'Благоприятно', neutral: 'Нейтрально', unfavorable: 'Неблагоприятно' },
+    houses: {
+      1: { n: '1-й дом', t: 'вы сами, начало, как вы входите в ситуацию' },
+      2: { n: '2-й дом', t: 'деньги, ресурсы, ценности' },
+      3: { n: '3-й дом', t: 'разговоры, ближнее окружение, учёба' },
+      4: { n: '4-й дом', t: 'дом, семья, корни' },
+      5: { n: '5-й дом', t: 'творчество, дети, удовольствие' },
+      6: { n: '6-й дом', t: 'ежедневная работа, режим, здоровье' },
+      7: { n: '7-й дом', t: 'партнёрство, близкие отношения' },
+      8: { n: '8-й дом', t: 'общие ресурсы, кризисы, глубина' },
+      9: { n: '9-й дом', t: 'смыслы, дальние поездки, взгляды' },
+      10: { n: '10-й дом', t: 'карьера, статус, публичная роль' },
+      11: { n: '11-й дом', t: 'друзья, круги общения, планы' },
+      12: { n: '12-й дом', t: 'уединение, внутреннее, завершения' }
+    },
+    rx: {
+      retroNow: 'Ретроградны сейчас',
+      mostRelevant: 'Сильнее всего задевает вашу карту',
+      mostRelevantNoChart: 'Самая быстрая из идущих назад',
+      noneTitle: 'Сейчас ни одна планета не ретроградна',
+      noneText: 'Все движутся прямо.',
+      nextIs: 'Ближайший разворот',
+      pickPlanet: 'Планета',
+      cycle: 'Цикл',
+      today: 'сегодня',
+      elapsed: 'прошло',
+      remaining: 'осталось',
+      untilRetro: 'до разворота',
+      dayShort: 'дн.',
+      inSign: 'в знаке',
+      house: 'Дом',
+      houseUnknown: 'Дома не рассчитаны — в профиле не указано время рождения',
+      contacts: 'Связи с вашей картой',
+      noContacts: 'Сейчас планета не образует аспектов к точкам вашей карты',
+      applying: 'сходится',
+      separating: 'расходится',
+      orb: 'Орбис',
+      areaTitle: 'Сфера',
+      keyDates: 'Ключевые даты',
+      openChart: 'Показать в карте',
+      needProfile: 'Заполните профиль, чтобы увидеть, как ретрограды ложатся на вашу карту',
+      meaning: 'Что это значит',
+      traditionNote: 'Астрология — язык описания, а не прогноз. Ниже то, с чем период традиционно связывают.',
+      phase: {
+        pre: 'Предтень',
+        retro: 'Ретроград',
+        post: 'Послетень',
+        upcoming: 'Ещё впереди'
+      },
+      phaseNote: {
+        pre: 'Планета ещё идёт прямо, но уже вошла в участок, который пройдёт трижды.',
+        retro: 'Попятное движение: планета возвращается по уже пройденному участку.',
+        post: 'Движение снова прямое, но по тому же участку — в третий раз.',
+        upcoming: 'Цикл ещё не начался.'
+      },
+      kd: {
+        shadowStart: 'Начало тени',
+        stationRetro: 'Разворот назад',
+        stationDirect: 'Разворот вперёд',
+        shadowEnd: 'Конец тени'
+      },
+      areas: {
+        overview: 'Обзор',
+        love: 'Любовь',
+        career: 'Работа',
+        money: 'Деньги',
+        communication: 'Общение',
+        energy: 'Энергия',
+        inner: 'Внутреннее'
+      },
+      areaText: {
+        overview: 'Ретроградный период традиционно связывают с возвратом к отложенному и пересмотром того, что казалось уже решённым.',
+        love: 'В отношениях заметнее становятся недоговорённые разговоры и темы, к которым вы возвращаетесь не впервые.',
+        career: 'В работе это скорее время пересмотра договорённостей и доделывания начатого, чем запуска нового.',
+        money: 'С деньгами имеет смысл перепроверить условия и расчёты — особенно в том, что подписывали раньше.',
+        communication: 'Разговоры чаще требуют второго захода: то, что казалось понятным, стоит проговорить ещё раз.',
+        energy: 'Темп может ощущаться неровным — дела идут не по прямой, а с возвратами.',
+        inner: 'Подходящий момент заметить повторяющиеся реакции и то, к чему вы мысленно возвращаетесь.'
+      }
+    }
   };
 var UK = {
     ui: {
@@ -1262,7 +1499,86 @@ var UK = {
       communication: { title: 'Спілкування',     desc: 'Розмови зазвичай проходять гладше' },
       learning:      { title: 'Навчання',        desc: 'Гарний фокус для засвоєння нового' }
     },
-    moonStatus: { favorable: 'Сприятливо', neutral: 'Нейтрально', unfavorable: 'Несприятливо' }
+    moonStatus: { favorable: 'Сприятливо', neutral: 'Нейтрально', unfavorable: 'Несприятливо' },
+    houses: {
+      1: { n: '1-й дім', t: 'ви самі, початок, як ви входите в ситуацію' },
+      2: { n: '2-й дім', t: 'гроші, ресурси, цінності' },
+      3: { n: '3-й дім', t: 'розмови, найближче оточення, навчання' },
+      4: { n: '4-й дім', t: 'дім, родина, коріння' },
+      5: { n: '5-й дім', t: 'творчість, діти, задоволення' },
+      6: { n: '6-й дім', t: 'щоденна робота, режим, здоровʼя' },
+      7: { n: '7-й дім', t: 'партнерство, близькі стосунки' },
+      8: { n: '8-й дім', t: 'спільні ресурси, кризи, глибина' },
+      9: { n: '9-й дім', t: 'сенси, далекі подорожі, погляди' },
+      10: { n: '10-й дім', t: 'карʼєра, статус, публічна роль' },
+      11: { n: '11-й дім', t: 'друзі, кола спілкування, плани' },
+      12: { n: '12-й дім', t: 'усамітнення, внутрішнє, завершення' }
+    },
+    rx: {
+      retroNow: 'Ретроградні зараз',
+      mostRelevant: 'Найсильніше зачіпає вашу карту',
+      mostRelevantNoChart: 'Найшвидша з тих, що йдуть назад',
+      noneTitle: 'Зараз жодна планета не ретроградна',
+      noneText: 'Усі рухаються прямо.',
+      nextIs: 'Найближчий розворот',
+      pickPlanet: 'Планета',
+      cycle: 'Цикл',
+      today: 'сьогодні',
+      elapsed: 'минуло',
+      remaining: 'лишилося',
+      untilRetro: 'до розвороту',
+      dayShort: 'дн.',
+      inSign: 'у знаку',
+      house: 'Дім',
+      houseUnknown: 'Доми не розраховані — у профілі не вказано час народження',
+      contacts: 'Звʼязки з вашою картою',
+      noContacts: 'Зараз планета не утворює аспектів до точок вашої карти',
+      applying: 'сходиться',
+      separating: 'розходиться',
+      orb: 'Орбіс',
+      areaTitle: 'Сфера',
+      keyDates: 'Ключові дати',
+      openChart: 'Показати в карті',
+      needProfile: 'Заповніть профіль, щоб побачити, як ретрогради лягають на вашу карту',
+      meaning: 'Що це означає',
+      traditionNote: 'Астрологія — мова опису, а не прогноз. Нижче те, з чим період традиційно повʼязують.',
+      phase: {
+        pre: 'Передтінь',
+        retro: 'Ретроград',
+        post: 'Післятінь',
+        upcoming: 'Ще попереду'
+      },
+      phaseNote: {
+        pre: 'Планета ще йде прямо, але вже увійшла в ділянку, яку пройде тричі.',
+        retro: 'Зворотний рух: планета повертається вже пройденою ділянкою.',
+        post: 'Рух знову прямий, але тією самою ділянкою — утретє.',
+        upcoming: 'Цикл ще не почався.'
+      },
+      kd: {
+        shadowStart: 'Початок тіні',
+        stationRetro: 'Розворот назад',
+        stationDirect: 'Розворот уперед',
+        shadowEnd: 'Кінець тіні'
+      },
+      areas: {
+        overview: 'Огляд',
+        love: 'Любов',
+        career: 'Робота',
+        money: 'Гроші',
+        communication: 'Спілкування',
+        energy: 'Енергія',
+        inner: 'Внутрішнє'
+      },
+      areaText: {
+        overview: 'Ретроградний період традиційно повʼязують із поверненням до відкладеного і переглядом того, що здавалося вже вирішеним.',
+        love: 'У стосунках помітнішими стають недоговорені розмови й теми, до яких ви повертаєтеся не вперше.',
+        career: 'У роботі це радше час перегляду домовленостей і завершення розпочатого, ніж запуску нового.',
+        money: 'З грошима варто перевірити умови й розрахунки — особливо в тому, що підписували раніше.',
+        communication: 'Розмови частіше потребують другого заходу: те, що здавалося зрозумілим, варто проговорити ще раз.',
+        energy: 'Темп може відчуватися нерівним — справи йдуть не по прямій, а з поверненнями.',
+        inner: 'Слушний момент помітити повторювані реакції і те, до чого ви подумки повертаєтеся.'
+      }
+    }
   };
 var DE = {
     ui: {
@@ -1571,7 +1887,86 @@ var DE = {
       communication: { title: 'Kommunikation',   desc: 'Gespräche laufen tendenziell glatter' },
       learning:      { title: 'Lernen',          desc: 'Guter Fokus, um Neues aufzunehmen' }
     },
-    moonStatus: { favorable: 'Günstig', neutral: 'Neutral', unfavorable: 'Ungünstig' }
+    moonStatus: { favorable: 'Günstig', neutral: 'Neutral', unfavorable: 'Ungünstig' },
+    houses: {
+      1: { n: '1. Haus', t: 'Sie selbst, Anfänge, wie Sie in Situationen gehen' },
+      2: { n: '2. Haus', t: 'Geld, Ressourcen, Werte' },
+      3: { n: '3. Haus', t: 'Gespräche, nahes Umfeld, Lernen' },
+      4: { n: '4. Haus', t: 'Zuhause, Familie, Wurzeln' },
+      5: { n: '5. Haus', t: 'Kreativität, Kinder, Vergnügen' },
+      6: { n: '6. Haus', t: 'tägliche Arbeit, Rhythmus, Gesundheit' },
+      7: { n: '7. Haus', t: 'Partnerschaft, enge Beziehungen' },
+      8: { n: '8. Haus', t: 'geteilte Ressourcen, Krisen, Tiefe' },
+      9: { n: '9. Haus', t: 'Sinn, weite Reisen, Überzeugungen' },
+      10: { n: '10. Haus', t: 'Beruf, Status, öffentliche Rolle' },
+      11: { n: '11. Haus', t: 'Freunde, Kreise, Pläne' },
+      12: { n: '12. Haus', t: 'Rückzug, Innenleben, Abschlüsse' }
+    },
+    rx: {
+      retroNow: 'Jetzt rückläufig',
+      mostRelevant: 'Berührt Ihr Horoskop am stärksten',
+      mostRelevantNoChart: 'Die schnellste der rückläufigen',
+      noneTitle: 'Derzeit ist kein Planet rückläufig',
+      noneText: 'Alle laufen direkt.',
+      nextIs: 'Nächste Station',
+      pickPlanet: 'Planet',
+      cycle: 'Zyklus',
+      today: 'heute',
+      elapsed: 'vergangen',
+      remaining: 'verbleibend',
+      untilRetro: 'bis zur Wende',
+      dayShort: 'Tage',
+      inSign: 'im Zeichen',
+      house: 'Haus',
+      houseUnknown: 'Häuser nicht berechnet — im Profil fehlt die Geburtszeit',
+      contacts: 'Verbindungen zu Ihrem Horoskop',
+      noContacts: 'Der Planet bildet gerade keine Aspekte zu Punkten Ihres Horoskops',
+      applying: 'zulaufend',
+      separating: 'trennend',
+      orb: 'Orbis',
+      areaTitle: 'Bereich',
+      keyDates: 'Wichtige Daten',
+      openChart: 'Im Horoskop zeigen',
+      needProfile: 'Vervollständigen Sie Ihr Profil, um zu sehen, wie Rückläufe auf Ihr Horoskop treffen',
+      meaning: 'Was das bedeutet',
+      traditionNote: 'Astrologie ist eine Beschreibungssprache, keine Vorhersage. Unten steht, womit diese Phase traditionell verbunden wird.',
+      phase: {
+        pre: 'Vorschatten',
+        retro: 'Rückläufig',
+        post: 'Nachschatten',
+        upcoming: 'Noch bevorstehend'
+      },
+      phaseNote: {
+        pre: 'Der Planet läuft noch vorwärts, hat aber den Abschnitt betreten, den er dreimal durchläuft.',
+        retro: 'Rückwärtsbewegung: Der Planet geht bereits zurückgelegte Strecke erneut.',
+        post: 'Die Bewegung ist wieder direkt, aber über denselben Abschnitt — zum dritten Mal.',
+        upcoming: 'Der Zyklus hat noch nicht begonnen.'
+      },
+      kd: {
+        shadowStart: 'Schatten beginnt',
+        stationRetro: 'Wende rückläufig',
+        stationDirect: 'Wende direkt',
+        shadowEnd: 'Schatten endet'
+      },
+      areas: {
+        overview: 'Überblick',
+        love: 'Liebe',
+        career: 'Beruf',
+        money: 'Geld',
+        communication: 'Kommunikation',
+        energy: 'Energie',
+        inner: 'Innenwelt'
+      },
+      areaText: {
+        overview: 'Eine rückläufige Phase wird traditionell mit der Rückkehr zu Aufgeschobenem und dem Überprüfen bereits Entschiedenem verbunden.',
+        love: 'In Beziehungen fallen unbeendete Gespräche und Themen auf, zu denen Sie nicht zum ersten Mal zurückkehren.',
+        career: 'Im Beruf liest sich das eher als Zeit, Vereinbarungen zu prüfen und Begonnenes abzuschließen, statt Neues zu starten.',
+        money: 'Bei Geld lohnt es sich, Konditionen und Zahlen erneut zu prüfen — besonders bei früher Unterzeichnetem.',
+        communication: 'Gespräche brauchen öfter einen zweiten Durchgang: Was klar schien, sagt man besser noch einmal.',
+        energy: 'Das Tempo kann ungleichmäßig wirken — die Dinge laufen in Schleifen statt geradeaus.',
+        inner: 'Ein guter Moment, wiederkehrende Reaktionen zu bemerken und das, worauf Ihre Gedanken zurückkommen.'
+      }
+    }
   };
 var ES = {
     ui: {
@@ -1880,7 +2275,86 @@ var ES = {
       communication: { title: 'Comunicación',    desc: 'Las conversaciones tienden a fluir mejor' },
       learning:      { title: 'Aprendizaje',     desc: 'Buen enfoque para absorber algo nuevo' }
     },
-    moonStatus: { favorable: 'Favorable', neutral: 'Neutral', unfavorable: 'Desfavorable' }
+    moonStatus: { favorable: 'Favorable', neutral: 'Neutral', unfavorable: 'Desfavorable' },
+    houses: {
+      1: { n: 'Casa 1', t: 'usted mismo, los inicios, cómo entra en una situación' },
+      2: { n: 'Casa 2', t: 'dinero, recursos, valores' },
+      3: { n: 'Casa 3', t: 'conversaciones, entorno cercano, aprendizaje' },
+      4: { n: 'Casa 4', t: 'hogar, familia, raíces' },
+      5: { n: 'Casa 5', t: 'creatividad, hijos, placer' },
+      6: { n: 'Casa 6', t: 'trabajo diario, rutina, salud' },
+      7: { n: 'Casa 7', t: 'pareja, relaciones cercanas' },
+      8: { n: 'Casa 8', t: 'recursos compartidos, crisis, profundidad' },
+      9: { n: 'Casa 9', t: 'sentido, viajes largos, creencias' },
+      10: { n: 'Casa 10', t: 'carrera, estatus, papel público' },
+      11: { n: 'Casa 11', t: 'amigos, círculos, planes' },
+      12: { n: 'Casa 12', t: 'soledad, vida interior, cierres' }
+    },
+    rx: {
+      retroNow: 'Retrógrados ahora',
+      mostRelevant: 'Lo que más toca su carta',
+      mostRelevantNoChart: 'El más rápido de los que retroceden',
+      noneTitle: 'Ahora mismo ningún planeta está retrógrado',
+      noneText: 'Todos avanzan directos.',
+      nextIs: 'Próxima estación',
+      pickPlanet: 'Planeta',
+      cycle: 'Ciclo',
+      today: 'hoy',
+      elapsed: 'transcurrido',
+      remaining: 'restante',
+      untilRetro: 'hasta el giro',
+      dayShort: 'días',
+      inSign: 'en',
+      house: 'Casa',
+      houseUnknown: 'Casas no calculadas — el perfil no tiene hora de nacimiento',
+      contacts: 'Contactos con su carta',
+      noContacts: 'Ahora el planeta no forma aspectos con puntos de su carta',
+      applying: 'aplicativo',
+      separating: 'separativo',
+      orb: 'Orbe',
+      areaTitle: 'Área',
+      keyDates: 'Fechas clave',
+      openChart: 'Ver en la carta',
+      needProfile: 'Complete su perfil para ver cómo caen los retrógrados sobre su carta',
+      meaning: 'Qué significa',
+      traditionNote: 'La astrología es un lenguaje descriptivo, no un pronóstico. Abajo, aquello con lo que este período se asocia tradicionalmente.',
+      phase: {
+        pre: 'Sombra previa',
+        retro: 'Retrógrado',
+        post: 'Sombra posterior',
+        upcoming: 'Todavía por venir'
+      },
+      phaseNote: {
+        pre: 'El planeta aún avanza, pero ya entró en el tramo que recorrerá tres veces.',
+        retro: 'Movimiento hacia atrás: el planeta rehace un tramo ya recorrido.',
+        post: 'El movimiento vuelve a ser directo, pero sobre el mismo tramo — por tercera vez.',
+        upcoming: 'El ciclo aún no ha empezado.'
+      },
+      kd: {
+        shadowStart: 'Empieza la sombra',
+        stationRetro: 'Gira retrógrado',
+        stationDirect: 'Gira directo',
+        shadowEnd: 'Termina la sombra'
+      },
+      areas: {
+        overview: 'General',
+        love: 'Amor',
+        career: 'Trabajo',
+        money: 'Dinero',
+        communication: 'Comunicación',
+        energy: 'Energía',
+        inner: 'Mundo interior'
+      },
+      areaText: {
+        overview: 'Un período retrógrado se asocia tradicionalmente con volver a lo aplazado y revisar lo que parecía ya resuelto.',
+        love: 'En las relaciones se notan más las conversaciones inconclusas y los temas a los que vuelve más de una vez.',
+        career: 'En el trabajo se lee como un tiempo para revisar acuerdos y terminar lo empezado, más que para lanzar algo nuevo.',
+        money: 'Con el dinero conviene revisar condiciones y cifras — sobre todo en lo firmado antes.',
+        communication: 'Las conversaciones piden una segunda pasada: lo que parecía claro conviene decirlo otra vez.',
+        energy: 'El ritmo puede sentirse irregular: las cosas avanzan en bucles y no en línea recta.',
+        inner: 'Buen momento para notar reacciones que se repiten y aquello a lo que vuelve con el pensamiento.'
+      }
+    }
   };
 var FR = {
     ui: {
@@ -2189,7 +2663,86 @@ var FR = {
       communication: { title: 'Communication',    desc: 'Les conversations ont tendance à mieux se passer' },
       learning:      { title: 'Apprentissage',    desc: 'Bonne concentration pour absorber du nouveau' }
     },
-    moonStatus: { favorable: 'Favorable', neutral: 'Neutre', unfavorable: 'Défavorable' }
+    moonStatus: { favorable: 'Favorable', neutral: 'Neutre', unfavorable: 'Défavorable' },
+    houses: {
+      1: { n: 'Maison 1', t: 'vous-même, les débuts, votre façon d’aborder les choses' },
+      2: { n: 'Maison 2', t: 'argent, ressources, valeurs' },
+      3: { n: 'Maison 3', t: 'conversations, entourage proche, apprentissage' },
+      4: { n: 'Maison 4', t: 'foyer, famille, racines' },
+      5: { n: 'Maison 5', t: 'création, enfants, plaisir' },
+      6: { n: 'Maison 6', t: 'travail quotidien, rythme, santé' },
+      7: { n: 'Maison 7', t: 'partenariat, relations proches' },
+      8: { n: 'Maison 8', t: 'ressources partagées, crises, profondeur' },
+      9: { n: 'Maison 9', t: 'sens, voyages lointains, convictions' },
+      10: { n: 'Maison 10', t: 'carrière, statut, rôle public' },
+      11: { n: 'Maison 11', t: 'amis, cercles, projets' },
+      12: { n: 'Maison 12', t: 'retrait, vie intérieure, fins de cycle' }
+    },
+    rx: {
+      retroNow: 'Rétrogrades en ce moment',
+      mostRelevant: 'Ce qui touche le plus votre thème',
+      mostRelevantNoChart: 'La plus rapide de celles qui reculent',
+      noneTitle: 'Aucune planète n’est rétrograde actuellement',
+      noneText: 'Toutes avancent en direct.',
+      nextIs: 'Prochaine station',
+      pickPlanet: 'Planète',
+      cycle: 'Cycle',
+      today: 'aujourd’hui',
+      elapsed: 'écoulé',
+      remaining: 'restant',
+      untilRetro: 'avant le retournement',
+      dayShort: 'jours',
+      inSign: 'en',
+      house: 'Maison',
+      houseUnknown: 'Maisons non calculées — l’heure de naissance manque dans le profil',
+      contacts: 'Liens avec votre thème',
+      noContacts: 'La planète ne forme actuellement aucun aspect aux points de votre thème',
+      applying: 'applicatif',
+      separating: 'séparatif',
+      orb: 'Orbe',
+      areaTitle: 'Domaine',
+      keyDates: 'Dates clés',
+      openChart: 'Voir dans le thème',
+      needProfile: 'Complétez votre profil pour voir comment les rétrogradations tombent sur votre thème',
+      meaning: 'Ce que cela signifie',
+      traditionNote: 'L’astrologie est un langage de description, pas une prévision. Ci-dessous, ce à quoi cette période est traditionnellement associée.',
+      phase: {
+        pre: 'Ombre initiale',
+        retro: 'Rétrograde',
+        post: 'Ombre finale',
+        upcoming: 'Encore à venir'
+      },
+      phaseNote: {
+        pre: 'La planète avance encore, mais elle est entrée dans le segment qu’elle parcourra trois fois.',
+        retro: 'Mouvement inverse : la planète repasse sur un trajet déjà parcouru.',
+        post: 'Le mouvement est de nouveau direct, mais sur le même segment — pour la troisième fois.',
+        upcoming: 'Le cycle n’a pas encore commencé.'
+      },
+      kd: {
+        shadowStart: 'Début de l’ombre',
+        stationRetro: 'Passage en rétrograde',
+        stationDirect: 'Retour en direct',
+        shadowEnd: 'Fin de l’ombre'
+      },
+      areas: {
+        overview: 'Vue d’ensemble',
+        love: 'Amour',
+        career: 'Travail',
+        money: 'Argent',
+        communication: 'Communication',
+        energy: 'Énergie',
+        inner: 'Vie intérieure'
+      },
+      areaText: {
+        overview: 'Une période rétrograde est traditionnellement associée au retour vers ce qui a été remis à plus tard et au réexamen de ce qui semblait réglé.',
+        love: 'Dans les relations, les conversations restées en suspens et les sujets sur lesquels on revient se font davantage sentir.',
+        career: 'Au travail, cela se lit comme un temps pour revoir les accords et finir ce qui est engagé, plutôt que pour lancer du neuf.',
+        money: 'Côté argent, mieux vaut revérifier les conditions et les chiffres — surtout sur ce qui a été signé auparavant.',
+        communication: 'Les échanges demandent souvent un second passage : ce qui semblait clair gagne à être redit.',
+        energy: 'Le rythme peut sembler irrégulier : les choses avancent par boucles plutôt qu’en ligne droite.',
+        inner: 'Un bon moment pour repérer les réactions qui reviennent et ce vers quoi la pensée retourne.'
+      }
+    }
   };
 var IT = {
     ui: {
@@ -2498,7 +3051,86 @@ var IT = {
       communication: { title: 'Comunicazione',  desc: 'Le conversazioni tendono a scorrere più agevolmente' },
       learning:      { title: 'Apprendimento',  desc: 'Buona concentrazione per assorbire qualcosa di nuovo' }
     },
-    moonStatus: { favorable: 'Favorevole', neutral: 'Neutro', unfavorable: 'Sfavorevole' }
+    moonStatus: { favorable: 'Favorevole', neutral: 'Neutro', unfavorable: 'Sfavorevole' },
+    houses: {
+      1: { n: 'Casa 1', t: 'voi stessi, gli inizi, come entrate in una situazione' },
+      2: { n: 'Casa 2', t: 'denaro, risorse, valori' },
+      3: { n: 'Casa 3', t: 'conversazioni, ambiente vicino, studio' },
+      4: { n: 'Casa 4', t: 'casa, famiglia, radici' },
+      5: { n: 'Casa 5', t: 'creatività, figli, piacere' },
+      6: { n: 'Casa 6', t: 'lavoro quotidiano, ritmo, salute' },
+      7: { n: 'Casa 7', t: 'coppia, relazioni strette' },
+      8: { n: 'Casa 8', t: 'risorse condivise, crisi, profondità' },
+      9: { n: 'Casa 9', t: 'senso, viaggi lontani, convinzioni' },
+      10: { n: 'Casa 10', t: 'carriera, status, ruolo pubblico' },
+      11: { n: 'Casa 11', t: 'amici, cerchie, progetti' },
+      12: { n: 'Casa 12', t: 'solitudine, vita interiore, chiusure' }
+    },
+    rx: {
+      retroNow: 'Retrogradi ora',
+      mostRelevant: 'Tocca di più il tuo tema',
+      mostRelevantNoChart: 'Il più veloce fra quelli che tornano indietro',
+      noneTitle: 'In questo momento nessun pianeta è retrogrado',
+      noneText: 'Tutti procedono diretti.',
+      nextIs: 'Prossima stazione',
+      pickPlanet: 'Pianeta',
+      cycle: 'Ciclo',
+      today: 'oggi',
+      elapsed: 'trascorso',
+      remaining: 'rimanente',
+      untilRetro: 'al cambio di moto',
+      dayShort: 'giorni',
+      inSign: 'in',
+      house: 'Casa',
+      houseUnknown: 'Case non calcolate — nel profilo manca l’ora di nascita',
+      contacts: 'Contatti con il tuo tema',
+      noContacts: 'Al momento il pianeta non forma aspetti ai punti del tuo tema',
+      applying: 'applicativo',
+      separating: 'separativo',
+      orb: 'Orbita',
+      areaTitle: 'Ambito',
+      keyDates: 'Date chiave',
+      openChart: 'Mostra nel tema',
+      needProfile: 'Completa il profilo per vedere come i retrogradi cadono sul tuo tema',
+      meaning: 'Che cosa significa',
+      traditionNote: 'L’astrologia è un linguaggio descrittivo, non una previsione. Qui sotto ciò a cui questo periodo viene tradizionalmente associato.',
+      phase: {
+        pre: 'Ombra iniziale',
+        retro: 'Retrogrado',
+        post: 'Ombra finale',
+        upcoming: 'Ancora davanti'
+      },
+      phaseNote: {
+        pre: 'Il pianeta procede ancora avanti, ma è già entrato nel tratto che percorrerà tre volte.',
+        retro: 'Moto retrogrado: il pianeta ripercorre un tratto già fatto.',
+        post: 'Il moto è di nuovo diretto, ma sullo stesso tratto — per la terza volta.',
+        upcoming: 'Il ciclo non è ancora iniziato.'
+      },
+      kd: {
+        shadowStart: 'Inizio dell’ombra',
+        stationRetro: 'Passa retrogrado',
+        stationDirect: 'Torna diretto',
+        shadowEnd: 'Fine dell’ombra'
+      },
+      areas: {
+        overview: 'Panoramica',
+        love: 'Amore',
+        career: 'Lavoro',
+        money: 'Denaro',
+        communication: 'Comunicazione',
+        energy: 'Energia',
+        inner: 'Mondo interiore'
+      },
+      areaText: {
+        overview: 'Un periodo retrogrado è tradizionalmente associato al ritorno su ciò che era stato rimandato e al riesame di quanto sembrava già deciso.',
+        love: 'Nelle relazioni si notano di più le conversazioni rimaste a metà e i temi su cui si torna non per la prima volta.',
+        career: 'Sul lavoro si legge come un tempo per rivedere accordi e chiudere ciò che è avviato, più che per lanciare qualcosa di nuovo.',
+        money: 'Con il denaro conviene ricontrollare condizioni e cifre — soprattutto su quanto firmato in precedenza.',
+        communication: 'Le conversazioni chiedono spesso un secondo passaggio: ciò che sembrava chiaro va detto di nuovo.',
+        energy: 'Il ritmo può risultare irregolare: le cose avanzano a cicli invece che in linea retta.',
+        inner: 'Buon momento per notare le reazioni che si ripetono e ciò a cui il pensiero torna.'
+      }
+    }
   };
 var PT = {
     ui: {
@@ -2807,7 +3439,86 @@ var PT = {
       communication: { title: 'Comunicação',    desc: 'As conversas tendem a fluir com mais facilidade' },
       learning:      { title: 'Aprendizado',    desc: 'Bom foco para absorver algo novo' }
     },
-    moonStatus: { favorable: 'Favorável', neutral: 'Neutro', unfavorable: 'Desfavorável' }
+    moonStatus: { favorable: 'Favorável', neutral: 'Neutro', unfavorable: 'Desfavorável' },
+    houses: {
+      1: { n: 'Casa 1', t: 'você mesmo, os começos, como entra numa situação' },
+      2: { n: 'Casa 2', t: 'dinheiro, recursos, valores' },
+      3: { n: 'Casa 3', t: 'conversas, ambiente próximo, aprendizado' },
+      4: { n: 'Casa 4', t: 'casa, família, raízes' },
+      5: { n: 'Casa 5', t: 'criatividade, filhos, prazer' },
+      6: { n: 'Casa 6', t: 'trabalho diário, rotina, saúde' },
+      7: { n: 'Casa 7', t: 'parceria, relações próximas' },
+      8: { n: 'Casa 8', t: 'recursos partilhados, crises, profundidade' },
+      9: { n: 'Casa 9', t: 'sentido, viagens longas, crenças' },
+      10: { n: 'Casa 10', t: 'carreira, status, papel público' },
+      11: { n: 'Casa 11', t: 'amigos, círculos, planos' },
+      12: { n: 'Casa 12', t: 'recolhimento, vida interior, encerramentos' }
+    },
+    rx: {
+      retroNow: 'Retrógrados agora',
+      mostRelevant: 'O que mais toca o seu mapa',
+      mostRelevantNoChart: 'O mais rápido entre os que recuam',
+      noneTitle: 'Neste momento nenhum planeta está retrógrado',
+      noneText: 'Todos seguem diretos.',
+      nextIs: 'Próxima estação',
+      pickPlanet: 'Planeta',
+      cycle: 'Ciclo',
+      today: 'hoje',
+      elapsed: 'decorrido',
+      remaining: 'restante',
+      untilRetro: 'até a virada',
+      dayShort: 'dias',
+      inSign: 'em',
+      house: 'Casa',
+      houseUnknown: 'Casas não calculadas — o perfil não tem hora de nascimento',
+      contacts: 'Contatos com o seu mapa',
+      noContacts: 'No momento o planeta não forma aspectos aos pontos do seu mapa',
+      applying: 'aplicativo',
+      separating: 'separativo',
+      orb: 'Orbe',
+      areaTitle: 'Área',
+      keyDates: 'Datas-chave',
+      openChart: 'Ver no mapa',
+      needProfile: 'Complete o seu perfil para ver como os retrógrados caem no seu mapa',
+      meaning: 'O que isso significa',
+      traditionNote: 'Astrologia é uma linguagem de descrição, não uma previsão. Abaixo, aquilo a que este período é tradicionalmente associado.',
+      phase: {
+        pre: 'Sombra inicial',
+        retro: 'Retrógrado',
+        post: 'Sombra final',
+        upcoming: 'Ainda por vir'
+      },
+      phaseNote: {
+        pre: 'O planeta ainda avança, mas já entrou no trecho que percorrerá três vezes.',
+        retro: 'Movimento para trás: o planeta refaz um trecho já percorrido.',
+        post: 'O movimento volta a ser direto, mas sobre o mesmo trecho — pela terceira vez.',
+        upcoming: 'O ciclo ainda não começou.'
+      },
+      kd: {
+        shadowStart: 'Começa a sombra',
+        stationRetro: 'Fica retrógrado',
+        stationDirect: 'Volta a direto',
+        shadowEnd: 'Termina a sombra'
+      },
+      areas: {
+        overview: 'Visão geral',
+        love: 'Amor',
+        career: 'Trabalho',
+        money: 'Dinheiro',
+        communication: 'Comunicação',
+        energy: 'Energia',
+        inner: 'Mundo interior'
+      },
+      areaText: {
+        overview: 'Um período retrógrado é tradicionalmente associado a voltar ao que ficou adiado e rever o que parecia já resolvido.',
+        love: 'Nos relacionamentos, ficam mais visíveis as conversas inacabadas e os temas a que se volta mais de uma vez.',
+        career: 'No trabalho, lê-se como tempo de rever acordos e concluir o que foi começado, e não de lançar algo novo.',
+        money: 'Com dinheiro, vale reconferir condições e números — sobretudo no que foi assinado antes.',
+        communication: 'As conversas pedem com mais frequência uma segunda passagem: o que parecia claro vale ser dito de novo.',
+        energy: 'O ritmo pode parecer irregular: as coisas avançam em voltas, não em linha reta.',
+        inner: 'Bom momento para notar reações que se repetem e aquilo a que o pensamento retorna.'
+      }
+    }
   };
 var TR = {
     ui: {
@@ -3116,7 +3827,86 @@ var TR = {
       communication: { title: 'İletişim',      desc: 'Sohbetler daha akıcı gitme eğiliminde' },
       learning:      { title: 'Öğrenme',       desc: 'Yeni bir şeyi özümsemek için iyi odaklanma' }
     },
-    moonStatus: { favorable: 'Elverişli', neutral: 'Nötr', unfavorable: 'Elverişsiz' }
+    moonStatus: { favorable: 'Elverişli', neutral: 'Nötr', unfavorable: 'Elverişsiz' },
+    houses: {
+      1: { n: '1. ev', t: 'kendiniz, başlangıçlar, bir duruma nasıl girdiğiniz' },
+      2: { n: '2. ev', t: 'para, kaynaklar, değerler' },
+      3: { n: '3. ev', t: 'konuşmalar, yakın çevre, öğrenme' },
+      4: { n: '4. ev', t: 'ev, aile, kökler' },
+      5: { n: '5. ev', t: 'yaratıcılık, çocuklar, keyif' },
+      6: { n: '6. ev', t: 'günlük iş, düzen, sağlık' },
+      7: { n: '7. ev', t: 'ortaklık, yakın ilişkiler' },
+      8: { n: '8. ev', t: 'ortak kaynaklar, krizler, derinlik' },
+      9: { n: '9. ev', t: 'anlam, uzak yolculuklar, inançlar' },
+      10: { n: '10. ev', t: 'kariyer, statü, kamusal rol' },
+      11: { n: '11. ev', t: 'arkadaşlar, çevreler, planlar' },
+      12: { n: '12. ev', t: 'inziva, iç dünya, kapanışlar' }
+    },
+    rx: {
+      retroNow: 'Şu anda retro',
+      mostRelevant: 'Haritanıza en çok dokunan',
+      mostRelevantNoChart: 'Geri gidenler arasında en hızlısı',
+      noneTitle: 'Şu anda hiçbir gezegen retro değil',
+      noneText: 'Hepsi düz hareket ediyor.',
+      nextIs: 'Sıradaki dönüş',
+      pickPlanet: 'Gezegen',
+      cycle: 'Döngü',
+      today: 'bugün',
+      elapsed: 'geçen',
+      remaining: 'kalan',
+      untilRetro: 'dönüşe',
+      dayShort: 'gün',
+      inSign: 'burcunda',
+      house: 'Ev',
+      houseUnknown: 'Evler hesaplanmadı — profilde doğum saati yok',
+      contacts: 'Haritanızla bağlantılar',
+      noContacts: 'Gezegen şu anda haritanızdaki noktalarla açı kurmuyor',
+      applying: 'yaklaşan',
+      separating: 'ayrılan',
+      orb: 'Orb',
+      areaTitle: 'Alan',
+      keyDates: 'Önemli tarihler',
+      openChart: 'Haritada göster',
+      needProfile: 'Retroların kendi haritanıza nasıl düştüğünü görmek için profilinizi tamamlayın',
+      meaning: 'Bu ne demek',
+      traditionNote: 'Astroloji bir tahmin değil, bir betimleme dilidir. Aşağıda bu dönemin geleneksel olarak ilişkilendirildiği şeyler var.',
+      phase: {
+        pre: 'Ön gölge',
+        retro: 'Retro',
+        post: 'Son gölge',
+        upcoming: 'Henüz önümüzde'
+      },
+      phaseNote: {
+        pre: 'Gezegen hâlâ ileri gidiyor ama üç kez geçeceği bölüme girdi.',
+        retro: 'Geri hareket: gezegen daha önce geçtiği yolu yeniden geçiyor.',
+        post: 'Hareket yeniden düz, ama aynı bölümde — üçüncü kez.',
+        upcoming: 'Döngü henüz başlamadı.'
+      },
+      kd: {
+        shadowStart: 'Gölge başlıyor',
+        stationRetro: 'Retroya dönüyor',
+        stationDirect: 'Düze dönüyor',
+        shadowEnd: 'Gölge bitiyor'
+      },
+      areas: {
+        overview: 'Genel',
+        love: 'Aşk',
+        career: 'İş',
+        money: 'Para',
+        communication: 'İletişim',
+        energy: 'Enerji',
+        inner: 'İç dünya'
+      },
+      areaText: {
+        overview: 'Retro dönem geleneksel olarak ertelenmiş olana dönmek ve çözülmüş görünene yeniden bakmakla ilişkilendirilir.',
+        love: 'İlişkilerde yarım kalmış konuşmalar ve ilk kez dönmediğiniz konular daha çok fark edilir.',
+        career: 'İşte bu, yeni bir şey başlatmaktan çok anlaşmaları gözden geçirme ve başlananı bitirme zamanı olarak okunur.',
+        money: 'Parada koşulları ve rakamları yeniden kontrol etmekte yarar var — özellikle daha önce imzalananlarda.',
+        communication: 'Konuşmalar çoğu zaman ikinci bir tur ister: açık görünen şeyi bir kez daha söylemek iyi olur.',
+        energy: 'Tempo dalgalı hissedilebilir: işler düz bir çizgide değil, dönerek ilerler.',
+        inner: 'Tekrarlayan tepkileri ve zihninizin geri döndüğü şeyleri fark etmek için iyi bir an.'
+      }
+    }
   };
 
   g.T_ALL = { pl: PL, en: EN, ru: RU, uk: UK, de: DE, es: ES, fr: FR, it: IT, pt: PT, tr: TR };

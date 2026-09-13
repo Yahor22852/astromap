@@ -8,7 +8,7 @@
   'use strict';
 
   var E = window.Engine, N = window.Numerology, T = window.T, W = window.Wheel;
-  var Moon = window.Moon;
+  var Moon = window.Moon, R = window.Retro;
   var A = window.Astronomy;
   var CITIES_ALL = window.CITIES_ALL, COUNTRY_NAMES = window.COUNTRY_NAMES;
   var TZ = window.TZ;
@@ -178,30 +178,10 @@
     return rows;
   }
 
-  /* --- ретрограды и станции ----------------------------------------------
-     Станцию ищем сканированием знака скорости по дням и уточняем делением. */
-  var RETRO_BODIES = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn',
-                      'Uranus', 'Neptune', 'Pluto'];
-
-  function nextStation(body, from) {
-    var step = 86400000;
-    var prev = E.bodyAt(body, from).speed;
-    for (var i = 1; i <= 400; i++) {
-      var d = new Date(from.getTime() + i * step);
-      var sp = E.bodyAt(body, d).speed;
-      if ((prev < 0) !== (sp < 0)) {
-        var a = from.getTime() + (i - 1) * step, b = d.getTime();
-        for (var k = 0; k < 24; k++) {
-          var m = (a + b) / 2;
-          if ((E.bodyAt(body, new Date(a)).speed < 0) ===
-              (E.bodyAt(body, new Date(m)).speed < 0)) { a = m; } else { b = m; }
-        }
-        return { date: new Date((a + b) / 2), toRetro: sp < 0 };
-      }
-      prev = sp;
-    }
-    return null;
-  }
+  /* Поиск станций переехал в retro.js вместе со всем расчётом циклов:
+     там же считаются теневые периоды и прогресс, а раздел «Ретрограды»
+     берёт всё оттуда. Отдельная копия nextStation() в app.js была бы вторым
+     источником тех же дат. */
 
   /* --- вспомогательная разметка ------------------------------------------- */
   function fmtDeg(x) {
@@ -1100,25 +1080,338 @@
     return '<div class="mp-page" id="moonBody">' + moonBodyHtml() + '</div>';
   };
 
-  views.retro = function () {
-    var now = new Date();
-    var cur = [], soon = [];
-    RETRO_BODIES.forEach(function (b) {
-      var p = E.bodyAt(b, now);
-      var st = nextStation(b, now);
-      if (p.retro) {
-        cur.push('<article class="tr"><div class="tr__h"><span class="tr__s"><b>' +
-          pName(b) + '</b>' + toneTag('hard') + '</span><span class="tr__o">' +
-          (st ? T.ui.stationing + ': ' + fmtDate(st.date) + ' \u2192 ' + T.ui.direct : '') +
-          '</span></div><p class="tr__t">' + (T.retro[b] || '') + '</p></article>');
-      } else if (st) {
-        soon.push([pName(b), fmtDate(st.date),
-                   st.toRetro ? T.ui.retrograde : T.ui.direct]);
-      }
+  /* --- \u0420\u0435\u0442\u0440\u043e\u0433\u0440\u0430\u0434\u044b: \u043f\u0440\u043e\u0432\u043e\u0434\u043d\u0438\u043a \u043f\u043e \u0446\u0438\u043a\u043b\u0430\u043c -------------------------------------
+     \u0420\u0430\u0437\u0434\u0435\u043b \u0441\u043e\u0431\u0440\u0430\u043d \u0432\u043e\u043a\u0440\u0443\u0433 \u0442\u0440\u0451\u0445 \u0441\u043b\u043e\u0451\u0432, \u0430 \u043d\u0435 \u0432\u043e\u043a\u0440\u0443\u0433 \u0441\u043f\u0438\u0441\u043a\u0430 \u043f\u043b\u0430\u043d\u0435\u0442:
+       1. \u0441\u043e\u0431\u044b\u0442\u0438\u0435   \u2014 \u00ab\u0421\u0430\u0442\u0443\u0440\u043d \u0440\u0435\u0442\u0440\u043e\u0433\u0440\u0430\u0434\u0435\u043d \u0432 \u0420\u044b\u0431\u0430\u0445\u00bb, \u0448\u043a\u0430\u043b\u0430 \u0446\u0438\u043a\u043b\u0430
+       2. \u043b\u0438\u0447\u043d\u043e\u0435    \u2014 \u0434\u043e\u043c \u043a\u0430\u0440\u0442\u044b \u0438 \u0442\u0435\u043a\u0443\u0449\u0438\u0435 \u0430\u0441\u043f\u0435\u043a\u0442\u044b \u043a \u043d\u0430\u0442\u0430\u043b\u044c\u043d\u044b\u043c \u0442\u043e\u0447\u043a\u0430\u043c
+       3. \u0441\u043c\u044b\u0441\u043b     \u2014 \u0441 \u0447\u0435\u043c \u043f\u0435\u0440\u0438\u043e\u0434 \u0442\u0440\u0430\u0434\u0438\u0446\u0438\u043e\u043d\u043d\u043e \u0441\u0432\u044f\u0437\u044b\u0432\u0430\u044e\u0442, \u0441 \u0444\u0438\u043b\u044c\u0442\u0440\u043e\u043c \u043f\u043e \u0441\u0444\u0435\u0440\u0435
+
+     \u0421\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u0435 \u0440\u0430\u0437\u0434\u0435\u043b\u0430 \u2014 \u0442\u0440\u0438 \u043f\u0435\u0440\u0435\u043c\u0435\u043d\u043d\u044b\u0435 (\u0434\u0430\u0442\u0430, \u043f\u043b\u0430\u043d\u0435\u0442\u0430, \u0441\u0444\u0435\u0440\u0430); \u043b\u044e\u0431\u0430\u044f \u0438\u0437 \u043d\u0438\u0445
+     \u043f\u0435\u0440\u0435\u0440\u0438\u0441\u043e\u0432\u044b\u0432\u0430\u0435\u0442 \u0442\u043e\u043b\u044c\u043a\u043e #rxBody, \u0431\u0435\u0437 route() \u0438 \u0431\u0435\u0437 \u0441\u0431\u0440\u043e\u0441\u0430 \u0441\u043a\u0440\u043e\u043b\u043b\u0430 \u2014 \u0442\u0435\u043c \u0436\u0435
+     \u043f\u0440\u0438\u0451\u043c\u043e\u043c, \u0447\u0442\u043e #moonBody \u0438 #chartBody.
+
+     \u0414\u0430\u0442\u0430 \u0437\u0434\u0435\u0441\u044c \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u0430\u044f, \u043d\u043e \u043d\u0430\u043c\u0435\u0440\u0435\u043d\u043d\u043e \u0441\u0434\u0435\u043b\u0430\u043d\u0430 \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u043e\u0439 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c\u044e \u0441
+     \u043a\u043d\u043e\u043f\u043a\u0430\u043c\u0438 \u00ab\u043d\u0430\u0437\u0430\u0434 / \u0441\u0435\u0433\u043e\u0434\u043d\u044f / \u0432\u043f\u0435\u0440\u0451\u0434\u00bb: \u043a\u043e\u0433\u0434\u0430 \u043f\u043e\u044f\u0432\u0438\u0442\u0441\u044f \u043e\u0431\u0449\u0438\u0439 \u043a\u043e\u043d\u0442\u0435\u043a\u0441\u0442
+     \u0432\u0440\u0435\u043c\u0435\u043d\u0438 \u043d\u0430 \u0432\u0435\u0441\u044c \u043f\u0440\u043e\u0434\u0443\u043a\u0442, \u044d\u0442\u043e\u0442 \u0440\u0430\u0437\u0434\u0435\u043b \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0438\u0442\u0441\u044f \u043a \u043d\u0435\u043c\u0443 \u0437\u0430\u043c\u0435\u043d\u043e\u0439 rxDate,
+     \u0430 \u043d\u0435 \u043f\u0435\u0440\u0435\u043f\u0438\u0441\u044b\u0432\u0430\u043d\u0438\u0435\u043c \u044d\u043a\u0440\u0430\u043d\u0430. */
+  var RX_AREAS = ['overview', 'love', 'career', 'money', 'communication', 'energy', 'inner'];
+  var rxDate = null, rxBody = null, rxArea = 'overview';
+
+  function rxLocaleDate(d) {
+    return new Intl.DateTimeFormat(moonLocale(),
+      { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+  }
+  function rxShortDate(d) {
+    var dd = d.getDate(), mm = d.getMonth() + 1;
+    return (dd < 10 ? '0' : '') + dd + '.' + (mm < 10 ? '0' : '') + mm;
+  }
+  function rxIsToday(d) { return sameDay(d, new Date()); }
+
+  /* \u0413\u043b\u0430\u0432\u043d\u0430\u044f \u043f\u043b\u0430\u043d\u0435\u0442\u0430 \u0440\u0430\u0437\u0434\u0435\u043b\u0430: \u043f\u0440\u0438 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u043d\u043e\u043c \u043f\u0440\u043e\u0444\u0438\u043b\u0435 \u2014 \u0442\u0430, \u0447\u0442\u043e \u0441\u0438\u043b\u044c\u043d\u0435\u0435 \u0432\u0441\u0435\u0433\u043e
+     \u0437\u0430\u0434\u0435\u0432\u0430\u0435\u0442 \u043a\u0430\u0440\u0442\u0443, \u0438\u043d\u0430\u0447\u0435 \u0441\u0430\u043c\u0430\u044f \u0431\u044b\u0441\u0442\u0440\u0430\u044f (\u0435\u0451 \u0446\u0438\u043a\u043b \u0431\u043b\u0438\u0436\u0435 \u0438 \u043d\u0430\u0433\u043b\u044f\u0434\u043d\u0435\u0435). \u0420\u0435\u0442\u0440\u043e-
+     \u0433\u0440\u0430\u0434\u043d\u044b\u0435 \u0432\u0441\u0435\u0433\u0434\u0430 \u043f\u0440\u0438\u043e\u0440\u0438\u0442\u0435\u0442\u043d\u0435\u0435 \u0438\u0434\u0443\u0449\u0438\u0445 \u043f\u0440\u044f\u043c\u043e. */
+  function rxDefaultBody(st) {
+    var retro = st.filter(function (s) { return s.retro; });
+    var pool = retro.length ? retro : st;
+    var best = null;
+    pool.forEach(function (s) {
+      if (!best) { best = s; return; }
+      if (natal && (s.relevance || best.relevance)) {
+        if (s.relevance > best.relevance) { best = s; }
+      } else if (Math.abs(s.speed) > Math.abs(best.speed)) { best = s; }
     });
-    return card(T.ui.retroTitle, cur.join('') ||
-        '<p class="empty">' + T.ui.noRetro + '</p>') +
-      card(T.ui.stationing, table([T.ui.point, T.ui.dateCol, T.ui.motion], soon));
+    return best ? best.body : R.BODIES[0];
+  }
+
+  function rxEnsureState(st) {
+    if (!rxDate) { rxDate = new Date(); }
+    var known = st.some(function (s) { return s.body === rxBody; });
+    if (!known) { rxBody = rxDefaultBody(st); }
+  }
+
+  /* \u0428\u043a\u0430\u043b\u0430 \u0446\u0438\u043a\u043b\u0430: \u043f\u0440\u0435\u0434\u0442\u0435\u043d\u044c \u2014 \u0440\u0435\u0442\u0440\u043e\u0433\u0440\u0430\u0434 \u2014 \u043f\u043e\u0441\u043b\u0435\u0442\u0435\u043d\u044c \u0432 \u0440\u0435\u0430\u043b\u044c\u043d\u044b\u0445 \u043f\u0440\u043e\u043f\u043e\u0440\u0446\u0438\u044f\u0445,
+     \u0441 \u043c\u0430\u0440\u043a\u0435\u0440\u043e\u043c \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u043e\u0439 \u0434\u0430\u0442\u044b. \u0415\u0441\u043b\u0438 \u0442\u0435\u043d\u044c \u043d\u0435 \u043f\u043e\u0441\u0447\u0438\u0442\u0430\u043b\u0430\u0441\u044c (\u043a\u0440\u0430\u0435\u0432\u043e\u0439 \u0441\u043b\u0443\u0447\u0430\u0439 \u0443
+     \u0433\u0440\u0430\u043d\u0438\u0446\u044b \u043f\u043e\u0438\u0441\u043a\u0430), \u0448\u043a\u0430\u043b\u044b \u043f\u0440\u043e\u0441\u0442\u043e \u043d\u0435\u0442 \u2014 \u0440\u0438\u0441\u043e\u0432\u0430\u0442\u044c \u0435\u0451 \u043f\u043e \u0432\u044b\u0434\u0443\u043c\u0430\u043d\u043d\u044b\u043c \u0433\u0440\u0430\u043d\u0438\u0446\u0430\u043c
+     \u043d\u0435\u043b\u044c\u0437\u044f. */
+  function rxTimelineHtml(c) {
+    if (!c.shadowStart || !c.shadowEnd) { return ''; }
+    var t0 = c.shadowStart.getTime(), t1 = c.shadowEnd.getTime();
+    var span = t1 - t0;
+    if (span <= 0) { return ''; }
+    var at = function (d) { return (d.getTime() - t0) / span * 100; };
+    var r0 = at(c.stationRetro), r1 = at(c.stationDirect);
+    var raw = (rxDate.getTime() - t0) / span * 100;
+    var now = Math.max(0, Math.min(100, raw));
+    var outside = raw < -0.5 || raw > 100.5;
+
+    var seg = function (from, to, kind, label) {
+      return '<span class="rx-tl__seg rx-tl__seg--' + kind + '" style="left:' +
+        from.toFixed(2) + '%;width:' + (to - from).toFixed(2) + '%" title="' + esc(label) + '"></span>';
+    };
+    var tick = function (pos, d) {
+      return '<span class="rx-tl__tick" style="left:' + pos.toFixed(2) + '%">' +
+        rxShortDate(d) + '</span>';
+    };
+
+    return '<div class="rx-tl">' +
+      '<div class="rx-tl__bar">' +
+        seg(0, r0, 'pre', T.rx.phase.pre) +
+        seg(r0, r1, 'retro', T.rx.phase.retro) +
+        seg(r1, 100, 'post', T.rx.phase.post) +
+        '<span class="rx-tl__now' + (outside ? ' rx-tl__now--out' : '') +
+          '" style="left:' + now.toFixed(2) + '%">' +
+          '<span class="rx-tl__nowlabel">' + (rxIsToday(rxDate) ? T.rx.today : rxShortDate(rxDate)) +
+        '</span></span>' +
+      '</div>' +
+      '<div class="rx-tl__ticks">' + tick(0, c.shadowStart) + tick(r0, c.stationRetro) +
+        tick(r1, c.stationDirect) + tick(100, c.shadowEnd) + '</div>' +
+      '<div class="rx-tl__legend">' +
+        '<span class="rx-tl__lg rx-tl__lg--pre">' + T.rx.phase.pre + '</span>' +
+        '<span class="rx-tl__lg rx-tl__lg--retro">' + T.rx.phase.retro + '</span>' +
+        '<span class="rx-tl__lg rx-tl__lg--post">' + T.rx.phase.post + '</span>' +
+      '</div></div>';
+  }
+
+  /* \u0421\u0447\u0451\u0442\u0447\u0438\u043a \u043f\u043e\u0434 \u0448\u043a\u0430\u043b\u043e\u0439 \u0437\u0430\u0432\u0438\u0441\u0438\u0442 \u043e\u0442 \u0444\u0430\u0437\u044b: \u0432\u043d\u0443\u0442\u0440\u0438 \u0440\u0435\u0442\u0440\u043e\u0433\u0440\u0430\u0434\u0430 \u043e\u0441\u043c\u044b\u0441\u043b\u0435\u043d\u043d\u043e
+     \u00ab\u043f\u0440\u043e\u0448\u043b\u043e / \u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c\u00bb, \u0434\u043e \u043d\u0435\u0433\u043e \u2014 \u00ab\u0434\u043e \u0440\u0430\u0437\u0432\u043e\u0440\u043e\u0442\u0430\u00bb, \u0432 \u043f\u043e\u0441\u043b\u0435\u0442\u0435\u043d\u0438 \u2014 \u0441\u043a\u043e\u043b\u044c\u043a\u043e
+     \u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c \u0434\u043e \u043a\u043e\u043d\u0446\u0430 \u0442\u0435\u043d\u0438. \u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0442\u044c \u00ab\u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c 0\u00bb \u0432 \u043f\u0440\u0435\u0434\u0442\u0435\u043d\u0438 \u0431\u044b\u043b\u043e \u0431\u044b
+     \u0444\u043e\u0440\u043c\u0430\u043b\u044c\u043d\u043e \u0432\u0435\u0440\u043d\u043e \u0438 \u043f\u0440\u0438 \u044d\u0442\u043e\u043c \u0431\u0435\u0441\u0441\u043c\u044b\u0441\u043b\u0435\u043d\u043d\u043e. */
+  function rxCountersHtml(c) {
+    var items = [];
+    if (c.phase === 'retro') {
+      items.push([T.rx.elapsed, c.daysElapsed]);
+      items.push([T.rx.remaining, c.daysRemaining]);
+    } else if (c.phase === 'pre' || c.phase === 'upcoming') {
+      items.push([T.rx.untilRetro, c.daysUntilRetro]);
+      items.push([T.rx.cycle, c.retroDays]);
+    } else if (c.phase === 'post' && c.shadowEnd) {
+      var left = Math.max(0, Math.round((c.shadowEnd.getTime() - rxDate.getTime()) / 86400000));
+      items.push([T.rx.remaining, left]);
+      items.push([T.rx.cycle, c.retroDays]);
+    }
+    if (!items.length) { return ''; }
+    return '<div class="rx-counts">' + items.map(function (it) {
+      return '<span class="rx-count"><b>' + it[1] + '</b> <span>' + T.rx.dayShort +
+        ' \u00b7 ' + it[0] + '</span></span>';
+    }).join('') + '</div>';
+  }
+
+  function rxPickerHtml(st) {
+    return '<div class="rx-pick" role="tablist" aria-label="' + esc(T.rx.pickPlanet) + '">' +
+      st.map(function (s) {
+        var state = s.retro ? 'retro' : 'direct';
+        return '<button type="button" class="rx-pick__b' + (s.body === rxBody ? ' on' : '') +
+          '" role="tab" aria-selected="' + (s.body === rxBody) + '" data-rxbody="' + s.body + '">' +
+          '<span class="rx-pick__dot rx-pick__dot--' + state + '" aria-hidden="true"></span>' +
+          '<span class="rx-pick__n">' + pName(s.body) + '</span>' +
+          (s.retro ? '<span class="rx-pick__r">R</span>' : '') +
+          '</button>';
+      }).join('') + '</div>';
+  }
+
+  /* \u0421\u043b\u043e\u0439 2 \u2014 \u043b\u0438\u0447\u043d\u043e\u0435. \u0414\u043e\u043c \u0441\u0447\u0438\u0442\u0430\u0435\u0442\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u0440\u0438 \u0438\u0437\u0432\u0435\u0441\u0442\u043d\u043e\u043c \u0432\u0440\u0435\u043c\u0435\u043d\u0438 \u0440\u043e\u0436\u0434\u0435\u043d\u0438\u044f:
+     \u0431\u0435\u0437 \u0430\u0441\u0446\u0435\u043d\u0434\u0435\u043d\u0442\u0430 \u0434\u043e\u043c\u043e\u0432 \u043d\u0435\u0442, \u0438 \u043f\u043e\u0434\u0441\u0442\u0430\u0432\u043b\u044f\u0442\u044c \u0438\u0445 \u043d\u0435\u0447\u0435\u043c. */
+  function rxPersonalHtml(s) {
+    if (!natal) {
+      return '<section class="rx-card rx-card--need"><p class="p">' + T.rx.needProfile + '</p>' +
+        '<a class="btn btn--link" href="#profile">' + T.ui.needBtn + '</a></section>';
+    }
+    var pers = s.personal;
+    var houseHtml;
+    if (pers && pers.house) {
+      var h = T.houses[pers.house];
+      houseHtml = '<div class="rx-house"><span class="rx-house__n">' + h.n + '</span>' +
+        '<span class="rx-house__t">' + h.t + '</span></div>';
+    } else {
+      houseHtml = '<p class="rx-muted">' + T.rx.houseUnknown + '</p>';
+    }
+
+    var asp = (pers && pers.aspects || []).slice(0, 4);
+    var aspHtml = asp.length ? '<ul class="rx-asp">' + asp.map(function (a) {
+      return '<li class="rx-asp__i"><button type="button" class="rx-asp__b" data-rxpoint="' + a.natal + '">' +
+        '<span class="rx-asp__main">' + T.aspects[a.aspect] + ' <b>' + pName(a.natal) + '</b></span>' +
+        toneTag(a.tone) +
+        '<span class="rx-asp__meta">' + T.rx.orb + ' ' + fmtDeg(a.orb) + ' \u00b7 ' +
+          (a.applying ? T.rx.applying : T.rx.separating) + '</span>' +
+        '<span class="rx-asp__go" aria-hidden="true">\u203a</span></button></li>';
+    }).join('') + '</ul>' : '<p class="rx-muted">' + T.rx.noContacts + '</p>';
+
+    return '<section class="rx-card">' +
+      '<h3 class="rx-card__t">' + T.rx.house + '</h3>' + houseHtml +
+      '<h3 class="rx-card__t rx-card__t--gap">' + T.rx.contacts + '</h3>' + aspHtml +
+      '<button type="button" class="btn btn--link rx-openchart" data-rxchart="' + s.body + '">' +
+        T.rx.openChart + '</button>' +
+      '</section>';
+  }
+
+  /* \u0421\u043b\u043e\u0439 3 \u2014 \u0441\u043c\u044b\u0441\u043b. \u0421\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0439 \u0442\u0435\u043a\u0441\u0442 \u043f\u043b\u0430\u043d\u0435\u0442\u044b (T.retro) \u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u043c \u0442\u043e\u043b\u044c\u043a\u043e
+     \u043a\u043e\u0433\u0434\u0430 \u043e\u043d\u0430 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0438\u0434\u0451\u0442 \u043d\u0430\u0437\u0430\u0434; \u0432 \u0442\u0435\u043d\u0438 \u0438 \u0434\u043e \u0446\u0438\u043a\u043b\u0430 \u0447\u0435\u0441\u0442\u043d\u0435\u0435 \u043e\u0431\u044a\u044f\u0441\u043d\u0438\u0442\u044c
+     \u0444\u0430\u0437\u0443, \u0430 \u043d\u0435 \u043f\u0435\u0440\u0435\u0441\u043a\u0430\u0437\u044b\u0432\u0430\u0442\u044c \u0440\u0435\u0442\u0440\u043e\u0433\u0440\u0430\u0434\u043d\u0443\u044e \u0445\u0430\u0440\u0430\u043a\u0442\u0435\u0440\u0438\u0441\u0442\u0438\u043a\u0443. */
+  function rxMeaningHtml(s, c) {
+    var tabs = RX_AREAS.map(function (k) {
+      return '<button type="button" class="segbar__b' + (rxArea === k ? ' on' : '') +
+        '" data-rxarea="' + k + '"><span class="segbar__t">' + T.rx.areas[k] + '</span></button>';
+    }).join('');
+    var body = '<p class="p">' + T.rx.phaseNote[c.phase] + '</p>';
+    if (s.retro && T.retro[s.body]) { body += '<p class="p">' + T.retro[s.body] + '</p>'; }
+    body += '<p class="p">' + T.rx.areaText[rxArea] + '</p>';
+    return '<section class="rx-card">' +
+      '<h3 class="rx-card__t">' + T.rx.meaning + '</h3>' +
+      '<div class="segbar rx-segbar" id="rxSegbar"><span class="segbar__ind" id="rxSegbarInd"></span>' +
+        tabs + '</div>' +
+      '<div class="rx-mean" id="rxMean">' + body + '</div>' +
+      '<p class="note">' + T.rx.traditionNote + '</p>' +
+      '</section>';
+  }
+
+  function rxDatesHtml(c) {
+    var rows = R.keyDates(c).map(function (k) {
+      var isPast = k.date.getTime() < rxDate.getTime();
+      return '<li class="rx-date' + (isPast ? ' rx-date--past' : '') + '">' +
+        '<button type="button" class="rx-date__b" data-rxjump="' + k.date.getTime() + '">' +
+        '<span class="rx-date__d">' + fmtDate(k.date) + '</span>' +
+        '<span class="rx-date__l">' + T.rx.kd[k.key] + '</span>' +
+        '<span class="rx-date__go" aria-hidden="true">\u203a</span></button></li>';
+    }).join('');
+    return '<section class="rx-card"><h3 class="rx-card__t">' + T.rx.keyDates + '</h3>' +
+      '<ul class="rx-dates">' + rows + '</ul></section>';
+  }
+
+  function rxDateBarHtml() {
+    return '<div class="rx-datebar">' +
+      '<button type="button" class="rx-datebar__nav" data-rxstep="-1" aria-label="' + esc(T.ui.prevMonth) + '">\u2190</button>' +
+      '<span class="rx-datebar__d">' + rxLocaleDate(rxDate) + '</span>' +
+      '<button type="button" class="rx-datebar__nav" data-rxstep="1" aria-label="' + esc(T.ui.nextMonth) + '">\u2192</button>' +
+      (rxIsToday(rxDate) ? '' :
+        '<button type="button" class="rx-datebar__today" data-rxtoday="1">' + T.rx.today + '</button>') +
+      '</div>';
+  }
+
+  function rxSummaryHtml(st) {
+    var retro = st.filter(function (s) { return s.retro; });
+    if (!retro.length) {
+      var next = R.nextRetrograde(rxDate);
+      return '<section class="rx-sum rx-sum--none">' +
+        '<h2 class="rx-sum__h">' + T.rx.noneTitle + '</h2>' +
+        '<p class="rx-sum__p">' + T.rx.noneText +
+          (next ? ' ' + T.rx.nextIs + ': <b>' + pName(next.body) + '</b>, ' +
+            fmtDate(next.stationRetro) + '.' : '') + '</p></section>';
+    }
+    var lead = null;
+    retro.forEach(function (s) {
+      if (!lead || (natal ? s.relevance > lead.relevance : Math.abs(s.speed) > Math.abs(lead.speed))) { lead = s; }
+    });
+    return '<section class="rx-sum">' +
+      '<div class="rx-sum__count"><b>' + retro.length + '</b><span>' + T.rx.retroNow + '</span></div>' +
+      '<div class="rx-sum__lead"><span>' + (natal ? T.rx.mostRelevant : T.rx.mostRelevantNoChart) +
+        '</span><b>' + pName(lead.body) + '</b></div>' +
+      '</section>';
+  }
+
+  function rxBodyHtml() {
+    if (!rxDate) { rxDate = new Date(); }
+    var st = R.statusAt(rxDate, natal);
+    rxEnsureState(st);
+    var s = null;
+    st.forEach(function (x) { if (x.body === rxBody) { s = x; } });
+    var c = R.cycleFor(rxBody, rxDate);
+
+    var hero;
+    if (c) {
+      hero = '<section class="rx-hero">' +
+        '<p class="rx-hero__eyebrow">' + T.rx.phase[c.phase] + '</p>' +
+        '<h2 class="rx-hero__h">' + pName(s.body) + ' <span class="rx-hero__sign">' +
+          T.rx.inSign + ' ' + signName(s.sign) + '</span></h2>' +
+        rxCountersHtml(c) + rxTimelineHtml(c) +
+        '</section>';
+    } else {
+      hero = '<section class="rx-hero"><h2 class="rx-hero__h">' + pName(s.body) + '</h2>' +
+        '<p class="rx-muted">' + T.ui.noRetro + '</p></section>';
+    }
+
+    return rxDateBarHtml() + rxSummaryHtml(st) + rxPickerHtml(st) + hero +
+      '<div class="rx-cols">' + rxPersonalHtml(s) +
+      (c ? rxMeaningHtml(s, c) + rxDatesHtml(c) : '') + '</div>';
+  }
+
+  function rerenderRetro() {
+    var body = el('rxBody');
+    if (!body) { return; }
+    body.innerHTML = rxBodyHtml();
+    body.classList.remove('fade-in');
+    void body.offsetWidth;
+    body.classList.add('fade-in');
+    positionSegIndicator('rxSegbar', 'rxSegbarInd', true);
+    bindRetro();
+  }
+
+  function bindRetro() {
+    var body = el('rxBody');
+    if (!body) { return; }
+    var pick = function (sel, fn) {
+      Array.prototype.slice.call(body.querySelectorAll(sel)).forEach(fn);
+    };
+    pick('[data-rxbody]', function (b) {
+      b.addEventListener('click', function () {
+        if (b.getAttribute('data-rxbody') === rxBody) { return; }
+        rxBody = b.getAttribute('data-rxbody');
+        rerenderRetro();
+      });
+    });
+    pick('[data-rxstep]', function (b) {
+      b.addEventListener('click', function () {
+        rxDate = new Date(rxDate.getTime() + (+b.getAttribute('data-rxstep')) * 86400000);
+        rerenderRetro();
+      });
+    });
+    pick('[data-rxtoday]', function (b) {
+      b.addEventListener('click', function () { rxDate = new Date(); rerenderRetro(); });
+    });
+    pick('[data-rxjump]', function (b) {
+      b.addEventListener('click', function () {
+        rxDate = new Date(+b.getAttribute('data-rxjump'));
+        rerenderRetro();
+      });
+    });
+    /* \u0421\u043c\u0435\u043d\u0430 \u0441\u0444\u0435\u0440\u044b \u043c\u0435\u043d\u044f\u0435\u0442 \u0442\u043e\u043b\u044c\u043a\u043e \u0442\u0435\u043a\u0441\u0442 \u2014 \u043f\u0435\u0440\u0435\u0440\u0438\u0441\u043e\u0432\u044b\u0432\u0430\u0442\u044c \u0432\u0435\u0441\u044c \u0440\u0430\u0437\u0434\u0435\u043b \u043d\u0435\u0437\u0430\u0447\u0435\u043c,
+       \u0438\u043d\u0430\u0447\u0435 \u0441\u043a\u043e\u043b\u044c\u0437\u044f\u0449\u0438\u0439 \u0438\u043d\u0434\u0438\u043a\u0430\u0442\u043e\u0440 \u0434\u0451\u0440\u043d\u0435\u0442\u0441\u044f \u0432\u043c\u0435\u0441\u0442\u043e \u0430\u043d\u0438\u043c\u0430\u0446\u0438\u0438. */
+    pick('[data-rxarea]', function (b) {
+      b.addEventListener('click', function () {
+        if (b.classList.contains('on')) { return; }
+        rxArea = b.getAttribute('data-rxarea');
+        pick('[data-rxarea]', function (x) { x.classList.toggle('on', x === b); });
+        positionSegIndicator('rxSegbar', 'rxSegbarInd', false);
+        var st = R.statusAt(rxDate, natal), s = null;
+        st.forEach(function (x) { if (x.body === rxBody) { s = x; } });
+        var c = R.cycleFor(rxBody, rxDate);
+        var mean = el('rxMean');
+        if (mean && c && s) {
+          var html = '<p class="p">' + T.rx.phaseNote[c.phase] + '</p>';
+          if (s.retro && T.retro[s.body]) { html += '<p class="p">' + T.retro[s.body] + '</p>'; }
+          html += '<p class="p">' + T.rx.areaText[rxArea] + '</p>';
+          mean.innerHTML = html;
+        }
+      });
+    });
+    /* \u041a\u0440\u043e\u0441\u0441-\u043f\u0435\u0440\u0435\u0445\u043e\u0434 \u0432 \u043a\u0430\u0440\u0442\u0443: chartSel \u2014 \u0442\u043e \u0436\u0435 \u0441\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u0435, \u043a\u043e\u0442\u043e\u0440\u044b\u043c \u0436\u0438\u0432\u0451\u0442
+       \u0432\u043a\u043b\u0430\u0434\u043a\u0430 Chart, \u043f\u043e\u044d\u0442\u043e\u043c\u0443 \u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e \u0432\u044b\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0435\u0433\u043e \u043f\u0435\u0440\u0435\u0434 \u0441\u043c\u0435\u043d\u043e\u0439 \u0445\u0435\u0448\u0430,
+       \u0438 \u043a\u0430\u0440\u0442\u0430 \u043e\u0442\u043a\u0440\u043e\u0435\u0442\u0441\u044f \u0443\u0436\u0435 \u0441 \u043d\u0443\u0436\u043d\u043e\u0439 \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u043e\u0439 \u0442\u043e\u0447\u043a\u043e\u0439. */
+    pick('[data-rxchart]', function (b) {
+      b.addEventListener('click', function () {
+        chartSel = b.getAttribute('data-rxchart');
+        location.hash = '#chart';
+      });
+    });
+    pick('[data-rxpoint]', function (b) {
+      b.addEventListener('click', function () {
+        chartSel = b.getAttribute('data-rxpoint');
+        location.hash = '#chart';
+      });
+    });
+  }
+
+  views.retro = function () {
+    return '<div class="rx" id="rxBody">' + rxBodyHtml() + '</div>';
   };
 
   /* --- поиск города: один общий список на все языки интерфейса -----------
@@ -1331,11 +1624,15 @@
     /* Страница Луны — узкая центрированная колонка, не двухколоночный грид
        остальных разделов (см. .view--moon в app.css). */
     view.classList.toggle('view--moon', h === 'moon');
+    /* Ретрограды — своя раскладка: шкала и сводка идут во всю ширину, а
+       карточки ниже раскладываются в две колонки только на десктопе. */
+    view.classList.toggle('view--rx', h === 'retro');
     /* Перезапуск CSS-анимации: снять класс, форсировать reflow, вернуть класс.
        Без чтения offsetWidth браузер схлопнёт снятие+возврат в один кадр. */
     view.classList.remove('fade-in');
     void view.offsetWidth;
     view.classList.add('fade-in');
+    if (h === 'retro') { positionSegIndicator('rxSegbar', 'rxSegbarInd', true); }
     if (h === 'horoscope') { positionHzIndicator(true); hzAiEnhance(hzPeriod); }
     if (h === 'match') { positionMcIndicator(true); if (mcSignA != null && mcSignB != null) { mcAiEnhance(); } }
     window.scrollTo(0, 0);
@@ -1388,6 +1685,7 @@
     bindMcTabs();
     bindMoonBody();
     bindChart();
+    bindRetro();
     bindCityPick();
 
     Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {
