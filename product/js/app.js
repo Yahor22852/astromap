@@ -214,6 +214,16 @@
         return '<tr>' + r.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
       }).join('') + '</tbody></table></div>';
   }
+  /* Оборот -> самостоятельное предложение: заглавная и точка в конце, если
+     её нет. Работает и для кириллицы, и для латиницы; языки без заглавных
+     букв (в продукте таких нет) toUpperCase просто оставит как есть. */
+  function sentence(str) {
+    var t = String(str || '').trim();
+    if (!t) { return ''; }
+    t = t.charAt(0).toUpperCase() + t.slice(1);
+    return /[.!?…]$/.test(t) ? t : t + '.';
+  }
+
   function toneTag(t) {
     return '<span class="tag tag--' + t + '">' + T.toneWord[t] + '</span>';
   }
@@ -1426,30 +1436,85 @@
   /* Карточка выбранной точки: T.nPoint покрывает все точки, включая ASC/MC;
      T.planetElement — только 10 планет + Node (глубже про стихию знака),
      для ASC/MC добавки просто нет — показываем один общий смысл точки. */
-  function chartDetailHtml(pts) {
+  /* Инспектор выбранной точки. На десктопе стоит справа от колеса и не
+     уезжает при прокрутке — раньше правая половина экрана на этой вкладке
+     просто пустовала, а детали лежали отдельной карточкой под колесом.
+
+     Четыре слоя, сверху вниз: что это за точка, где она в карте, с чем
+     связана внутри карты, что её задевает снаружи прямо сейчас. Последние
+     два кликабельны — отсюда начинаются переходы вглубь. */
+  function chartInspectorHtml(pts) {
     var p = chartFind(pts, chartSel);
     if (!p) { return ''; }
-    var txt = T.nPoint[p.name] || '';
+    /* T.nPoint — оборот, а не предложение: в транзитах он стоит в середине
+       фразы («...поддерживает ваше ощущение себя»). Отдельной строкой в
+       инспекторе его надо оформить — иначе два фрагмента склеиваются без
+       точки и со строчной буквы посреди абзаца. */
+    var txt = sentence(T.nPoint[p.name] || '');
     var extra = T.planetElement[p.name] && T.planetElement[p.name][p.sign.element];
-    return '<div class="ptcard">' +
-      '<div class="ptcard__head"><span class="ptcard__icon">' + ZODIAC_GLYPHS[p.sign.index] + '</span>' +
-      '<div><div class="ptcard__title">' + pName(p.name) + '</div>' +
-      '<div class="ptcard__sub">' + signName(p.sign) + ' ' + fmtDeg(p.sign.degree) +
-      (p.retro ? ' · R' : '') + '</div></div></div>' +
-      '<p class="ptcard__text">' + txt + (extra ? ' ' + extra : '') + '</p>' +
-      '</div>';
+
+    var houseHtml = p.house
+      ? '<div class="phouse"><span class="phouse__n">' + T.houses[p.house].n + '</span>' +
+        '<span class="phouse__t">' + T.houses[p.house].t + '</span></div>'
+      : '';
+
+    /* Аспекты именно этой точки: chartAspects отдаёт пары, поэтому берём и
+       те, где точка стоит второй, и разворачиваем к ней. */
+    var own = [];
+    E.chartAspects(natal).forEach(function (x) {
+      if (x.a === p.name) { own.push({ other: x.b, data: x.data }); }
+      else if (x.b === p.name) { own.push({ other: x.a, data: x.data }); }
+    });
+    own.sort(function (x, y) { return x.data.orb - y.data.orb; });
+    var aspHtml = own.length ? '<ul class="pasp">' + own.slice(0, 6).map(function (a) {
+      return '<li class="pasp__i"><button type="button" class="pasp__b" data-point="' + a.other + '">' +
+        '<span class="pasp__main">' + T.aspects[a.data.aspect] + ' <b>' + pName(a.other) + '</b></span>' +
+        toneTag(a.data.tone) +
+        '<span class="pasp__meta">' + T.sec.orb + ' ' + fmtDeg(a.data.orb) + '</span>' +
+        '<span class="pasp__go" aria-hidden="true">›</span></button></li>';
+    }).join('') + '</ul>' : '<p class="pmuted">' + T.sec.noAspectsOf + '</p>';
+
+    /* Что задевает эту точку снаружи прямо сейчас — связь карты с текущим
+       небом, которой на вкладке не было вовсе. Каждая строка ведёт в
+       проводник транзитов с этим транзитом уже выбранным. */
+    var tr = E.activeTransits(natal, Clock.get()).filter(function (t) {
+      return t.natal === p.name;
+    }).slice(0, 4);
+    var trHtml = tr.length ? '<ul class="pasp">' + tr.map(function (t) {
+      return '<li class="pasp__i"><button type="button" class="pasp__b" data-cngo="horoscope/' +
+        esc(t.transit + '-' + t.natal + '-' + t.aspect) + '">' +
+        '<span class="pasp__main"><b>' + pName(t.transit) + '</b> ' + T.aspects[t.aspect] + '</span>' +
+        toneTag(t.tone) +
+        '<span class="pasp__meta">' + T.sec.orb + ' ' + fmtDeg(t.orb) + '</span>' +
+        '<span class="pasp__go" aria-hidden="true">›</span></button></li>';
+    }).join('') + '</ul>' : '<p class="pmuted">' + T.sec.noContacts + '</p>';
+
+    return '<aside class="insp" id="chartInsp">' +
+      '<div class="insp__head"><span class="insp__icon">' + ZODIAC_GLYPHS[p.sign.index] + '</span>' +
+        '<div><div class="insp__title">' + pName(p.name) + '</div>' +
+        '<div class="insp__sub">' + signName(p.sign) + ' ' + fmtDeg(p.sign.degree) +
+        (p.retro ? ' · R' : '') + '</div></div></div>' +
+      (houseHtml ? '<div class="insp__sec">' + houseHtml + '</div>' : '') +
+      '<p class="insp__text">' + txt + (extra ? ' ' + extra : '') + '</p>' +
+      '<div class="insp__sec"><h3 class="pcard__t">' + T.sec.aspectsOf + '</h3>' + aspHtml + '</div>' +
+      '<div class="insp__sec"><h3 class="pcard__t">' + T.sec.transitsTo + '</h3>' + trHtml + '</div>' +
+      '</aside>';
   }
 
   function chartBodyHtml() {
     var pts = chartPts();
     if (!chartSel || !chartFind(pts, chartSel)) { chartSel = pts[0].name; }
-    return '<div class="wheelbox">' + W.render(natal, 620, chartSel) +
-        chartChipsHtml(pts) + '</div>' +
+    return '<div class="chart-pane">' +
+        '<div class="wheelbox">' + W.render(natal, 620, chartSel) +
+          chartChipsHtml(pts) + '</div>' +
+        chartInspectorHtml(pts) +
+      '</div>' +
       (natal.asc ? '' : card(null, '<p class="empty">' + T.ui.timeMissing + '</p>')) +
-      card(null, chartDetailHtml(pts)) +
-      card(T.ui.positions, chartPositionsHtml(pts)) +
-      card(T.ui.balance, chartBalanceHtml()) +
-      card(T.ui.aspects, chartAspectsHtml());
+      '<div class="chart-tables">' +
+        card(T.ui.positions, chartPositionsHtml(pts)) +
+        card(T.ui.balance, chartBalanceHtml()) +
+        card(T.ui.aspects, chartAspectsHtml()) +
+      '</div>';
   }
 
   function rerenderChart() {
@@ -1476,6 +1541,11 @@
     });
     /* <g role="button"> в SVG не активируется Enter/Space нативно, как это
        делает <button> (чипы) — добавляем клавиатурную активацию вручную. */
+    Array.prototype.slice.call(body.querySelectorAll('[data-cngo]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        location.hash = '#' + b.getAttribute('data-cngo');
+      });
+    });
     Array.prototype.slice.call(body.querySelectorAll('.w-pt')).forEach(function (grp) {
       grp.addEventListener('keydown', function (ev) {
         if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
@@ -2326,6 +2396,8 @@
     view.classList.toggle('view--tx', h === 'horoscope');
     /* Cosmic Now — одна колонка: это вход, а не сетка карточек. */
     view.classList.toggle('view--cn', h === 'today');
+    /* Карта: колесо и инспектор в два столбца, таблицы под ними. */
+    view.classList.toggle('view--chart', h === 'chart');
     /* Перезапуск CSS-анимации: снять класс, форсировать reflow, вернуть класс.
        Без чтения offsetWidth браузер схлопнёт снятие+возврат в один кадр. */
     view.classList.remove('fade-in');

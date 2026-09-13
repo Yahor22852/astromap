@@ -1370,3 +1370,60 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   .tl-save { transition: none; }
   .tl-save:hover { transform: none; }
 }
+
+/* --- Карта: колесо и инспектор ---------------------------------------------
+   Вкладка выходит из общей двухколоночной сетки. Раньше колесо занимало
+   левую колонку, а правая половина экрана на 1440px просто пустовала, и
+   детали выбранной точки лежали карточкой под колесом — то есть за сгибом.
+   Теперь они справа и видны одновременно с колесом, ради чего клик по
+   планете и затевался. */
+.view--chart { display: block; }
+.chart-pane {
+  max-width: 1120px; margin: 0 auto;
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 18px; align-items: start;
+}
+.chart-tables {
+  max-width: 1120px; margin: 18px auto 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px;
+  align-items: start;
+}
+.chart-tables .card:last-child { grid-column: 1 / -1; }
+
+/* .wheelbox написан для прежней двухколоночной сетки и растягивался на обе
+   колонки — внутри новой панели он из-за этого занимал всю ширину, а
+   инспектор уезжал под него. */
+.chart-pane .wheelbox { grid-column: auto; }
+
+/* Кликабельна сама точка, а не её выносная линия: линии соседних планет идут
+   почти параллельно и близко, и промах по стеблю выбирал не ту планету. */
+.w-stem { pointer-events: none; }
+
+.insp {
+  position: sticky; top: 96px;
+  background: var(--surf); border: 1px solid var(--line);
+  border-radius: var(--r-card); padding: var(--pad);
+}
+.insp__head { display: flex; align-items: center; gap: 14px; }
+.insp__icon {
+  flex: none; display: flex; align-items: center; justify-content: center;
+  width: 46px; height: 46px; border-radius: 50%;
+  background: rgba(155,138,248,.14); color: var(--accent); font-size: 22px;
+}
+.insp__title { font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1.1; }
+.insp__sub { font-size: 14px; color: var(--ink-dim); }
+.insp__text { margin: 16px 0 0; font-size: 15px; line-height: 1.6; color: var(--ink-dim); }
+.insp__sec { margin-top: 22px; }
+.insp__sec:first-of-type { margin-top: 16px; }
+.insp .pasp__b { font-size: 14px; }
+
+@media (max-width: 1000px) {
+  /* Ниже тысячи пикселей колесо в колонке становится мелким — инспектор
+     уходит под него на всю ширину и перестаёт быть липким. */
+  .chart-pane { grid-template-columns: minmax(0, 1fr); }
+  .insp { position: static; }
+}
+@media (max-width: 900px) {
+  .chart-tables { grid-template-columns: minmax(0, 1fr); }
+  .insp__title { font-size: 22px; }
+}

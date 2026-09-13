@@ -342,6 +342,9 @@
       12: { n: '12. dom', t: 'samotność, wnętrze, zamykanie spraw' }
     },
     sec: {
+      transitsTo: 'Tranzyty do tego punktu',
+      aspectsOf: 'Aspekty tego punktu',
+      noAspectsOf: 'Ten punkt nie tworzy aspektów w mapie',
       upcoming: 'Najbliższe wydarzenia',
       range7: '7 dni',
       range30: '30 dni',
@@ -782,6 +785,9 @@
       12: { n: '12th house', t: 'solitude, inner life, endings' }
     },
     sec: {
+      transitsTo: 'Transits to this point',
+      aspectsOf: 'Aspects of this point',
+      noAspectsOf: 'This point makes no aspects in the chart',
       upcoming: 'Coming up',
       range7: '7 days',
       range30: '30 days',
@@ -1223,6 +1229,9 @@ var RU = {
       12: { n: '12-й дом', t: 'уединение, внутреннее, завершения' }
     },
     sec: {
+      transitsTo: 'Транзиты к этой точке',
+      aspectsOf: 'Аспекты этой точки',
+      noAspectsOf: 'Эта точка не образует аспектов в карте',
       upcoming: 'Ближайшие события',
       range7: '7 дней',
       range30: '30 дней',
@@ -1659,6 +1668,9 @@ var UK = {
       12: { n: '12-й дім', t: 'усамітнення, внутрішнє, завершення' }
     },
     sec: {
+      transitsTo: 'Транзити до цієї точки',
+      aspectsOf: 'Аспекти цієї точки',
+      noAspectsOf: 'Ця точка не утворює аспектів у карті',
       upcoming: 'Найближчі події',
       range7: '7 днів',
       range30: '30 днів',
@@ -2095,6 +2107,9 @@ var DE = {
       12: { n: '12. Haus', t: 'Rückzug, Innenleben, Abschlüsse' }
     },
     sec: {
+      transitsTo: 'Transite zu diesem Punkt',
+      aspectsOf: 'Aspekte dieses Punktes',
+      noAspectsOf: 'Dieser Punkt bildet keine Aspekte im Horoskop',
       upcoming: 'Demnächst',
       range7: '7 Tage',
       range30: '30 Tage',
@@ -2531,6 +2546,9 @@ var ES = {
       12: { n: 'Casa 12', t: 'soledad, vida interior, cierres' }
     },
     sec: {
+      transitsTo: 'Tránsitos a este punto',
+      aspectsOf: 'Aspectos de este punto',
+      noAspectsOf: 'Este punto no forma aspectos en la carta',
       upcoming: 'Próximamente',
       range7: '7 días',
       range30: '30 días',
@@ -2967,6 +2985,9 @@ var FR = {
       12: { n: 'Maison 12', t: 'retrait, vie intérieure, fins de cycle' }
     },
     sec: {
+      transitsTo: 'Transits vers ce point',
+      aspectsOf: 'Aspects de ce point',
+      noAspectsOf: 'Ce point ne forme aucun aspect dans le thème',
       upcoming: 'À venir',
       range7: '7 jours',
       range30: '30 jours',
@@ -3403,6 +3424,9 @@ var IT = {
       12: { n: 'Casa 12', t: 'solitudine, vita interiore, chiusure' }
     },
     sec: {
+      transitsTo: 'Transiti a questo punto',
+      aspectsOf: 'Aspetti di questo punto',
+      noAspectsOf: 'Questo punto non forma aspetti nel tema',
       upcoming: 'In arrivo',
       range7: '7 giorni',
       range30: '30 giorni',
@@ -3839,6 +3863,9 @@ var PT = {
       12: { n: 'Casa 12', t: 'recolhimento, vida interior, encerramentos' }
     },
     sec: {
+      transitsTo: 'Trânsitos a este ponto',
+      aspectsOf: 'Aspectos deste ponto',
+      noAspectsOf: 'Este ponto não forma aspectos no mapa',
       upcoming: 'Em breve',
       range7: '7 dias',
       range30: '30 dias',
@@ -4275,6 +4302,9 @@ var TR = {
       12: { n: '12. ev', t: 'inziva, iç dünya, kapanışlar' }
     },
     sec: {
+      transitsTo: 'Bu noktaya transitler',
+      aspectsOf: 'Bu noktanın açıları',
+      noAspectsOf: 'Bu nokta haritada açı kurmuyor',
       upcoming: 'Yaklaşanlar',
       range7: '7 gün',
       range30: '30 gün',
