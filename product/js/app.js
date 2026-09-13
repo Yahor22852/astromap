@@ -372,13 +372,152 @@
   /* --- экраны ------------------------------------------------------------- */
   var views = {};
 
+  /* --- Cosmic Now: персональный вход ----------------------------------------
+     Экран отвечает на четыре вопроса подряд, а не показывает сводку:
+       что происходит       — главный транзит, Луна, ретрограды
+       почему это про меня  — дом и натальная точка, которых это касается
+       когда изменится      — ближайшая смена, с точным временем
+       куда пойти дальше    — каждый пункт ведёт в свой раздел с уже
+                              выставленным контекстом
+
+     Пунктов намеренно немного: это вход в продукт, а не приборная панель.
+     Индексы дня остались — они единственное, что даёт ощущение «сегодня не
+     как вчера» одним взглядом, — но ушли вниз, под то, что кликабельно.
+
+     Считается только дешёвое: сортировка транзитов без обращений к
+     эфемеридам, окно — для одного главного, цикл — для одного ретрограда.
+     Это вход в приложение, он не имеет права думать полсекунды. */
+  function greetKey(d) {
+    var h = d.getHours();
+    if (h < 5) { return 'greetNight'; }
+    if (h < 12) { return 'greetMorning'; }
+    if (h < 18) { return 'greetDay'; }
+    return 'greetEvening';
+  }
+
+  /* Ближайшее событие из тех, что считаются дёшево: смена знака Луны,
+     ближайшая главная фаза и точный момент главного транзита. Станции
+     планет сюда не идут намеренно — их поиск стоит десятков обращений к
+     эфемеридам на тело, а на входном экране это заметно. Они на своём
+     месте, в Ретроградах. */
+  function cnNextShift(now, leadDetail) {
+    var out = [];
+    var sc = Moon.nextSignChange(now);
+    if (sc) {
+      out.push({ at: sc.date, label: T.sec.signChange,
+        value: ZODIAC_GLYPHS[sc.to.index] + ' ' + T.signs[sc.to.index],
+        go: ['moon'] });
+    }
+    var q = Moon.quartersFrom(now, 1)[0];
+    if (q) {
+      out.push({ at: q.date, label: T.moonPhase[q.phaseIndex].n,
+        value: ZODIAC_GLYPHS[q.sign.index] + ' ' + T.signs[q.sign.index],
+        go: ['moon', Clock.toKey(q.date)] });
+    }
+    if (leadDetail && leadDetail.nextExact) {
+      out.push({ at: leadDetail.nextExact, label: T.sec.exactOn,
+        value: pName(leadDetail.transit) + ' ' + T.aspects[leadDetail.aspect] + ' ' + pName(leadDetail.natal),
+        go: ['horoscope', txHashKey(leadDetail)] });
+    }
+    out.sort(function (a, b) { return a.at - b.at; });
+    return out[0] || null;
+  }
+
+  /* Осталось до момента: часы и минуты, пока счёт идёт на часы, дальше дни.
+     «Через 38 ч» читается хуже, чем «через 2 дн.», а «через 0 дн.» — хуже,
+     чем «через 4 ч 20 мин». */
+  function cnUntil(date, now) {
+    var ms = date.getTime() - now.getTime();
+    if (ms <= 0) { return ''; }
+    if (ms < 36 * 3600000) {
+      var h = Math.floor(ms / 3600000), mi = Math.round((ms % 3600000) / 60000);
+      return h + ' ' + T.sec.hoursShort + ' ' + mi + ' ' + T.sec.minShort;
+    }
+    return Math.round(ms / 86400000) + ' ' + T.sec.dayShort;
+  }
+
+  function cnTile(opts) {
+    var attrs = opts.go
+      ? ' data-cngo="' + esc(opts.go.join('/')) + '"' : '';
+    return '<button type="button" class="cn-tile"' + attrs + '>' +
+      '<span class="cn-tile__l">' + opts.label + '</span>' +
+      '<span class="cn-tile__v">' + opts.value + '</span>' +
+      (opts.sub ? '<span class="cn-tile__s">' + opts.sub + '</span>' : '') +
+      '<span class="cn-tile__go" aria-hidden="true">›</span>' +
+      '</button>';
+  }
+
   views.today = function () {
     if (!natal) { return needProfile('needText') + moonCard() + skyNow(); }
     var now = new Date();
-    var ix = indices(now);
-    var m = moonInfo(now);
-    var ph = T.moonPhase[m.phaseIndex];
+    var r = Tr.rank(natal, now);
+    var lead = r.lead ? Tr.detail(natal, r.lead, now) : null;
 
+    /* Шапка: приветствие и место. Имя подставляем только если оно есть —
+       «Добрый вечер, » с пустотой после запятой выглядит как ошибка. */
+    var city = cityOf(S.profile);
+    var head = '<header class="cn-head">' +
+      '<p class="cn-greet">' + T.sec[greetKey(now)] +
+        (S.profile.name ? ', ' + esc(S.profile.name) : '') + '</p>' +
+      '<h2 class="cn-title">' + T.sec.skyTitle + '</h2>' +
+      '<p class="cn-meta">' + localeDate(now) + (city && city.n ? ' · ' + esc(city.n) : '') + '</p>' +
+      '</header>';
+
+    /* Главное: сильнейший транзит с натальным контекстом. Это ровно тот же
+       расчёт, что в проводнике, поэтому два экрана не могут разойтись в том,
+       что сейчас главное. */
+    var main;
+    if (lead) {
+      var ctx = signName(lead.natalSign) +
+        (lead.natalHouse ? ' · ' + T.houses[lead.natalHouse].n + ' — ' + T.houses[lead.natalHouse].t : '');
+      main = '<button type="button" class="cn-main" data-cngo="horoscope/' + txHashKey(lead) + '">' +
+        '<span class="cn-main__l">' + T.sec.mainNow + '</span>' +
+        '<span class="cn-main__h">' + txPair(lead) + toneTag(lead.tone) + '</span>' +
+        '<span class="cn-main__ctx">' + ctx + '</span>' +
+        '<span class="cn-main__go" aria-hidden="true">›</span>' +
+        '</button>';
+    } else {
+      main = '<div class="cn-main cn-main--empty"><span class="cn-main__l">' + T.sec.mainNow +
+        '</span><span class="cn-main__ctx">' + T.ui.noTransits + '</span></div>';
+    }
+
+    /* Луна: фаза, знак и — если известно время рождения — дом карты. */
+    var mi = Moon.infoFor(now);
+    var moonHouse = E.houseOfSign(natal, mi.sign.index);
+    var moonTile = cnTile({
+      label: T.sec.moonNow,
+      value: T.moonPhase[mi.phaseIndex].n + ' · ' + T.signs[mi.sign.index],
+      sub: moonHouse ? T.houses[moonHouse].n + ' — ' + T.houses[moonHouse].t
+                     : Math.round(mi.illum * 100) + '% ' + T.ui.illuminated.toLowerCase(),
+      go: ['moon']
+    });
+
+    /* Ретрограды: сколько и какой сильнее всего задевает карту. Полный цикл
+       считаем только для него одного. */
+    var st = R.statusAt(now, natal);
+    var retro = st.filter(function (x) { return x.retro; });
+    var retroTile;
+    if (retro.length) {
+      var top = retro[0];
+      retro.forEach(function (x) { if (x.relevance > top.relevance) { top = x; } });
+      var cyc = R.cycleFor(top.body, now);
+      retroTile = cnTile({
+        label: T.sec.retroNow + ' · ' + retro.length,
+        value: pName(top.body),
+        sub: cyc ? cyc.daysRemaining + ' ' + T.sec.dayShort + ' · ' + T.sec.remaining : '',
+        go: ['retro', top.body]
+      });
+    } else {
+      retroTile = cnTile({ label: T.sec.retroNow, value: '0', sub: T.sec.noneText, go: ['retro'] });
+    }
+
+    var shift = cnNextShift(now, lead);
+    var shiftTile = shift
+      ? cnTile({ label: T.sec.nextShift, value: shift.value,
+          sub: shift.label + ' · ' + (cnUntil(shift.at, now) || fmtDate(shift.at)), go: shift.go })
+      : cnTile({ label: T.sec.nextShift, value: '—', sub: T.sec.nothingSoon });
+
+    var ix = indices(now);
     var bars = ['mood', 'work', 'love'].map(function (k) {
       var v = ix.values[k];
       return '<div class="bar"><div class="bar__r"><span>' + T.ui[k] +
@@ -386,24 +525,21 @@
         v + '%"></i></div></div>';
     }).join('');
 
-    var top = ix.transits.slice(0, 6).map(function (t) {
-      return '<article class="tr"><div class="tr__h"><span class="tr__s"><b>' +
-        pName(t.transit) + (t.retro ? ' R' : '') + '</b> ' + T.aspects[t.aspect] +
-        ' <b>' + pName(t.natal) + '</b>' + toneTag(t.tone) + '</span>' +
-        '<span class="tr__o">' + T.ui.orb + ' ' + fmtDeg(t.orb) + '</span></div>' +
-        '<p class="tr__t">' + transitText(t) + '</p></article>';
-    }).join('') || '<p class="empty">' + T.ui.noTransits + '</p>';
-
-    return card(T.ui.indices, bars, T.ui.indicesNote) +
-      card(T.ui.moonTitle,
-        '<div class="kv"><span>' + T.ui.phase + '</span><b>' + ph.n + '</b></div>' +
-        '<div class="kv"><span>' + T.ui.illum + '</span><b>' +
-          Math.round(m.illum * 100) + '%</b></div>' +
-        '<div class="kv"><span>' + T.ui.moonSign + '</span><b>' + signName(m.sign) +
-          ' ' + fmtDeg(m.sign.degree) + '</b></div>' +
-        '<p class="p">' + ph.t + '</p>') +
-      cardWide(T.ui.activeTransits, top);
+    return '<div class="cn">' + head + main +
+      '<div class="cn-tiles">' + moonTile + retroTile + shiftTile + '</div>' +
+      '<section class="cn-idx">' + card(T.ui.indices, bars, T.ui.indicesNote) + '</section>' +
+      '</div>';
   };
+
+  function bindToday() {
+    var view = el('view');
+    if (!view) { return; }
+    Array.prototype.slice.call(view.querySelectorAll('[data-cngo]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        location.hash = '#' + b.getAttribute('data-cngo');
+      });
+    });
+  }
 
   /* --- гороскоп: 6 периодов, читаемых как в референсе Astroscope ----------
      Переключатель периодов — «капсула» со скользящим градиентным индикатором
@@ -821,6 +957,10 @@
   var txSel = null, txFilter = 'all', txOpen = false, txWhy = false;
 
   function txKey(r) { return r.transit + '|' + r.natal + '|' + r.aspect; }
+  /* Тот же ключ для адресной строки: вертикальная черта в хеше выглядит
+     мусором и кодируется в %7C, поэтому разделитель — дефис. Дату он не
+     перепутает: она распознаётся раньше, по своей форме. */
+  function txHashKey(r) { return r.transit + '-' + r.natal + '-' + r.aspect; }
 
   function txPair(r) {
     return '<b>' + pName(r.transit) + '</b>' + (r.retro ? ' R' : '') +
@@ -961,6 +1101,7 @@
   function rerenderTx() {
     var body = el('txBody');
     if (!body) { return; }
+    if (txSel) { syncHash('horoscope', [txSel.split('|').join('-')]); }
     body.innerHTML = txBodyHtml();
     bindTx();
   }
@@ -1944,11 +2085,20 @@
      списку известных имён: мусор в адресе не должен выбирать несуществующую
      планету и ронять раздел. */
   var POINT_NAMES = E.BODIES.concat(['Node', 'ASC', 'MC']);
+  var ASPECT_KEYS = E.ASPECTS.map(function (a) { return a.key; });
   function applyHashState(name, args) {
     args.forEach(function (a) {
       if (Clock.isKey(a)) {
         var d = Clock.fromKey(a);
         if (d) { Clock.set(d); moonSyncMonth(); }
+        return;
+      }
+      if (name === 'horoscope' && a.indexOf('-') > 0) {
+        var p = a.split('-');
+        if (p.length === 3 && POINT_NAMES.indexOf(p[0]) >= 0 &&
+            POINT_NAMES.indexOf(p[1]) >= 0 && ASPECT_KEYS.indexOf(p[2]) >= 0) {
+          txSel = p.join('|');
+        }
         return;
       }
       if (POINT_NAMES.indexOf(a) < 0) { return; }
@@ -1967,7 +2117,14 @@
     document.querySelectorAll('.nav__i').forEach(function (a) {
       a.classList.toggle('on', a.getAttribute('href') === '#' + h);
     });
-    el('title').textContent = T.ui[h + 'Title'] || T.ui.nav[h];
+    /* У Cosmic Now своя шапка с приветствием и датой, поэтому общий
+       заголовок раздела на нём лишний — два заголовка подряд читаются как
+       недоделка. Без профиля экран показывает обычные карточки, и заголовок
+       снова нужен. */
+    var ownHead = (h === 'today' && !!natal);
+    var head = document.querySelector('.head');
+    if (head) { head.hidden = ownHead; }
+    el('title').textContent = ownHead ? '' : (T.ui[h + 'Title'] || T.ui.nav[h]);
     var view = el('view');
     view.innerHTML = views[h]();
     /* Страница Луны — узкая центрированная колонка, не двухколоночный грид
@@ -1979,6 +2136,8 @@
     /* Гороскоп тоже вышел из общей двухколоночной сетки: сверху проводник
        во всю ширину, ниже — прежние карточки периода со своей сеткой. */
     view.classList.toggle('view--tx', h === 'horoscope');
+    /* Cosmic Now — одна колонка: это вход, а не сетка карточек. */
+    view.classList.toggle('view--cn', h === 'today');
     /* Перезапуск CSS-анимации: снять класс, форсировать reflow, вернуть класс.
        Без чтения offsetWidth браузер схлопнёт снятие+возврат в один кадр. */
     view.classList.remove('fade-in');
@@ -1991,6 +2150,7 @@
     if (h === 'retro') { syncHash('retro', [rxBody, dateArg]); }
     if (h === 'moon') { syncHash('moon', [dateArg]); }
     if (h === 'chart') { syncHash('chart', [chartSel]); }
+    if (h === 'horoscope' && txSel) { syncHash('horoscope', [txSel.split('|').join('-')]); }
     if (h === 'retro') { positionSegIndicator('rxSegbar', 'rxSegbarInd', true); }
     if (h === 'horoscope') { positionHzIndicator(true); hzAiEnhance(hzPeriod); }
     if (h === 'match') { positionMcIndicator(true); if (mcSignA != null && mcSignB != null) { mcAiEnhance(); } }
@@ -2046,6 +2206,7 @@
     bindChart();
     bindRetro();
     bindTx();
+    bindToday();
     bindCityPick();
 
     Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {

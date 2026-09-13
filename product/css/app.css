@@ -1225,3 +1225,82 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 @media (prefers-reduced-motion: reduce) {
   .tx-row__go, .tx-sup__b { transition: none; }
 }
+
+/* --- Cosmic Now ------------------------------------------------------------
+   Вход в продукт: одна колонка, один главный вывод, три плитки под ним и
+   индексы дня внизу. Не сетка карточек — сетка была бы приборной панелью,
+   а здесь нужен порядок чтения сверху вниз. */
+.view--cn { display: block; }
+.cn { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+.cn-head { margin-bottom: 2px; }
+.cn-greet {
+  margin: 0; font-size: 13px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent);
+}
+.cn-title {
+  margin: 6px 0 0; font-family: var(--serif); font-size: 38px; font-weight: 600;
+  line-height: 1.1; color: var(--ink);
+}
+.cn-meta { margin: 6px 0 0; font-size: 14px; color: var(--ink-faint); }
+
+/* Главный вывод крупнее всего остального на экране — это единственное, что
+   человек обязан прочитать, если у него есть три секунды. */
+.cn-main {
+  position: relative; display: flex; flex-direction: column; gap: 8px;
+  width: 100%; text-align: left; cursor: pointer;
+  padding: 26px var(--pad); border-radius: var(--r-card);
+  background: var(--surf); border: 1px solid var(--line); color: var(--ink);
+  font-family: var(--sans);
+  transition: border-color .2s ease, background .2s ease;
+}
+.cn-main:hover { border-color: var(--accent); background: var(--surf-sel); }
+.cn-main:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cn-main--empty { cursor: default; }
+.cn-main--empty:hover { border-color: var(--line); background: var(--surf); }
+.cn-main__l {
+  font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent);
+}
+.cn-main__h { font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: 1.2; }
+.cn-main__ctx { font-size: 15px; color: var(--ink-dim); }
+.cn-main__go, .cn-tile__go {
+  position: absolute; top: 50%; right: 20px; transform: translateY(-50%);
+  font-size: 22px; color: var(--ink-faint); transition: transform .2s ease, color .2s ease;
+}
+.cn-main:hover .cn-main__go, .cn-tile:hover .cn-tile__go {
+  color: var(--accent); transform: translateY(-50%) translateX(3px);
+}
+
+.cn-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.cn-tile {
+  position: relative; display: flex; flex-direction: column; gap: 5px;
+  padding: 18px 44px 18px 20px; border-radius: var(--r-card);
+  text-align: left; cursor: pointer;
+  background: var(--surf); border: 1px solid var(--line-2); color: var(--ink);
+  font-family: var(--sans);
+  transition: border-color .2s ease;
+}
+.cn-tile:hover { border-color: var(--accent); }
+.cn-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cn-tile__l {
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint);
+}
+.cn-tile__v { font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
+.cn-tile__s { font-size: 13px; color: var(--ink-dim); }
+
+/* Индексы дня отодвинуты вниз и приглушены: они дают ощущение «сегодня не
+   как вчера», но никуда не ведут, и соперничать с кликабельным верхом не
+   должны. */
+.cn-idx .card { background: transparent; border-color: var(--line-2); }
+
+@media (max-width: 900px) {
+  .cn-tiles { grid-template-columns: minmax(0, 1fr); }
+  .cn-title { font-size: 28px; }
+  .cn-main__h { font-size: 24px; }
+  .cn-main { padding: 20px 18px; }
+  .cn-main__go, .cn-tile__go { right: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cn-main, .cn-tile, .cn-main__go, .cn-tile__go { transition: none; }
+}

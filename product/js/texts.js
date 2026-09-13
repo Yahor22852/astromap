@@ -342,6 +342,14 @@
       12: { n: '12. dom', t: 'samotność, wnętrze, zamykanie spraw' }
     },
     sec: {
+      greetMorning: 'Dzień dobry',
+      greetDay: 'Dzień dobry',
+      greetEvening: 'Dobry wieczór',
+      greetNight: 'Dobrej nocy',
+      skyTitle: 'Twoje niebo teraz',
+      nextShift: 'Najbliższa zmiana',
+      moonNow: 'Księżyc teraz',
+      nothingSoon: 'Nic istotnego w najbliższych dniach',
       mainNow: 'Najważniejsze teraz',
       supporting: 'Obok',
       allActive: 'Wszystkie aktywne',
@@ -765,6 +773,14 @@
       12: { n: '12th house', t: 'solitude, inner life, endings' }
     },
     sec: {
+      greetMorning: 'Good morning',
+      greetDay: 'Good afternoon',
+      greetEvening: 'Good evening',
+      greetNight: 'Good night',
+      skyTitle: 'Your sky right now',
+      nextShift: 'Next shift',
+      moonNow: 'The Moon now',
+      nothingSoon: 'Nothing notable in the next few days',
       mainNow: 'Strongest now',
       supporting: 'Alongside',
       allActive: 'All active',
@@ -1189,6 +1205,14 @@ var RU = {
       12: { n: '12-й дом', t: 'уединение, внутреннее, завершения' }
     },
     sec: {
+      greetMorning: 'Доброе утро',
+      greetDay: 'Добрый день',
+      greetEvening: 'Добрый вечер',
+      greetNight: 'Доброй ночи',
+      skyTitle: 'Ваше небо сейчас',
+      nextShift: 'Ближайшая смена',
+      moonNow: 'Луна сейчас',
+      nothingSoon: 'В ближайшие дни ничего заметного',
       mainNow: 'Главное сейчас',
       supporting: 'Рядом',
       allActive: 'Все активные',
@@ -1608,6 +1632,14 @@ var UK = {
       12: { n: '12-й дім', t: 'усамітнення, внутрішнє, завершення' }
     },
     sec: {
+      greetMorning: 'Доброго ранку',
+      greetDay: 'Доброго дня',
+      greetEvening: 'Доброго вечора',
+      greetNight: 'Доброї ночі',
+      skyTitle: 'Ваше небо зараз',
+      nextShift: 'Найближча зміна',
+      moonNow: 'Місяць зараз',
+      nothingSoon: 'Найближчими днями нічого помітного',
       mainNow: 'Головне зараз',
       supporting: 'Поруч',
       allActive: 'Усі активні',
@@ -2027,6 +2059,14 @@ var DE = {
       12: { n: '12. Haus', t: 'Rückzug, Innenleben, Abschlüsse' }
     },
     sec: {
+      greetMorning: 'Guten Morgen',
+      greetDay: 'Guten Tag',
+      greetEvening: 'Guten Abend',
+      greetNight: 'Gute Nacht',
+      skyTitle: 'Ihr Himmel jetzt',
+      nextShift: 'Nächster Wechsel',
+      moonNow: 'Der Mond jetzt',
+      nothingSoon: 'In den nächsten Tagen nichts Auffälliges',
       mainNow: 'Jetzt am stärksten',
       supporting: 'Daneben',
       allActive: 'Alle aktiven',
@@ -2446,6 +2486,14 @@ var ES = {
       12: { n: 'Casa 12', t: 'soledad, vida interior, cierres' }
     },
     sec: {
+      greetMorning: 'Buenos días',
+      greetDay: 'Buenas tardes',
+      greetEvening: 'Buenas noches',
+      greetNight: 'Buenas noches',
+      skyTitle: 'Su cielo ahora',
+      nextShift: 'Próximo cambio',
+      moonNow: 'La Luna ahora',
+      nothingSoon: 'Nada destacable en los próximos días',
       mainNow: 'Lo más fuerte ahora',
       supporting: 'Al lado',
       allActive: 'Todos los activos',
@@ -2865,6 +2913,14 @@ var FR = {
       12: { n: 'Maison 12', t: 'retrait, vie intérieure, fins de cycle' }
     },
     sec: {
+      greetMorning: 'Bonjour',
+      greetDay: 'Bon après-midi',
+      greetEvening: 'Bonsoir',
+      greetNight: 'Bonne nuit',
+      skyTitle: 'Votre ciel maintenant',
+      nextShift: 'Prochain changement',
+      moonNow: 'La Lune maintenant',
+      nothingSoon: 'Rien de notable dans les prochains jours',
       mainNow: 'Le plus fort maintenant',
       supporting: 'À côté',
       allActive: 'Tous les actifs',
@@ -3284,6 +3340,14 @@ var IT = {
       12: { n: 'Casa 12', t: 'solitudine, vita interiore, chiusure' }
     },
     sec: {
+      greetMorning: 'Buongiorno',
+      greetDay: 'Buon pomeriggio',
+      greetEvening: 'Buonasera',
+      greetNight: 'Buonanotte',
+      skyTitle: 'Il tuo cielo adesso',
+      nextShift: 'Prossimo cambio',
+      moonNow: 'La Luna adesso',
+      nothingSoon: 'Niente di rilevante nei prossimi giorni',
       mainNow: 'Il più forte ora',
       supporting: 'Accanto',
       allActive: 'Tutti gli attivi',
@@ -3703,6 +3767,14 @@ var PT = {
       12: { n: 'Casa 12', t: 'recolhimento, vida interior, encerramentos' }
     },
     sec: {
+      greetMorning: 'Bom dia',
+      greetDay: 'Boa tarde',
+      greetEvening: 'Boa noite',
+      greetNight: 'Boa noite',
+      skyTitle: 'O seu céu agora',
+      nextShift: 'Próxima mudança',
+      moonNow: 'A Lua agora',
+      nothingSoon: 'Nada notável nos próximos dias',
       mainNow: 'O mais forte agora',
       supporting: 'Ao lado',
       allActive: 'Todos os ativos',
@@ -4122,6 +4194,14 @@ var TR = {
       12: { n: '12. ev', t: 'inziva, iç dünya, kapanışlar' }
     },
     sec: {
+      greetMorning: 'Günaydın',
+      greetDay: 'İyi günler',
+      greetEvening: 'İyi akşamlar',
+      greetNight: 'İyi geceler',
+      skyTitle: 'Şu andaki gökyüzünüz',
+      nextShift: 'Sıradaki değişim',
+      moonNow: 'Ay şimdi',
+      nothingSoon: 'Önümüzdeki günlerde kayda değer bir şey yok',
       mainNow: 'Şu anda en güçlü',
       supporting: 'Yanında',
       allActive: 'Tüm etkin olanlar',
