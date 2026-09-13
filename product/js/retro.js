@@ -281,6 +281,28 @@
     return best;
   }
 
+  /* Все станции в интервале — для таймлайна. Полный цикл тут считать нельзя:
+     восемь тел по десяткам обращений к эфемеридам каждое заметно тормозят
+     экран, на котором таймлайн живёт. Достаточно пройти сам интервал шагом
+     в трое суток и уточнить найденные развороты: для 90 дней это тридцать
+     проб на тело вместо сотен. */
+  function stationsIn(from, to) {
+    var out = [];
+    var t0 = from.getTime(), t1 = to.getTime();
+    BODIES.forEach(function (b) {
+      var prev = speedAt(b, t0), prevT = t0;
+      for (var t = t0 + SCAN_STEP * DAY; t <= t1 + SCAN_STEP * DAY; t += SCAN_STEP * DAY) {
+        var cur = speedAt(b, t);
+        if ((prev < 0) !== (cur < 0)) {
+          var d = bisectSpeedFlip(b, prevT, t);
+          if (d >= from && d <= to) { out.push({ body: b, date: d, toRetro: cur < 0 }); }
+        }
+        prev = cur; prevT = t;
+      }
+    });
+    return out.sort(function (a, b2) { return a.date - b2.date; });
+  }
+
   /* Ключевые даты цикла в хронологическом порядке. Сюда попадает только то,
      что действительно посчитано: если тень не нашлась (краевой случай у
      границы запаса поиска), строки просто не будет — выдумывать дату нельзя. */
@@ -298,6 +320,7 @@
     cycleFor: cycleFor,
     relevance: relevance,
     statusAt: statusAt,
+    stationsIn: stationsIn,
     nextTurnRetro: nextTurnRetro,
     nextRetrograde: nextRetrograde,
     keyDates: keyDates

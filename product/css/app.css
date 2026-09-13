@@ -1304,3 +1304,69 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 @media (prefers-reduced-motion: reduce) {
   .cn-main, .cn-tile, .cn-main__go, .cn-tile__go { transition: none; }
 }
+
+/* --- лента событий и сохранённое ------------------------------------------
+   Живут на Cosmic Now под плитками. Оформлены как один список с заголовками
+   дней, а не как сетка карточек: лента читается сверху вниз по времени, и
+   любое деление на плитки эту последовательность ломает. */
+.tl {
+  background: var(--surf); border: 1px solid var(--line-2);
+  border-radius: var(--r-card); padding: 18px var(--pad) 8px;
+}
+.tl + .tl { margin-top: 14px; }
+.tl--saved { border-color: rgba(155,138,248,.28); }
+.tl__head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.tl__t {
+  margin: 0; font-size: 12px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
+}
+.tl__ranges { margin-left: auto; }
+.tl__ul { list-style: none; margin: 10px 0 0; padding: 0; }
+
+.tl-day {
+  padding: 14px 0 6px; font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.tl-day:first-child { padding-top: 4px; }
+
+.tl-row { display: flex; align-items: stretch; gap: 6px; }
+.tl-row + .tl-row { border-top: 1px solid var(--line-2); }
+.tl-row__b {
+  display: flex; align-items: baseline; gap: 14px; flex: 1 1 auto; min-width: 0;
+  cursor: pointer; padding: 11px 0; background: transparent; border: 0;
+  text-align: left; color: var(--ink); font-family: var(--sans); font-size: 15px;
+}
+.tl-row__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.tl-row__t {
+  flex: none; width: 52px; font-size: 13px; color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+/* В сохранённом первая колонка держит полную дату, а не время: в 52
+   пикселя она не влезает и упирается в заголовок. */
+.tl--saved .tl-row__t { width: auto; min-width: 88px; }
+.tl-row__m { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tl-row__ttl { overflow-wrap: anywhere; }
+.tl-row__sub { font-size: 12px; color: var(--ink-faint); }
+.tl-row__b:hover .tl-row__ttl { color: var(--accent); }
+/* Прошедшее из сохранённого остаётся на месте, но гаснет: это данные
+   человека, выбрасывать их молча нельзя, а соперничать с будущим не должны. */
+.tl-row--past .tl-row__ttl, .tl-row--past .tl-row__t { color: var(--ink-faint); }
+
+.tl-save {
+  flex: none; width: 38px; cursor: pointer; background: transparent; border: 0;
+  color: var(--ink-faint); font-size: 17px; line-height: 1;
+  transition: color .2s ease, transform .2s ease;
+}
+.tl-save:hover { color: var(--moon-light); transform: scale(1.15); }
+.tl-save.on { color: var(--moon-light); }
+.tl-save:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+
+@media (max-width: 560px) {
+  .tl-row__b { flex-wrap: wrap; gap: 2px 12px; }
+  .tl-row__t { width: auto; }
+  .tl__ranges { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tl-save { transition: none; }
+  .tl-save:hover { transform: none; }
+}

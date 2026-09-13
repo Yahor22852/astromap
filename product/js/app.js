@@ -8,7 +8,7 @@
   'use strict';
 
   var E = window.Engine, N = window.Numerology, T = window.T, W = window.Wheel;
-  var Moon = window.Moon, R = window.Retro, Clock = window.Clock, Tr = window.Transits;
+  var Moon = window.Moon, R = window.Retro, Clock = window.Clock, Tr = window.Transits, TL = window.Timeline;
   var A = window.Astronomy;
   var CITIES_ALL = window.CITIES_ALL, COUNTRY_NAMES = window.COUNTRY_NAMES;
   var TZ = window.TZ;
@@ -527,9 +527,179 @@
 
     return '<div class="cn">' + head + main +
       '<div class="cn-tiles">' + moonTile + retroTile + shiftTile + '</div>' +
+      '<div id="cnFeed">' + tlSavedHtml(now) + tlHtml(now) + '</div>' +
       '<section class="cn-idx">' + card(T.ui.indices, bars, T.ui.indicesNote) + '</section>' +
       '</div>';
   };
+
+  /* --- лента ближайших событий и сохранённое ---------------------------------
+     Лента живёт на Cosmic Now, а не отдельным разделом: девятый пункт меню
+     противоречил бы тому, ради чего затевалась перестройка — бриф прямо
+     просит меньше разделов и больше глубины в каждом. Здесь же ей и место:
+     вход в продукт отвечает «что сейчас», «что дальше» и «что я отметил».
+
+     События приходят из timeline.js структурой, а не текстом: названия фаз,
+     знаков и аспектов лежат в переводах, и собирать из них строки должен
+     экран — иначе десять языков пришлось бы тащить в расчётный модуль. */
+  var SAVED_KEY = 'astromap.saved';
+  var tlRange = 7;
+
+  /* Единая форма события для ленты и для хранилища. Сохранять объекты
+     timeline.js как есть нельзя: в них лежат Date и вложенный знак, а из
+     localStorage всё вернётся строками. */
+  function tlNorm(e) {
+    return {
+      id: TL.idOf(e), kind: e.kind, at: e.at.getTime(),
+      phaseIndex: e.phaseIndex,
+      signIndex: e.sign ? e.sign.index : null,
+      body: e.body, toRetro: e.toRetro,
+      natal: e.natal, aspect: e.aspect, tone: e.tone
+    };
+  }
+
+  /* Подпись события собирается по виду. Здесь же решается, куда оно ведёт:
+     фаза и смена знака — в Луну на свою дату, станция — в Ретрограды к своей
+     планете, точный аспект — в проводник с этим транзитом. */
+  function tlLabel(n) {
+    var sign = (n.signIndex !== null && n.signIndex !== undefined)
+      ? ZODIAC_GLYPHS[n.signIndex] + ' ' + T.signs[n.signIndex] : '';
+    var at = new Date(n.at);
+    if (n.kind === 'moonPhase') {
+      return { title: T.moonPhase[n.phaseIndex].n, sub: sign, go: ['moon', Clock.toKey(at)] };
+    }
+    if (n.kind === 'moonSign') {
+      return { title: T.sec.signChange, sub: sign, go: ['moon', Clock.toKey(at)] };
+    }
+    if (n.kind === 'station') {
+      return { title: pName(n.body),
+        sub: n.toRetro ? T.sec.kd.stationRetro : T.sec.kd.stationDirect,
+        go: ['retro', n.body] };
+    }
+    /* Подписью аспекта служит дом карты, которого он касается, а не слово
+       «точно»: время события и так стоит в первой колонке, а повторённое
+       десять раз «точно» не добавляет ничего. Дом отвечает на «почему это
+       про меня» — ради этого лента и нужна. */
+    var target = natal && (natal.byName[n.natal] ||
+      (n.natal === 'ASC' ? natal.asc : null) || (n.natal === 'MC' ? natal.mc : null));
+    var house = target && target.house;
+    return {
+      title: pName(n.body) + ' ' + T.aspects[n.aspect] + ' ' + pName(n.natal),
+      sub: house ? T.houses[house].n + ' — ' + T.houses[house].t : '',
+      tone: n.tone,
+      go: ['horoscope', n.body + '-' + n.natal + '-' + n.aspect]
+    };
+  }
+
+  function loadSaved() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]');
+      return Array.isArray(raw) ? raw.filter(function (x) { return x && x.id && x.at; }) : [];
+    } catch (e) { return []; }
+  }
+  function storeSaved(list) {
+    try { localStorage.setItem(SAVED_KEY, JSON.stringify(list)); } catch (e) { /* игнор */ }
+  }
+  function toggleSaved(n) {
+    var list = loadSaved();
+    var at = list.filter(function (x) { return x.id === n.id; });
+    if (at.length) {
+      storeSaved(list.filter(function (x) { return x.id !== n.id; }));
+    } else {
+      list.push(n);
+      list.sort(function (a, b) { return a.at - b.at; });
+      storeSaved(list);
+    }
+  }
+
+  /* Заголовок дня: «сегодня» и «завтра» словами, остальное датой. Человек
+     читает ленту от текущего момента, и две ближайшие ступени опознаются
+     быстрее словом, чем числом. */
+  function tlDayLabel(d, now) {
+    if (sameDay(d, now)) { return T.sec.today; }
+    var tomorrow = new Date(now.getTime() + 86400000);
+    if (sameDay(d, tomorrow)) { return T.sec.tomorrow; }
+    return localeDate(d);
+  }
+
+  function tlRowHtml(n, savedIds) {
+    var lab = tlLabel(n);
+    var at = new Date(n.at);
+    var isSaved = savedIds.indexOf(n.id) >= 0;
+    return '<li class="tl-row">' +
+      '<button type="button" class="tl-row__b" data-cngo="' + esc(lab.go.join('/')) + '">' +
+        '<span class="tl-row__t">' + clockTime(at) + '</span>' +
+        '<span class="tl-row__m">' +
+          '<span class="tl-row__ttl">' + lab.title +
+            (lab.tone ? toneTag(lab.tone) : '') + '</span>' +
+          (lab.sub ? '<span class="tl-row__sub">' + lab.sub + '</span>' : '') +
+        '</span>' +
+      '</button>' +
+      '<button type="button" class="tl-save' + (isSaved ? ' on' : '') +
+        '" data-tlsave="' + esc(n.id) + '" aria-pressed="' + isSaved + '" aria-label="' +
+        esc(isSaved ? T.sec.unsaveAct : T.sec.saveAct) + '" title="' +
+        esc(isSaved ? T.sec.unsaveAct : T.sec.saveAct) + '">' +
+        (isSaved ? '★' : '☆') + '</button>' +
+      '</li>';
+  }
+
+  function tlSavedHtml(now) {
+    var list = loadSaved();
+    if (!list.length) { return ''; }
+    /* Прошедшее из сохранённого не выбрасываем молча — это данные человека,
+       — но опускаем ниже и гасим: список нужен, чтобы смотреть вперёд. */
+    var rows = list.map(function (n) {
+      var lab = tlLabel(n);
+      var at = new Date(n.at);
+      var past = at.getTime() < now.getTime();
+      return '<li class="tl-row' + (past ? ' tl-row--past' : '') + '">' +
+        '<button type="button" class="tl-row__b" data-cngo="' + esc(lab.go.join('/')) + '">' +
+          '<span class="tl-row__t">' + fmtDate(at) + '</span>' +
+          '<span class="tl-row__m"><span class="tl-row__ttl">' + lab.title + '</span>' +
+          (lab.sub ? '<span class="tl-row__sub">' + lab.sub + '</span>' : '') + '</span>' +
+        '</button>' +
+        '<button type="button" class="tl-save on" data-tlsave="' + esc(n.id) +
+          '" aria-label="' + esc(T.sec.unsaveAct) + '" title="' + esc(T.sec.unsaveAct) + '">★</button>' +
+        '</li>';
+    }).join('');
+    return '<section class="tl tl--saved"><h3 class="tl__t">' + T.sec.savedTitle + '</h3>' +
+      '<ul class="tl__ul">' + rows + '</ul></section>';
+  }
+
+  function tlHtml(now) {
+    var events = TL.events(natal, Moon, now, tlRange).map(tlNorm);
+    var savedIds = loadSaved().map(function (x) { return x.id; });
+    var chips = TL.RANGES.map(function (d) {
+      return '<button type="button" class="chip' + (tlRange === d ? ' on' : '') +
+        '" data-tlrange="' + d + '">' + T.sec['range' + d] + '</button>';
+    }).join('');
+
+    var body = '';
+    if (!events.length) {
+      body = '<p class="pmuted">' + T.sec.nothingSoon + '</p>';
+    } else {
+      var lastDay = '';
+      body = '<ul class="tl__ul">' + events.map(function (n) {
+        var d = new Date(n.at);
+        var day = isoDay(d);
+        var head = '';
+        if (day !== lastDay) {
+          lastDay = day;
+          head = '<li class="tl-day">' + tlDayLabel(d, now) + '</li>';
+        }
+        return head + tlRowHtml(n, savedIds);
+      }).join('') + '</ul>';
+    }
+
+    return '<section class="tl"><div class="tl__head"><h3 class="tl__t">' + T.sec.upcoming + '</h3>' +
+      '<div class="chartchips tl__ranges">' + chips + '</div></div>' + body + '</section>';
+  }
+
+  function rerenderTimeline() {
+    var host = el('cnFeed');
+    if (!host) { return; }
+    host.innerHTML = tlSavedHtml(new Date()) + tlHtml(new Date());
+    bindToday();
+  }
 
   function bindToday() {
     var view = el('view');
@@ -537,6 +707,24 @@
     Array.prototype.slice.call(view.querySelectorAll('[data-cngo]')).forEach(function (b) {
       b.addEventListener('click', function () {
         location.hash = '#' + b.getAttribute('data-cngo');
+      });
+    });
+    Array.prototype.slice.call(view.querySelectorAll('[data-tlrange]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        tlRange = +b.getAttribute('data-tlrange');
+        rerenderTimeline();
+      });
+    });
+    /* Звёздочка ищет событие среди показанных сейчас и среди уже
+       сохранённых: убрать отметку должно быть можно и из списка
+       сохранённого, где исходного события в ленте может уже не быть. */
+    Array.prototype.slice.call(view.querySelectorAll('[data-tlsave]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-tlsave');
+        var pool = TL.events(natal, Moon, new Date(), tlRange).map(tlNorm).concat(loadSaved());
+        var found = null;
+        pool.forEach(function (n) { if (n.id === id && !found) { found = n; } });
+        if (found) { toggleSaved(found); rerenderTimeline(); }
       });
     });
   }
