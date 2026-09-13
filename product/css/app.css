@@ -974,7 +974,6 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 .pasp__meta { flex: none; font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 .pasp__go { flex: none; color: var(--ink-faint); transition: transform .2s ease, color .2s ease; }
 
-.pcard__go { margin-top: 18px; }
 
 .rx-segbar { margin-bottom: 16px; }
 .rx-mean .p:first-child { margin-top: 0; }
@@ -1080,4 +1079,149 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 @media (prefers-reduced-motion: reduce) {
   .mp-ph { transition: none; }
   .mp-ph:hover { transform: none; }
+}
+
+/* --- контекстные действия --------------------------------------------------
+   Действия внутри карточки — «показать в карте», «перейти к пику», «откуда
+   это известно» — не призывы к покупке, и градиентной кнопкой .btn быть не
+   должны: три таких подряд перетягивают на себя всю карточку. Тихая рамка,
+   которая оживает на наведении. */
+.acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.act {
+  padding: 8px 14px; border-radius: 999px; cursor: pointer;
+  background: transparent; border: 1px solid var(--line);
+  color: var(--ink-dim); font-family: var(--sans); font-size: 13px; font-weight: 500;
+  transition: color .2s ease, border-color .2s ease, background .2s ease;
+}
+.act:hover { color: var(--ink); border-color: var(--accent); background: rgba(155,138,248,.08); }
+.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --- проводник транзитов ---------------------------------------------------
+   Раздел выходит из общей двухколоночной сетки: проводник идёт во всю
+   ширину, а прежние карточки периода ниже сохраняют собственную сетку .hz. */
+.view--tx { display: block; }
+.tx-page { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.tx { display: flex; flex-direction: column; gap: 14px; }
+
+.tx-sub {
+  margin: 10px 0 0; font-size: 12px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint);
+}
+.tx-sub--period { margin-top: 22px; color: var(--accent); }
+
+/* Точка тона: аспект читается не только цветом, но и заливкой — сплошная
+   у трудного, полая у лёгкого, кольцо у нейтрального. */
+.tone-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.tone-dot--hard { background: var(--hard); }
+.tone-dot--soft { background: transparent; border: 1.5px solid var(--soft); }
+.tone-dot--neutral { background: transparent; box-shadow: inset 0 0 0 1.5px var(--neutral); }
+
+.tx-hero {
+  position: relative;
+  background: var(--surf); border: 1px solid var(--line); border-radius: var(--r-card);
+  padding: var(--pad);
+}
+.tx-hero__badge {
+  display: inline-block; margin-bottom: 10px; padding: 3px 10px; border-radius: 999px;
+  background: rgba(155,138,248,.14); color: var(--accent);
+  font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+}
+.tx-hero__h {
+  margin: 0; font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: 1.2;
+}
+.tx-hero__h b { font-weight: 600; }
+/* Название аспекта задано без размера: в герое оно подхватывает крупный
+   серифный заголовок, в карточках и строках списка — их собственный кегль.
+   С фиксированными 20px оно выпирало из пятнадцатипиксельных карточек. */
+.tx-asp { color: var(--ink-dim); font-family: var(--sans); font-weight: 400; }
+.tx-hero__h .tx-asp { font-size: 20px; }
+.tx-hero__ctx { display: flex; flex-wrap: wrap; gap: 6px 26px; margin-top: 10px; font-size: 14px; color: var(--ink-dim); }
+.tx-hero__ctx i {
+  font-style: normal; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-faint); margin-right: 6px;
+}
+.tx-hero__meta {
+  display: flex; flex-wrap: wrap; gap: 4px 22px; margin-top: 14px;
+  font-size: 13px; color: var(--ink-faint); font-variant-numeric: tabular-nums;
+}
+
+/* Окно транзита: от входа в орбис до выхода, с отметками точных моментов.
+   У медленной планеты их три — ретроградная петля, и на шкале это видно
+   сразу, без чтения таблицы. */
+.twin { margin-top: 18px; }
+.twin__bar {
+  position: relative; height: 10px; border-radius: 999px;
+  background: rgba(255,255,255,.06);
+}
+.twin__fill {
+  position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px;
+  background: linear-gradient(90deg, rgba(155,138,248,.25), rgba(155,138,248,.6));
+}
+.twin__ex {
+  position: absolute; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%; background: var(--moon-light);
+  box-shadow: 0 0 8px rgba(245,230,121,.7);
+}
+.twin__now { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
+.twin__ends {
+  display: flex; justify-content: space-between; margin-top: 8px;
+  font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums;
+}
+
+.tx-why { margin-top: 16px; padding-top: 8px; border-top: 1px solid var(--line-2); }
+.tx-why__v { font-family: var(--sans); font-size: 15px; font-weight: 600; }
+
+.tx-sup { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tx-sup__b {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px; cursor: pointer;
+  padding: 14px 16px; border-radius: var(--r-card); text-align: left;
+  background: var(--surf); border: 1px solid var(--line-2); color: var(--ink);
+  font-family: var(--sans); font-size: 15px;
+  transition: border-color .2s ease;
+}
+.tx-sup__b:hover { border-color: var(--accent); }
+.tx-sup__b.on { border-color: var(--accent); background: var(--surf-sel); }
+.tx-sup__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tx-sup__p { min-width: 0; overflow-wrap: anywhere; }
+.tx-sup__m { font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+.tx-list {
+  background: var(--surf); border: 1px solid var(--line-2);
+  border-radius: var(--r-card); padding: 16px var(--pad);
+}
+.tx-list__toggle {
+  display: flex; align-items: baseline; gap: 8px; width: 100%; cursor: pointer;
+  background: transparent; border: 0; padding: 0; text-align: left;
+  color: var(--ink-dim); font-family: var(--sans); font-size: 14px;
+}
+.tx-list__toggle b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.tx-list__toggle span { margin-left: auto; color: var(--accent); }
+.tx-list__toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.tx-list__chips { margin-top: 14px; }
+.tx-list__ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.tx-list__ul li + li { border-top: 1px solid var(--line-2); }
+.tx-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; cursor: pointer;
+  padding: 11px 0; background: transparent; border: 0; text-align: left;
+  color: var(--ink); font-family: var(--sans); font-size: 15px;
+}
+.tx-row.on { color: var(--accent); }
+.tx-row:hover .tx-row__go { color: var(--accent); transform: translateX(2px); }
+.tx-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.tx-row__p { flex: 1 1 auto; min-width: 0; }
+.tx-row__m { flex: none; font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.tx-row__go { flex: none; color: var(--ink-faint); transition: transform .2s ease, color .2s ease; }
+
+@media (max-width: 900px) {
+  .tx-sup { grid-template-columns: minmax(0, 1fr); }
+  .tx-hero__h { font-size: 24px; }
+  .tx-hero__h .tx-asp { font-size: 17px; }
+}
+@media (max-width: 560px) {
+  .tx-row { flex-wrap: wrap; }
+  .tx-row__m { flex: 1 1 100%; }
+  .tx-row__go { margin-left: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tx-row__go, .tx-sup__b { transition: none; }
 }

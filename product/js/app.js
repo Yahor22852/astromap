@@ -8,7 +8,7 @@
   'use strict';
 
   var E = window.Engine, N = window.Numerology, T = window.T, W = window.Wheel;
-  var Moon = window.Moon, R = window.Retro, Clock = window.Clock;
+  var Moon = window.Moon, R = window.Retro, Clock = window.Clock, Tr = window.Transits;
   var A = window.Astronomy;
   var CITIES_ALL = window.CITIES_ALL, COUNTRY_NAMES = window.COUNTRY_NAMES;
   var TZ = window.TZ;
@@ -280,8 +280,8 @@
 
     return '<h3 class="pcard__t">' + T.sec.house + '</h3>' + houseHtml +
       '<h3 class="pcard__t pcard__t--gap">' + T.sec.contacts + '</h3>' + aspHtml +
-      '<button type="button" class="btn btn--link pcard__go" data-gochart="' + body + '">' +
-        T.sec.openChart + '</button>';
+      '<div class="acts"><button type="button" class="act" data-gochart="' + body + '">' +
+        T.sec.openChart + '</button></div>';
   }
 
   function personalNeedHtml() {
@@ -435,9 +435,12 @@
   var hzPeriod = 'today';
   var chartSel = null;
 
+  /* Период отсчитывается от выбранной даты, а не всегда от «сейчас»: иначе
+     перемотка времени меняла бы верхнюю половину раздела и не трогала
+     нижнюю, и две части экрана говорили бы о разных днях. */
   function hzPeriodData(key) {
     var p = HZ_PERIODS.filter(function (x) { return x.key === key; })[0] || HZ_PERIODS[0];
-    var now = new Date();
+    var now = Clock.get();
     var from = new Date(now.getTime() + (p.offset || 0) * 86400000);
     var to = new Date(from.getTime() + p.days * 86400000);
     return E.transitEvents(natal, from, to, { bodies: p.bodies, stepHours: p.stepHours });
@@ -801,6 +804,206 @@
     });
   }
 
+  /* --- проводник транзитов --------------------------------------------------
+     Раздел отвечал на «что происходит» дважды — связным текстом по сферам и
+     таблицей точных дат — и ни разу на «что из этого сильнее всего и когда
+     пик». Проводник добавляет именно этот слой и стоит выше текста: сорок
+     активных аспектов равнозначным списком не говорят ничего.
+
+     Иерархия: один главный, три рядом, остальное свёрнуто под фильтры. Любой
+     транзит из списка можно поднять в главный — это и есть исследование, а
+     не просто пролистывание.
+
+     Луна из главных исключена намеренно (см. transits.js): она меняет
+     аспекты по нескольку раз в сутки и всегда вытесняла бы то, что держится
+     неделями. В общем списке она остаётся. */
+  var TX_FILTERS = ['all', 'soft', 'hard', 'slow', 'love', 'career', 'growth', 'inner'];
+  var txSel = null, txFilter = 'all', txOpen = false, txWhy = false;
+
+  function txKey(r) { return r.transit + '|' + r.natal + '|' + r.aspect; }
+
+  function txPair(r) {
+    return '<b>' + pName(r.transit) + '</b>' + (r.retro ? ' R' : '') +
+      ' <span class="tx-asp">' + T.aspects[r.aspect] + '</span> <b>' + pName(r.natal) + '</b>';
+  }
+
+  /* Дата границы окна: если поиск упёрся в предел, честно помечаем, что
+     дальше не смотрели, вместо того чтобы выдать предел за настоящий край. */
+  function txEdgeDate(d, capped) {
+    return (capped ? '≥ ' : '') + fmtDate(d);
+  }
+
+  function txWindowHtml(d) {
+    var t0 = d.from.getTime(), t1 = d.to.getTime(), span = t1 - t0;
+    if (span <= 0) { return ''; }
+    var at = function (x) { return Math.max(0, Math.min(100, (x - t0) / span * 100)); };
+    var now = at(Clock.get().getTime());
+    var marks = d.exacts.map(function (e) {
+      return '<span class="twin__ex" style="left:' + at(e.getTime()).toFixed(2) + '%" title="' +
+        esc(fmtDate(e)) + '"></span>';
+    }).join('');
+    return '<div class="twin">' +
+      '<div class="twin__bar">' +
+        '<span class="twin__fill" style="width:' + now.toFixed(2) + '%"></span>' + marks +
+        '<span class="twin__now" style="left:' + now.toFixed(2) + '%"></span>' +
+      '</div>' +
+      '<div class="twin__ends">' +
+        '<span>' + txEdgeDate(d.from, d.fromCapped) + '</span>' +
+        '<span>' + txEdgeDate(d.to, d.toCapped) + '</span>' +
+      '</div></div>';
+  }
+
+  /* Технические детали по запросу: продукт показывает вывод, а любопытный
+     должен иметь возможность увидеть, из чего он собран. Шкала силы
+     произвольная и годится только для сравнения транзитов между собой —
+     так и подписано, чтобы её не читали как вероятность. */
+  function txWhyHtml(d) {
+    var rows = [
+      [T.sec.orb, fmtDeg(d.orb) + ' / ' + fmtDeg(d.maxOrb)],
+      [T.ui.motion, d.applying ? T.sec.applying : T.sec.separating],
+      [T.sec.windowW, d.days + ' ' + T.sec.dayShort],
+      [T.sec.exactCount, String(d.exacts.length)],
+      [T.sec.strength, d.strength.toFixed(1)]
+    ];
+    var list = rows.map(function (r) {
+      return '<div class="kv"><span>' + r[0] + '</span><b class="tx-why__v">' + r[1] + '</b></div>';
+    }).join('');
+    var dates = d.exacts.length
+      ? '<p class="note">' + T.sec.exactOn + ': ' + d.exacts.map(fmtDate).join(' · ') + '</p>' : '';
+    var triple = d.triple ? '<p class="note">' + T.sec.tripleNote + '</p>' : '';
+    return '<div class="tx-why">' + list + dates + triple + '</div>';
+  }
+
+  function txHeroHtml(d, isLead) {
+    var natalCtx = signName(d.natalSign) +
+      (d.natalHouse ? ' · ' + T.houses[d.natalHouse].n : '');
+    var transitCtx = signName(d.sign) + (d.house ? ' · ' + T.houses[d.house].n : '');
+    var peak = d.nextExact || d.exacts[0] || null;
+    return '<section class="tx-hero">' +
+      (isLead ? '<span class="tx-hero__badge">' + T.sec.mainNow + '</span>' : '') +
+      '<h2 class="tx-hero__h">' + txPair(d) + toneTag(d.tone) + '</h2>' +
+      '<div class="tx-hero__ctx">' +
+        '<span><i>' + T.sec.transiting + '</i> ' + transitCtx + '</span>' +
+        '<span><i>' + T.sec.natalW + '</i> ' + natalCtx + '</span>' +
+      '</div>' +
+      txWindowHtml(d) +
+      '<div class="tx-hero__meta">' +
+        '<span>' + T.sec.orb + ' ' + fmtDeg(d.orb) + '</span>' +
+        '<span>' + (d.applying ? T.sec.applying : T.sec.separating) + '</span>' +
+        (peak ? '<span>' + T.sec.exactOn + ' ' + fmtDate(peak) + '</span>' : '') +
+      '</div>' +
+      '<div class="acts">' +
+        '<button type="button" class="act" data-txwhy="1" aria-expanded="' + txWhy + '">' +
+          T.sec.why + (txWhy ? ' ▴' : ' ▾') + '</button>' +
+        '<button type="button" class="act" data-gopoint="' + d.natal + '">' +
+          T.sec.openChart + '</button>' +
+        (peak ? '<button type="button" class="act" data-clockjump="' + peak.getTime() + '">' +
+          T.sec.goPeak + '</button>' : '') +
+      '</div>' +
+      (txWhy ? txWhyHtml(d) : '') +
+      '</section>';
+  }
+
+  function txSupportHtml(rows, selKey) {
+    if (!rows.length) { return ''; }
+    return '<div class="tx-sup">' + rows.map(function (r) {
+      return '<button type="button" class="tx-sup__b' + (txKey(r) === selKey ? ' on' : '') +
+        '" data-txsel="' + esc(txKey(r)) + '">' +
+        '<span class="tx-sup__p">' + txPair(r) + '</span>' +
+        '<span class="tx-sup__m">' + T.sec.orb + ' ' + fmtDeg(r.orb) + '</span>' +
+        '<span class="tone-dot tone-dot--' + r.tone + '" aria-hidden="true"></span>' +
+        '</button>';
+    }).join('') + '</div>';
+  }
+
+  function txListHtml(all, selKey) {
+    var rows = Tr.filterRows(all, txFilter);
+    var chips = TX_FILTERS.map(function (k) {
+      return '<button type="button" class="chip' + (txFilter === k ? ' on' : '') +
+        '" data-txfilter="' + k + '">' + T.sec.filters[k] + '</button>';
+    }).join('');
+    var items = rows.map(function (r) {
+      return '<li><button type="button" class="tx-row' + (txKey(r) === selKey ? ' on' : '') +
+        '" data-txsel="' + esc(txKey(r)) + '">' +
+        '<span class="tone-dot tone-dot--' + r.tone + '" aria-hidden="true"></span>' +
+        '<span class="tx-row__p">' + txPair(r) + '</span>' +
+        '<span class="tx-row__m">' + fmtDeg(r.orb) + ' · ' +
+          (r.applying ? T.sec.applying : T.sec.separating) + '</span>' +
+        '<span class="tx-row__go" aria-hidden="true">›</span></button></li>';
+    }).join('');
+    return '<section class="tx-list">' +
+      '<button type="button" class="tx-list__toggle" data-txopen="1" aria-expanded="' + txOpen + '">' +
+        T.sec.allActive + ' <b>' + all.length + '</b> <span>' +
+        (txOpen ? T.sec.collapse : T.sec.showAll) + '</span></button>' +
+      (txOpen ? '<div class="chartchips tx-list__chips">' + chips + '</div>' +
+        '<ul class="tx-list__ul">' + items + '</ul>' : '') +
+      '</section>';
+  }
+
+  function txBodyHtml() {
+    var date = Clock.get();
+    var r = Tr.rank(natal, date);
+    if (!r.lead) {
+      return '<section class="tx-hero"><p class="empty">' + T.ui.noTransits + '</p></section>';
+    }
+    var sel = null;
+    if (txSel) { r.all.forEach(function (x) { if (txKey(x) === txSel) { sel = x; } }); }
+    if (!sel) { sel = r.lead; }
+    var d = Tr.detail(natal, sel, date);
+    if (!d) { sel = r.lead; d = Tr.detail(natal, sel, date); }
+    var selKey = txKey(sel);
+    return txHeroHtml(d, selKey === txKey(r.lead)) +
+      '<h3 class="tx-sub">' + T.sec.supporting + '</h3>' +
+      txSupportHtml(r.support, selKey) +
+      txListHtml(r.all, selKey);
+  }
+
+  function rerenderTx() {
+    var body = el('txBody');
+    if (!body) { return; }
+    body.innerHTML = txBodyHtml();
+    bindTx();
+  }
+
+  function bindTx() {
+    var body = el('txBody');
+    if (!body) { return; }
+    var each = function (sel, fn) {
+      Array.prototype.slice.call(body.querySelectorAll(sel)).forEach(fn);
+    };
+    each('[data-txsel]', function (b) {
+      b.addEventListener('click', function () {
+        txSel = b.getAttribute('data-txsel');
+        txWhy = false;            /* другой транзит — детали прежнего не к месту */
+        rerenderTx();
+      });
+    });
+    each('[data-txfilter]', function (b) {
+      b.addEventListener('click', function () {
+        txFilter = b.getAttribute('data-txfilter');
+        rerenderTx();
+      });
+    });
+    each('[data-txopen]', function (b) {
+      b.addEventListener('click', function () { txOpen = !txOpen; rerenderTx(); });
+    });
+    each('[data-txwhy]', function (b) {
+      b.addEventListener('click', function () { txWhy = !txWhy; rerenderTx(); });
+    });
+    bindGoChart(body);
+    /* Прыжок на дату пика меняет общую дату, поэтому перерисовать нужно и
+       нижнюю половину раздела — периоды считаются от той же даты. */
+    bindDateBar(body, function () { rerenderTx(); rerenderHzPeriod(); });
+  }
+
+  function rerenderHzPeriod() {
+    var body = el('hzBody');
+    if (!body) { return; }
+    body.innerHTML = hzContentHtml();
+    bindHzRows();
+    hzAiEnhance(hzPeriod);
+  }
+
   views.horoscope = function () {
     if (!natal) { return needProfile('needText') + skyNow() + moonCard(); }
     var tabs = HZ_PERIODS.map(function (p) {
@@ -813,10 +1016,15 @@
         '<span class="hzquick__i">' + s.icon + '</span>' +
         T.ui['hz' + s.key.charAt(0).toUpperCase() + s.key.slice(1)] + '</a>';
     }).join('');
-    return '<div class="hzhead card--wide"><div class="segbar" id="segbar">' +
-      '<span class="segbar__ind" id="segbarInd"></span>' + tabs + '</div></div>' +
-      '<div class="hzquick card--wide" id="hzquick">' + quick + '</div>' +
-      '<div class="hz card--wide" id="hzBody">' + hzContentHtml() + '</div>';
+    return '<div class="tx-page">' +
+      dateBarHtml() +
+      '<div class="tx" id="txBody">' + txBodyHtml() + '</div>' +
+      '<h3 class="tx-sub tx-sub--period">' + T.sec.forecast + '</h3>' +
+      '<div class="hzhead"><div class="segbar" id="segbar">' +
+        '<span class="segbar__ind" id="segbarInd"></span>' + tabs + '</div></div>' +
+      '<div class="hzquick" id="hzquick">' + quick + '</div>' +
+      '<div class="hz" id="hzBody">' + hzContentHtml() + '</div>' +
+      '</div>';
   };
 
   /* --- вкладка Chart: интерактивное колесо -------------------------------
@@ -1768,6 +1976,9 @@
     /* Ретрограды — своя раскладка: шкала и сводка идут во всю ширину, а
        карточки ниже раскладываются в две колонки только на десктопе. */
     view.classList.toggle('view--rx', h === 'retro');
+    /* Гороскоп тоже вышел из общей двухколоночной сетки: сверху проводник
+       во всю ширину, ниже — прежние карточки периода со своей сеткой. */
+    view.classList.toggle('view--tx', h === 'horoscope');
     /* Перезапуск CSS-анимации: снять класс, форсировать reflow, вернуть класс.
        Без чтения offsetWidth браузер схлопнёт снятие+возврат в один кадр. */
     view.classList.remove('fade-in');
@@ -1834,6 +2045,7 @@
     bindMoonBody();
     bindChart();
     bindRetro();
+    bindTx();
     bindCityPick();
 
     Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {
