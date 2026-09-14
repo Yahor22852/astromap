@@ -1,11 +1,22 @@
 /* flow.js — состояние и логика воронки.
    Тексты не здесь, а в copy.js. Цены — там же, в блоке billing.
 
-   ССЫЛКА НА ОПЛАТУ. Впиши URL Stripe Payment Link / Paddle Checkout ниже.
-   Пока строка пустая, кнопка «Kontynuuj» не ведёт никуда и пишет об этом
-   под собой — так видно, что интеграция не подключена, а не что она сломалась. */
-var CHECKOUT_URL = '';            /* подписка: интро-неделя */
+   ССЫЛКИ. Впиши URL ниже. Пока строка пустая, кнопка не ведёт никуда и
+   говорит об этом — так видно, что интеграция не подключена, а не что она
+   сломалась. Сообщение при этом пользовательское и на языке воронки:
+   раньше здесь выводилась отладочная строка по-русски с номером строки в
+   исходнике — её увидел бы покупатель, если выкатить без ссылки.
+
+   ЮРИДИЧЕСКИЕ ДОКУМЕНТЫ. Дисклеймер подписки ссылается на «Условия
+   подписки» и «Политику конфиденциальности»; раньше обе ссылки вели на
+   якоря #terms и #privacy, которых на странице нет. Документы, на которые
+   ссылается согласие при списании денег, обязаны существовать и
+   открываться — пока URL не заданы, названия выводятся текстом без ссылки,
+   а в консоль идёт предупреждение. */
+var CHECKOUT_URL = '';            /* подписка: месячный план */
 var CHECKOUT_URL_YEAR = '';       /* годовой план на recovery-экране */
+var TERMS_URL = '';               /* Условия подписки */
+var PRIVACY_URL = '';             /* Политика конфиденциальности */
 
 (function () {
   'use strict';
@@ -48,16 +59,43 @@ var CHECKOUT_URL_YEAR = '';       /* годовой план на recovery-эк�
      она пересобирает карту из тех же данных, ничего не пересылая на сервер. */
   function persist() {
     try {
+      /* ГОРОД УХОДИТ ОБЪЕКТОМ. Раньше сюда клался только cityIdx — индекс в
+         списке городов самой воронки. Продукт ждёт объект {n,lat,lon,tz} и,
+         не найдя его, подставлял пустой город: координат нет — значит нет
+         ни асцендента, ни домов (0 вместо 12), а время считалось как UTC+0
+         вместо настоящего пояса, что сдвигает всю карту. То есть у каждого,
+         кто приходил из воронки, персональный слой продукта — дом Луны,
+         дом ретрограда, дом транзита — не работал вовсе.
+
+         Индекс сам по себе и не мог сработать: списки городов у польской и
+         английской версии разные, так что одно и то же число означает
+         разные города. cityIdx оставлен рядом — на нём держится страница
+         разбора внутри самой воронки. */
+      var cityObj = CITIES[S.cityIdx || 0];
       localStorage.setItem('astromap.funnel', JSON.stringify({
         dob: S.dob,
         themes: S.themes,
         time: S.time,
         cityIdx: S.cityIdx,
+        city: cityObj ? { n: cityObj.n, lat: cityObj.lat, lon: cityObj.lon,
+                          tz: cityObj.tz, dst: cityObj.dst || '' } : null,
         partner: S.partner,
         lang: window.LANG,
         savedAt: new Date().toISOString()
       }));
     } catch (e) { /* приватный режим — просто без сохранения */ }
+  }
+
+  /* Оплата не подключена: пользователю — фраза на языке воронки,
+     разработчику — точное имя константы в консоли. Отладочный текст на
+     экране покупателя недопустим, тем более на третьем языке. */
+  function noCheckout(which) {
+    var note = el('checkoutNote');
+    if (note) {
+      note.textContent = C.paywall.checkoutOff;
+      note.classList.remove('hidden');
+    }
+    console.warn('astromap: ' + which + ' не заполнен в js/flow.js — кнопка оплаты никуда не ведёт.');
   }
 
   /* --- подстановка статических строк по data-t --------------------------- */
@@ -382,9 +420,18 @@ var CHECKOUT_URL_YEAR = '';       /* годовой план на recovery-эк�
     el('planDisc').textContent = C.billing.disclaimer;
 
     /* Ссылки-заглушки: реальных документов пока нет. См. README, п. «Что не размещено». */
+    /* Ссылка на несуществующий документ хуже, чем его отсутствие: человек
+       жмёт, ничего не происходит, а согласие формально уже дано. */
+    var docLink = function (url, label) {
+      return url ? '<a href="' + url + '" target="_blank" rel="noopener">' + label + '</a>' : label;
+    };
+    if (!TERMS_URL || !PRIVACY_URL) {
+      console.warn('astromap: TERMS_URL/PRIVACY_URL не заданы в js/flow.js — ' +
+        'дисклеймер подписки ссылается на документы, которых нет.');
+    }
     el('legal').innerHTML = C.paywall.legal
-      .replace('{terms}', '<a href="#terms">' + C.paywall.terms + '</a>')
-      .replace('{privacy}', '<a href="#privacy">' + C.paywall.privacyInline + '</a>');
+      .replace('{terms}', docLink(TERMS_URL, C.paywall.terms))
+      .replace('{privacy}', docLink(PRIVACY_URL, C.paywall.privacyInline));
   }
 
   /* --- экран 7: recovery -------------------------------------------------- */
@@ -431,11 +478,7 @@ var CHECKOUT_URL_YEAR = '';       /* годовой план на recovery-эк�
     if (S.screen === 's5') { buildPaywall(); go('s6'); return; }
     if (S.screen === 's6') {
       if (CHECKOUT_URL) { window.location.href = CHECKOUT_URL; }
-      else {
-        el('checkoutNote').textContent =
-          'CHECKOUT_URL не заполнен (js/flow.js, строка 8). Впиши ссылку Stripe/Paddle.';
-        el('checkoutNote').classList.remove('hidden');
-      }
+      else { noCheckout('CHECKOUT_URL'); }
       return;
     }
     if (S.screen === 's7') {
@@ -469,6 +512,9 @@ var CHECKOUT_URL_YEAR = '';       /* годовой план на recovery-эк�
   /* Переключатель языка: перезагружаем страницу, потому что тексты
      подставляются один раз на старте. Введённая дата не теряется —
      она уже в localStorage. */
+  /* Продукт умеет десять языков, воронка — два. Если в общем ключе стоит,
+     например, 'ru', copy.js отдаёт английский; подсветить надо именно EN,
+     иначе ни одна кнопка не активна и переключатель выглядит сломанным. */
   all('.lang__b').forEach(function (b) {
     b.classList.toggle('on', b.getAttribute('data-lang') === window.LANG);
     b.addEventListener('click', function () {
