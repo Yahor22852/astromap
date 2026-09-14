@@ -1486,3 +1486,23 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 /* Невидимая область попадания у точек колеса. fill нужен именно заливкой, а
    не прозрачностью: элемент без заливки не ловит указатель вовсе. */
 .w-hit { fill: rgba(0,0,0,0.001); }
+
+/* Живая интерпретация дома дописывается к теме, а не заменяет её: если
+   воркер не ответил, тема остаётся на месте и блок не выглядит пустым. */
+.phouse__ai { margin: 8px 0 0; font-size: 14px; line-height: 1.55; color: var(--ink-dim); }
+
+/* Числа: панель даты сверху, дальше прежняя двухколоночная сетка карточек. */
+.view--num { display: block; }
+.numpage { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.numbody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .numbody { grid-template-columns: minmax(0, 1fr); gap: 14px; } }
+
+/* Видимый фокус на точках колеса. У <g> с tabindex браузер стандартную
+   рамку не рисует, поэтому обводим сам кружок: проверка обхода табом
+   показала тринадцать элементов подряд без единого видимого признака
+   фокуса — по колесу можно было ходить с клавиатуры вслепую. */
+.w-pt:focus { outline: none; }
+.w-pt:focus-visible .w-dot {
+  stroke: var(--ink); stroke-width: 3; paint-order: stroke;
+}
+.w-pt:focus-visible .w-code { fill: var(--ink); font-weight: 700; }

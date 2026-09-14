@@ -401,6 +401,9 @@
         '<span class="pasp__go" aria-hidden="true">›</span></button></li>';
     }).join('') + '</ul>' : '<p class="pmuted">' + T.sec.noContacts + '</p>';
 
+    /* Живой слой просим после отрисовки: сам блок должен появиться сразу,
+       а объяснение дописаться, когда придёт. */
+    if (c.house) { setTimeout(function () { houseAiEnhance(body, c.house, c.aspects); }, 0); }
     return '<h3 class="pcard__t">' + termHtml('house', T.sec.house) + '</h3>' + houseHtml +
       '<h3 class="pcard__t pcard__t--gap">' + T.sec.contacts + '</h3>' + aspHtml +
       '<div class="acts"><button type="button" class="act" data-gochart="' + body + '">' +
@@ -990,6 +993,63 @@
      Кэш в localStorage на календарный день не даёт дёргать API повторно
      при каждом заходе на вкладку. */
   var AI_URL = 'https://astromap-horoscope-ai.egorrut3030.workers.dev';
+
+  /* Воркер долго умел писать только по-английски и по-польски, а lang
+     принимал любой — и для остальных восьми языков возвращал английский
+     текст, которым мы затирали правильный композиционный перевод. Теперь он
+     сообщает, на каком языке написал, и мы принимаем ответ только при
+     совпадении. Старая версия воркера поля lang не вернёт — и её ответ
+     будет отброшен, то есть перевод перестаёт портиться сам собой, ещё до
+     обновления воркера. Английский принимаем и без поля: для него старое
+     поведение было верным. */
+  function aiLangOk(data, lang) {
+    if (!data) { return false; }
+    if (data.lang) { return data.lang === lang; }
+    return lang === 'en';
+  }
+
+  /* --- ИИ-слой поверх темы дома --------------------------------------------
+     Композиционный текст (название дома и его тема) рендерится сразу и
+     остаётся, если воркер не ответил. Живой слой объясняет конкретное
+     сочетание «планета — дом — аспекты» для этого человека и приписывается
+     отдельным абзацем, а не подменяет факты. Кэш по языку, планете и дому:
+     сочетание меняется редко, дёргать API на каждый рендер незачем. */
+  function houseAiEnhance(bodyName, house, aspects) {
+    var host = document.querySelector('.phouse');
+    if (!host || !house || !AI_URL) { return; }
+    var lang = window.APP_LANG || 'en';
+    var key = 'hai:' + lang + ':' + bodyName + ':' + house;
+    var put = function (text) {
+      var h = document.querySelector('.phouse');
+      if (!h || h.querySelector('.phouse__ai')) { return; }
+      var p = document.createElement('p');
+      p.className = 'phouse__ai';
+      p.textContent = text;
+      h.appendChild(p);
+    };
+    try {
+      var cached = localStorage.getItem(key);
+      if (cached) { put(cached); return; }
+    } catch (e) {}
+
+    fetch(AI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'house', lang: lang, body: bodyName, house: house,
+        sign: (E.bodyAt(bodyName, Clock.get()).sign.key),
+        aspects: (aspects || []).slice(0, 4).map(function (a) {
+          return { natal: a.natal, aspect: a.aspect, tone: a.tone };
+        })
+      })
+    }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!aiLangOk(data, lang) || !data.text) { return; }
+        try { localStorage.setItem(key, data.text); } catch (e) {}
+        put(data.text);
+      })
+      .catch(function () { /* сеть/лимит — остаёмся на теме дома */ });
+  }
   var hzLastBuckets = null;
   var hzAiSeq = 0;
 
@@ -1035,7 +1095,7 @@
       body: JSON.stringify(payload)
     }).then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
-        if (!data || !data.sections) { return; }
+        if (!aiLangOk(data, lang) || !data.sections) { return; }
         try { localStorage.setItem(cacheKey, JSON.stringify(data.sections)); } catch (e) {}
         applyHzSections(data.sections, mySeq);
       })
@@ -1207,7 +1267,7 @@
       body: JSON.stringify({ type: 'compat', lang: lang, signA: T.signs[mcSignA], signB: T.signs[mcSignB] })
     }).then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
-        if (!data || !data.categories) { return; }
+        if (!aiLangOk(data, lang) || !data.categories) { return; }
         try { localStorage.setItem(cacheKey, JSON.stringify(data.categories)); } catch (e) {}
         mcApplyCategories(data.categories, mySeq);
       })
@@ -1717,10 +1777,17 @@
     var syn = E.synastry(natal, partnerChart);
     var comp = E.composite(natal, partnerChart);
 
-    var hits = syn.top.map(function (h) {
-      return [pName(h.a), T.aspects[h.aspect], pName(h.b), fmtDeg(h.orb),
-              toneTag(h.tone), h.importance];
-    });
+    /* Сильнейшие контакты были таблицей, из которой никуда нельзя было
+       перейти: раздел знал, что Луна человека связана с Венерой партнёра, и
+       не давал посмотреть эту Луну в карте. Теперь каждая строка ведёт к
+       СВОЕЙ точке (колонка A — точка владельца профиля). */
+    var hitsHtml = '<ul class="pasp">' + syn.top.map(function (h) {
+      return '<li class="pasp__i"><button type="button" class="pasp__b" data-gopoint="' + h.a + '">' +
+        '<span class="pasp__main"><b>' + pName(h.a) + '</b> ' + T.aspects[h.aspect] +
+        ' ' + pName(h.b) + '</span>' + toneTag(h.tone) +
+        '<span class="pasp__meta">' + T.sec.orb + ' ' + fmtDeg(h.orb) + '</span>' +
+        '<span class="pasp__go" aria-hidden="true">›</span></button></li>';
+    }).join('') + '</ul>';
     var cpts = comp.points.concat(comp.asc ? [comp.asc, comp.mc] : []).map(function (p) {
       return [pName(p.name), signName(p.sign), fmtDeg(p.sign.degree)];
     });
@@ -1729,24 +1796,20 @@
         '<div class="score"><div class="score__n">' + syn.score + '%</div>' +
         '<div class="score__b"><i style="width:' + syn.score + '%"></i></div></div>',
         T.ui.indexNote) +
-      card(T.ui.strongest, table(['A', T.ui.aspects, 'B', T.ui.orb, T.ui.tone,
-                                  T.ui.weight], hits)) +
+      card(T.ui.strongest, hitsHtml) +
       card(T.ui.composite, table([T.ui.point, T.ui.sign, T.ui.deg], cpts),
            T.ui.compositeNote) +
       card(T.ui.partnerTitle, form);
   };
 
-  views.numbers = function () {
-    if (!S.profile) {
-      /* Справочник значений вместо пустоты: он не требует данных человека
-         и объясняет, что вообще будет посчитано. */
-      var ref = Object.keys(T.numbers).map(function (k) {
-        return '<article class="num num--sm"><div class="num__v">' + k + '</div>' +
-          '<div class="num__c"><p class="num__t">' + T.numbers[k] + '</p></div></article>';
-      }).join('');
-      return needProfile('needTextNum') + cardWide(T.ui.numbersRef, ref);
-    }
-    var n = N.full(S.profile, new Date());
+  /* Числа считались всегда «на сегодня» и были единственным разделом, не
+     замечавшим выбранную дату. Личный день, месяц и год — величины
+     календарные, и если в остальном продукте человек листает время, здесь
+     оно тоже должно листаться: иначе два раздела на одном экране говорят о
+     разных днях. Ядро нумерологии уже принимает дату параметром — менять
+     там ничего не пришлось. */
+  function numbersBodyHtml() {
+    var n = N.full(S.profile, Clock.get());
     function block(key, label, obj) {
       if (!obj) { return ''; }
       var v = obj.value;
@@ -1773,9 +1836,32 @@
       block('personalMonth', T.ui.pMonth, n.personalMonth) +
       block('personalDay', T.ui.pDay, n.personalDay);
 
-    return card(T.ui.numbersTitle, core,
-        (S.profile.name ? '' : T.ui.nameNeeded)) +
+    return card(T.ui.numbersTitle, core, (S.profile.name ? '' : T.ui.nameNeeded)) +
       card(T.ui.pYear, cycles);
+  }
+
+  /* Перерисовываем страницу целиком, а не только карточки: панель даты
+     живёт над ними и сама показывает выбранный день — при обновлении одних
+     карточек личный день менялся, а подпись на панели оставалась вчерашней. */
+  function rerenderNumbers() {
+    var page = el('numPage');
+    if (!page) { return; }
+    page.innerHTML = dateBarHtml() + '<div class="numbody" id="numBody">' + numbersBodyHtml() + '</div>';
+    bindDateBar(page, rerenderNumbers);
+  }
+
+  views.numbers = function () {
+    if (!S.profile) {
+      /* Справочник значений вместо пустоты: он не требует данных человека
+         и объясняет, что вообще будет посчитано. */
+      var ref = Object.keys(T.numbers).map(function (k) {
+        return '<article class="num num--sm"><div class="num__v">' + k + '</div>' +
+          '<div class="num__c"><p class="num__t">' + T.numbers[k] + '</p></div></article>';
+      }).join('');
+      return needProfile('needTextNum') + cardWide(T.ui.numbersRef, ref);
+    }
+    return '<div class="numpage" id="numPage">' + dateBarHtml() +
+      '<div class="numbody" id="numBody">' + numbersBodyHtml() + '</div></div>';
   };
 
   /* --- страница «Фаза Луны»: интерактивный лунный календарь --------------
@@ -2522,6 +2608,7 @@
     view.classList.toggle('view--cn', h === 'today');
     /* Карта: колесо и инспектор в два столбца, таблицы под ними. */
     view.classList.toggle('view--chart', h === 'chart');
+    view.classList.toggle('view--num', h === 'numbers' && !!S.profile);
     /* Перезапуск CSS-анимации: снять класс, форсировать reflow, вернуть класс.
        Без чтения offsetWidth браузер схлопнёт снятие+возврат в один кадр. */
     view.classList.remove('fade-in');
@@ -2591,6 +2678,8 @@
     bindRetro();
     bindTx();
     bindToday();
+    bindDateBar(el('numPage'), rerenderNumbers);
+    bindGoChart(el('view'));
     bindTerms(document.getElementById('view'));
     bindCityPick();
 
