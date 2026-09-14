@@ -23,6 +23,11 @@
      доступа», если её некуда вести. */
   var LICENSE_API = ''; /* TODO: URL воркера license-verify.js, напр. https://astromap-license-verify.<você>.workers.dev */
   var GATE_CHECKOUT_URL = ''; /* TODO: ссылка на продукт/чекаут Gumroad */
+  /* Управление подпиской для тех, у кого доступ уже есть (раздел #settings).
+     Это НЕ чекаут: у Gumroad это отдельный адрес, где отменяют и меняют
+     карту. Пока пусто, кнопки нет, а вместо неё строка о том, где искать
+     ссылку, — мёртвая кнопка «управлять подпиской» хуже её отсутствия. */
+  var MANAGE_URL = ''; /* TODO: ссылка на управление подпиской Gumroad */
   var ACCESS_KEY = 'astromap.access';
   var ACCESS_REVALIDATE_MS = 24 * 3600 * 1000; /* не чаще раза в сутки дёргаем воркер повторно на уже открытой сессии */
   /* Обход гейта для разработки: открыть app.html?dev=<DEV_WORD> один раз —
@@ -2857,8 +2862,144 @@
     }
   }
 
+  /* --- настройки: доступ и подписка -----------------------------------------
+
+     До этого раздела ключ можно было ввести ровно один раз — на гейте — и
+     после этого он исчезал из интерфейса навсегда. Нельзя было ни увидеть,
+     на какую почту открыт доступ, ни выйти на чужом компьютере, ни
+     проверить, жива ли подписка, ни сменить ключ, не чистя localStorage
+     руками. Для продукта по подписке это дыра, а не мелочь.
+
+     Ключ показывается замаскированным, с последними четырьмя знаками:
+     этого хватает, чтобы сверить его с письмом, и недостаточно, чтобы его
+     подсмотрели через плечо. Полностью — по кнопке.
+
+     Выход в два нажатия, как удаление данных в профиле: он запирает
+     продукт до повторного ввода ключа, и случайное касание не должно этого
+     делать. Данные карты при этом не трогаются — они к лицензии
+     отношения не имеют. */
+  function maskKey(k) {
+    var s = String(k || '');
+    if (s.length <= 4) { return s; }
+    return new Array(Math.min(s.length - 4, 20) + 1).join('•') + s.slice(-4);
+  }
+
+  var setKeyShown = false;
+
+  views.settings = function () {
+    var blocks = [];
+
+    if (devBypassActive()) {
+      blocks.push(card(T.set.devTitle,
+        '<p class="p">' + T.set.devText + '</p>' +
+        '<div class="acts"><button type="button" class="act act--warn" id="setDevOff">' +
+          T.set.devOff + '</button></div>'));
+    }
+
+    var a = loadAccess();
+    if (a && a.email && a.licenseKey) {
+      var checked = a.verifiedAt ? fmtDateTime(new Date(a.verifiedAt)) : T.set.checkedNever;
+      var body =
+        '<div class="kv"><span>' + T.set.emailLabel + '</span><b class="set__mono">' +
+          esc(a.email) + '</b></div>' +
+        '<div class="kv"><span>' + T.set.keyLabel + '</span><b class="set__mono" id="setKey">' +
+          esc(setKeyShown ? a.licenseKey : maskKey(a.licenseKey)) + '</b></div>' +
+        '<div class="kv"><span>' + T.set.checkedLabel + '</span><b>' + checked + '</b></div>' +
+        '<p class="set__status" id="setStatus" role="status" aria-live="polite" hidden></p>' +
+        '<div class="acts">' +
+          '<button type="button" class="act" id="setReveal" aria-pressed="' + setKeyShown + '">' +
+            (setKeyShown ? T.set.keyHide : T.set.keyShow) + '</button>' +
+          '<button type="button" class="act" id="setCheck">' + T.set.checkNow + '</button>' +
+          (MANAGE_URL
+            ? '<a class="act" href="' + MANAGE_URL + '" target="_blank" rel="noopener">' +
+              T.set.manage + '</a>'
+            : '') +
+          '<button type="button" class="act act--warn" id="setOut" data-armed="0">' +
+            T.set.signOut + '</button>' +
+        '</div>' +
+        (MANAGE_URL ? '' : '<p class="note">' + T.set.manageOff + '</p>') +
+        '<p class="note">' + T.set.signOutNote + '</p>';
+      blocks.push(card(T.set.accessTitle, body, T.set.privacyNote));
+    } else if (!devBypassActive()) {
+      blocks.push(card(T.set.accessTitle, '<p class="empty">' + T.set.noAccess + '</p>'));
+    }
+
+    return blocks.join('');
+  };
+
+  function bindSettings() {
+    var dev = el('setDevOff');
+    if (dev) {
+      dev.addEventListener('click', function () {
+        try { localStorage.removeItem(DEV_KEY); } catch (e) { /* игнор */ }
+        location.reload();
+      });
+    }
+
+    var reveal = el('setReveal');
+    if (reveal) {
+      reveal.addEventListener('click', function () { setKeyShown = !setKeyShown; route(); });
+    }
+
+    var check = el('setCheck');
+    if (check) {
+      check.addEventListener('click', function () {
+        var a = loadAccess();
+        if (!a) { return; }
+        check.disabled = true;
+        setSetStatus(T.ui.gateChecking, false);
+        verifyAccess(a.email, a.licenseKey).then(function (res) {
+          check.disabled = false;
+          if (res && res.ok && res.active) {
+            saveAccess({ email: a.email, licenseKey: a.licenseKey, verifiedAt: Date.now() });
+            route();
+            setSetStatus(T.set.checkOk, false);
+          } else if (res && res.ok && res.active === false) {
+            /* Подписка кончилась — тот же путь, что у фоновой перепроверки:
+               запираем обратно на гейт, а не оставляем открытый продукт с
+               грустной надписью. */
+            clearAccess();
+            showGateOnly(gateErrorText(res.reason));
+          } else {
+            setSetStatus(T.ui.gateErrorInvalid, true);
+          }
+        }).catch(function () {
+          check.disabled = false;
+          setSetStatus(T.ui.gateErrorNetwork, true);
+        });
+      });
+    }
+
+    var out = el('setOut');
+    if (out) {
+      out.addEventListener('click', function () {
+        if (out.getAttribute('data-armed') !== '1') {
+          out.setAttribute('data-armed', '1');
+          out.textContent = T.set.signOutSure;
+          setTimeout(function () {
+            if (!out.isConnected) { return; }
+            out.setAttribute('data-armed', '0');
+            out.textContent = T.set.signOut;
+          }, 5000);
+          return;
+        }
+        clearAccess();
+        showGateOnly();
+      });
+    }
+  }
+
+  function setSetStatus(text, isError) {
+    var st = el('setStatus');
+    if (!st) { return; }
+    st.hidden = !text;
+    st.textContent = text || '';
+    st.classList.toggle('set__status--error', !!isError);
+  }
+
   /* --- роутер ------------------------------------------------------------- */
-  var ORDER = ['today', 'horoscope', 'chart', 'match', 'numbers', 'moon', 'retro', 'profile'];
+  var ORDER = ['today', 'horoscope', 'chart', 'match', 'numbers', 'moon', 'retro', 'profile',
+               'settings'];
 
   /* --- адрес раздела с состоянием ------------------------------------------
      Хеш теперь не только имя раздела, но и то, что в нём выбрано:
@@ -2935,6 +3076,14 @@
     document.querySelectorAll('.nav__i').forEach(function (a) {
       a.classList.toggle('on', a.getAttribute('href') === '#' + h);
     });
+    /* Шестерёнка живёт вне .nav, поэтому подсвечивается отдельно — иначе на
+       открытых настройках ни один пункт навигации не был бы активным, и
+       человек не понимал бы, где находится. */
+    var gear = el('gear');
+    if (gear) {
+      gear.classList.toggle('on', h === 'settings');
+      gear.setAttribute('aria-current', h === 'settings' ? 'page' : 'false');
+    }
     /* У Cosmic Now своя шапка с приветствием и датой, поэтому общий
        заголовок раздела на нём лишний — два заголовка подряд читаются как
        недоделка. Без профиля экран показывает обычные карточки, и заголовок
@@ -2942,7 +3091,10 @@
     var ownHead = (h === 'today' && !!natal);
     var head = document.querySelector('.head');
     if (head) { head.hidden = ownHead; }
-    el('title').textContent = ownHead ? '' : (T.ui[h + 'Title'] || T.ui.nav[h]);
+    /* У настроек нет пункта в T.ui.nav — это не раздел астрологии, а
+       служебный экран за шестерёнкой, и заголовок у него свой. */
+    el('title').textContent = ownHead ? ''
+      : (h === 'settings' ? T.set.title : (T.ui[h + 'Title'] || T.ui.nav[h]));
     var view = el('view');
     view.innerHTML = views[h]();
     /* Страница Луны — узкая центрированная колонка, не двухколоночный грид
@@ -2959,8 +3111,9 @@
     /* Карта: колесо и инспектор в два столбца, таблицы под ними. */
     view.classList.toggle('view--chart', h === 'chart');
     view.classList.toggle('view--num', h === 'numbers' && !!S.profile);
-    /* Профиль — одна колонка: страница про одного человека, а не сетка. */
-    view.classList.toggle('view--prof', h === 'profile' && !!S.profile);
+    /* Профиль и настройки — одна колонка: страница про одного человека и
+       служебный экран, а не сетка равноправных модулей. */
+    view.classList.toggle('view--prof', (h === 'profile' && !!S.profile) || h === 'settings');
     /* Перезапуск CSS-анимации: снять класс, форсировать reflow, вернуть класс.
        Без чтения offsetWidth браузер схлопнёт снятие+возврат в один кадр. */
     view.classList.remove('fade-in');
@@ -3035,6 +3188,7 @@
     bindTerms(document.getElementById('view'));
     bindCityPick();
     bindProfile();
+    bindSettings();
 
     Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {
       b.addEventListener('click', function () {
@@ -3079,6 +3233,13 @@
       var v = path.reduce(function (o, k) { return o ? o[k] : null; }, T);
       if (typeof v === 'string') { n.textContent = v; }
     });
+    /* У шестерёнки нет видимой подписи — значит нужна невидимая, иначе
+       скринридер объявит «ссылка» и ничего больше. Заодно title для мыши. */
+    var gear = el('gear');
+    if (gear) {
+      gear.setAttribute('aria-label', T.set.nav);
+      gear.setAttribute('title', T.set.nav);
+    }
   }
 
   function startApp() {

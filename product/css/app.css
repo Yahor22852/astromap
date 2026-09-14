@@ -1689,3 +1689,45 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 }
 .tx-exact { margin: 8px 0 0; padding-left: 18px; }
 .tx-exact li { font-size: 14px; color: var(--ink-dim); padding: 2px 0; }
+
+/* --- шестерёнка настроек ----------------------------------------------------
+   Рядом с переключателем языка, тем же размером и той же круглой формой,
+   что и .lang__b: это соседи по служебному углу шапки, и разнокалиберные
+   элементы там читаются как случайность.
+
+   Иконка без подписи, поэтому имя ей даёт aria-label из переводов
+   (applyStaticTexts в app.js) — без него скринридер объявит просто «ссылка».
+   Цель нажатия 34px: меньше рекомендованных 44, но столько же, сколько у
+   соседней кнопки языка, а на телефоне шапка сворачивается в бургер, где
+   настройки идут обычным пунктом меню полной высоты. */
+.gear {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; margin-left: 6px;
+  border: 1px solid var(--line); border-radius: 999px;
+  color: var(--ink-faint); text-decoration: none;
+  transition: color .2s ease, border-color .2s ease, background .2s ease;
+}
+.gear svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6;
+  stroke-linejoin: round; }
+.gear:hover { color: var(--ink); border-color: var(--accent); }
+.gear.on { background: var(--nav-on); color: var(--ink); border-color: var(--accent); }
+.gear:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --- настройки --------------------------------------------------------------
+   Почта и ключ — моноширинным: их сверяют с письмом посимвольно, а в
+   пропорциональном шрифте единица и строчная L, ноль и O неразличимы. */
+/* Селектор с .kv, а не просто .set__mono: у `.kv b` стоит крупный шрифт с
+   засечками, и он перебивает по специфичности. В Cormorant Garamond единица
+   и строчная L, ноль и O почти неразличимы — а ключ сверяют с письмом
+   посимвольно, это худшее место для декоративного шрифта. */
+.kv b.set__mono, .set__mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px; font-weight: 500; letter-spacing: .02em;
+  overflow-wrap: anywhere; text-align: right;
+}
+.set__status {
+  margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+  background: var(--surf); border: 1px solid var(--line);
+  font-size: 14px; color: var(--ink-dim);
+}
+.set__status--error { color: var(--hard); border-color: rgba(240,146,138,.4); }

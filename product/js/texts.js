@@ -117,6 +117,30 @@
     modes: { cardinal: 'Kardynalny', fixed: 'Stały', mutable: 'Zmienny' },
     /* Баланс стихий и крестов: разбор того, что посчитал
        Engine.balance. Веса и порог дефицита — там же. */
+    /* Раздел «Доступ и подписка» (шестерёнка в шапке, #settings). */
+    set: {
+      nav: 'Ustawienia',
+      title: 'Dostęp i subskrypcja',
+      accessTitle: 'Twój dostęp',
+      emailLabel: 'E-mail',
+      keyLabel: 'Klucz licencyjny',
+      keyShow: 'Pokaż',
+      keyHide: 'Ukryj',
+      checkedLabel: 'Ostatnie sprawdzenie',
+      checkedNever: 'jeszcze nie sprawdzano',
+      checkNow: 'Sprawdź teraz',
+      checkOk: 'Subskrypcja aktywna',
+      manage: 'Zarządzaj subskrypcją',
+      manageOff: 'Link do zarządzania subskrypcją nie jest jeszcze podłączony. Znajdziesz ją w mailu z zakupu.',
+      signOut: 'Wyloguj się',
+      signOutSure: 'Na pewno? Naciśnij ponownie',
+      signOutNote: 'Klucz zostanie usunięty z tej przeglądarki. Żeby wrócić, wpiszesz go jeszcze raz — dane mapy zostają na miejscu.',
+      devTitle: 'Obejście dla developera',
+      devText: 'Aplikacja jest otwarta pominięciem bramki (?dev=…), a nie kluczem. Tak wygląda produkt bez opłaty — normalny użytkownik tu nie trafi.',
+      devOff: 'Wyłącz obejście',
+      noAccess: 'Nie ma tu zapisanego klucza.',
+      privacyNote: 'Klucz i e-mail są sprawdzane na serwerze przy każdym otwarciu, nie rzadziej niż raz na dobę — dzięki temu anulowana subskrypcja zamyka dostęp od razu. Data i miejsce urodzenia nigdzie nie są wysyłane.'
+    },
     bal: {
       how: 'Jak to policzono',
       method: 'Liczone wagami, nie sztukami: Słońce, Księżyc i Ascendent po 3, Merkury, Wenus, Mars i MC po 2, Jowisz i Saturn po 1,5, Uran, Neptun i Pluton po 1. Powód: Pluton stoi w jednym znaku dwadzieścia lat, więc licząc go na równi z Słońcem, dostalibyśmy portret całego pokolenia. Suma wag: {n}.',
@@ -616,6 +640,30 @@
     modes: { cardinal: 'Cardinal', fixed: 'Fixed', mutable: 'Mutable' },
     /* Баланс стихий и крестов: разбор того, что посчитал
        Engine.balance. Веса и порог дефицита — там же. */
+    /* Раздел «Доступ и подписка» (шестерёнка в шапке, #settings). */
+    set: {
+      nav: 'Settings',
+      title: 'Access and subscription',
+      accessTitle: 'Your access',
+      emailLabel: 'Email',
+      keyLabel: 'License key',
+      keyShow: 'Show',
+      keyHide: 'Hide',
+      checkedLabel: 'Last checked',
+      checkedNever: 'not checked yet',
+      checkNow: 'Check now',
+      checkOk: 'Subscription active',
+      manage: 'Manage subscription',
+      manageOff: 'The subscription management link is not connected yet. You will find it in your purchase email.',
+      signOut: 'Sign out',
+      signOutSure: 'Sure? Press again',
+      signOutNote: 'The key is removed from this browser. To come back you enter it once more — your chart data stays where it is.',
+      devTitle: 'Developer bypass',
+      devText: 'The app is open through the gate bypass (?dev=…), not through a key. This is what the product looks like without paying — a normal visitor never lands here.',
+      devOff: 'Turn the bypass off',
+      noAccess: 'No key is stored here.',
+      privacyNote: 'The key and email are checked against the server on open, at most once a day — that way a cancelled subscription closes access straight away. Your date and place of birth are never sent anywhere.'
+    },
     bal: {
       how: 'How this is counted',
       method: 'Counted by weight, not by headcount: Sun, Moon and Ascendant 3 each, Mercury, Venus, Mars and MC 2 each, Jupiter and Saturn 1.5, Uranus, Neptune and Pluto 1. The reason: Pluto sits in one sign for twenty years, so counting it level with the Sun would describe a whole generation rather than you. Total weight: {n}.',
@@ -1115,6 +1163,30 @@ var RU = {
     modes: { cardinal: 'Кардинальный', fixed: 'Фиксированный', mutable: 'Мутабельный' },
     /* Баланс стихий и крестов: разбор того, что посчитал
        Engine.balance. Веса и порог дефицита — там же. */
+    /* Раздел «Доступ и подписка» (шестерёнка в шапке, #settings). */
+    set: {
+      nav: 'Настройки',
+      title: 'Доступ и подписка',
+      accessTitle: 'Ваш доступ',
+      emailLabel: 'Почта',
+      keyLabel: 'Лицензионный ключ',
+      keyShow: 'Показать',
+      keyHide: 'Скрыть',
+      checkedLabel: 'Последняя проверка',
+      checkedNever: 'ещё не проверялся',
+      checkNow: 'Проверить сейчас',
+      checkOk: 'Подписка активна',
+      manage: 'Управление подпиской',
+      manageOff: 'Ссылка на управление подпиской пока не подключена. Она есть в письме о покупке.',
+      signOut: 'Выйти',
+      signOutSure: 'Точно? Нажмите ещё раз',
+      signOutNote: 'Ключ будет удалён из этого браузера. Чтобы вернуться, введёте его снова — данные карты останутся на месте.',
+      devTitle: 'Обход для разработки',
+      devText: 'Приложение открыто обходом гейта (?dev=…), а не ключом. Так продукт выглядит без оплаты — обычный посетитель сюда не попадает.',
+      devOff: 'Снять обход',
+      noAccess: 'Здесь не сохранён ключ.',
+      privacyNote: 'Ключ и почта проверяются на сервере при открытии, не чаще раза в сутки — поэтому отменённая подписка закрывает доступ сразу. Дата и место рождения никуда не отправляются.'
+    },
     bal: {
       how: 'Как это посчитано',
       method: 'Считается весами, а не числом точек: Солнце, Луна и Асцендент по 3, Меркурий, Венера, Марс и MC по 2, Юпитер и Сатурн по 1,5, Уран, Нептун и Плутон по 1. Причина: Плутон стоит в одном знаке двадцать лет, и если считать его наравне с Солнцем, получится портрет целого поколения, а не ваш. Сумма весов: {n}.',
@@ -1606,6 +1678,30 @@ var UK = {
     modes: { cardinal: 'Кардинальний', fixed: 'Фіксований', mutable: 'Мутабельний' },
     /* Баланс стихий и крестов: разбор того, что посчитал
        Engine.balance. Веса и порог дефицита — там же. */
+    /* Раздел «Доступ и подписка» (шестерёнка в шапке, #settings). */
+    set: {
+      nav: 'Налаштування',
+      title: 'Доступ і підписка',
+      accessTitle: 'Ваш доступ',
+      emailLabel: 'Пошта',
+      keyLabel: 'Ліцензійний ключ',
+      keyShow: 'Показати',
+      keyHide: 'Сховати',
+      checkedLabel: 'Остання перевірка',
+      checkedNever: 'ще не перевірявся',
+      checkNow: 'Перевірити зараз',
+      checkOk: 'Підписка активна',
+      manage: 'Керування підпискою',
+      manageOff: 'Посилання на керування підпискою поки не підключене. Воно є в листі про покупку.',
+      signOut: 'Вийти',
+      signOutSure: 'Точно? Натисніть ще раз',
+      signOutNote: 'Ключ буде видалено з цього браузера. Щоб повернутися, введете його знову — дані карти залишаться на місці.',
+      devTitle: 'Обхід для розробки',
+      devText: 'Застосунок відкрито обходом брами (?dev=…), а не ключем. Так продукт виглядає без оплати — звичайний відвідувач сюди не потрапляє.',
+      devOff: 'Зняти обхід',
+      noAccess: 'Тут не збережено ключа.',
+      privacyNote: 'Ключ і пошта перевіряються на сервері при відкритті, не частіше ніж раз на добу — тому скасована підписка закриває доступ одразу. Дата й місце народження нікуди не надсилаються.'
+    },
     bal: {
       how: 'Як це пораховано',
       method: 'Рахується вагами, а не кількістю точок: Сонце, Місяць і Асцендент по 3, Меркурій, Венера, Марс і MC по 2, Юпітер і Сатурн по 1,5, Уран, Нептун і Плутон по 1. Причина: Плутон стоїть в одному знаку двадцять років, і якщо рахувати його нарівні із Сонцем, вийде портрет цілого покоління, а не ваш. Сума ваг: {n}.',
@@ -2097,6 +2193,30 @@ var DE = {
     modes: { cardinal: 'Kardinal', fixed: 'Fix', mutable: 'Veränderlich' },
     /* Баланс стихий и крестов: разбор того, что посчитал
        Engine.balance. Веса и порог дефицита — там же. */
+    /* Раздел «Доступ и подписка» (шестерёнка в шапке, #settings). */
+    set: {
+      nav: 'Einstellungen',
+      title: 'Zugang und Abo',
+      accessTitle: 'Ihr Zugang',
+      emailLabel: 'E-Mail',
+      keyLabel: 'Lizenzschlüssel',
+      keyShow: 'Zeigen',
+      keyHide: 'Verbergen',
+      checkedLabel: 'Zuletzt geprüft',
+      checkedNever: 'noch nicht geprüft',
+      checkNow: 'Jetzt prüfen',
+      checkOk: 'Abo aktiv',
+      manage: 'Abo verwalten',
+      manageOff: 'Der Link zur Abo-Verwaltung ist noch nicht hinterlegt. Sie finden ihn in Ihrer Kauf-E-Mail.',
+      signOut: 'Abmelden',
+      signOutSure: 'Sicher? Noch einmal drücken',
+      signOutNote: 'Der Schlüssel wird aus diesem Browser entfernt. Zum Zurückkommen geben Sie ihn erneut ein — Ihre Horoskopdaten bleiben erhalten.',
+      devTitle: 'Entwickler-Umgehung',
+      devText: 'Die App ist über die Gate-Umgehung (?dev=…) offen, nicht über einen Schlüssel. So sieht das Produkt ohne Bezahlung aus — ein normaler Besucher landet hier nie.',
+      devOff: 'Umgehung abschalten',
+      noAccess: 'Hier ist kein Schlüssel gespeichert.',
+      privacyNote: 'Schlüssel und E-Mail werden beim Öffnen gegen den Server geprüft, höchstens einmal täglich — so schließt ein gekündigtes Abo den Zugang sofort. Geburtsdatum und -ort werden nirgendwohin gesendet.'
+    },
     bal: {
       how: 'Wie das gerechnet wird',
       method: 'Gewichtet gezählt, nicht nach Stückzahl: Sonne, Mond und Aszendent je 3, Merkur, Venus, Mars und MC je 2, Jupiter und Saturn je 1,5, Uranus, Neptun und Pluto je 1. Der Grund: Pluto steht zwanzig Jahre in einem Zeichen — zählte man ihn wie die Sonne, beschriebe das eine ganze Generation und nicht Sie. Summe der Gewichte: {n}.',
@@ -2588,6 +2708,30 @@ var ES = {
     modes: { cardinal: 'Cardinal', fixed: 'Fijo', mutable: 'Mutable' },
     /* Баланс стихий и крестов: разбор того, что посчитал
        Engine.balance. Веса и порог дефицита — там же. */
+    /* Раздел «Доступ и подписка» (шестерёнка в шапке, #settings). */
+    set: {
+      nav: 'Ajustes',
+      title: 'Acceso y suscripción',
+      accessTitle: 'Su acceso',
+      emailLabel: 'Correo',
+      keyLabel: 'Clave de licencia',
+      keyShow: 'Mostrar',
+      keyHide: 'Ocultar',
+      checkedLabel: 'Última comprobación',
+      checkedNever: 'aún sin comprobar',
+      checkNow: 'Comprobar ahora',
+      checkOk: 'Suscripción activa',
+      manage: 'Gestionar la suscripción',
+      manageOff: 'El enlace para gestionar la suscripción aún no está conectado. Lo encontrará en el correo de la compra.',
+      signOut: 'Cerrar sesión',
+      signOutSure: '¿Seguro? Pulse otra vez',
+      signOutNote: 'La clave se borra de este navegador. Para volver la introduce otra vez — los datos de su carta se quedan donde están.',
+      devTitle: 'Acceso de desarrollo',
+      devText: 'La aplicación está abierta por el atajo de la puerta (?dev=…), no por una clave. Así se ve el producto sin pagar — un visitante normal nunca llega aquí.',
+      devOff: 'Desactivar el atajo',
+      noAccess: 'Aquí no hay ninguna clave guardada.',
+      privacyNote: 'La clave y el correo se comprueban en el servidor al abrir, como mucho una vez al día — así una suscripción cancelada cierra el acceso de inmediato. Su fecha y lugar de nacimiento no se envían a ninguna parte.'
+    },
     bal: {
       how: 'Cómo se calcula',
       method: 'Se cuenta por peso, no por número de puntos: Sol, Luna y Ascendente 3 cada uno, Mercurio, Venus, Marte y MC 2, Júpiter y Saturno 1,5, Urano, Neptuno y Plutón 1. El motivo: Plutón pasa veinte años en un signo, así que contarlo igual que al Sol describiría a toda una generación y no a usted. Suma de pesos: {n}.',
@@ -3079,6 +3223,30 @@ var FR = {
     modes: { cardinal: 'Cardinal', fixed: 'Fixe', mutable: 'Mutable' },
     /* Баланс стихий и крестов: разбор того, что посчитал
        Engine.balance. Веса и порог дефицита — там же. */
+    /* Раздел «Доступ и подписка» (шестерёнка в шапке, #settings). */
+    set: {
+      nav: 'Réglages',
+      title: 'Accès et abonnement',
+      accessTitle: 'Votre accès',
+      emailLabel: 'E-mail',
+      keyLabel: 'Clé de licence',
+      keyShow: 'Afficher',
+      keyHide: 'Masquer',
+      checkedLabel: 'Dernière vérification',
+      checkedNever: 'pas encore vérifiée',
+      checkNow: 'Vérifier maintenant',
+      checkOk: 'Abonnement actif',
+      manage: 'Gérer l’abonnement',
+      manageOff: 'Le lien de gestion de l’abonnement n’est pas encore branché. Vous le trouverez dans l’e-mail d’achat.',
+      signOut: 'Se déconnecter',
+      signOutSure: 'Sûr ? Appuyez encore',
+      signOutNote: 'La clé est retirée de ce navigateur. Pour revenir, vous la saisissez à nouveau — les données de votre carte restent en place.',
+      devTitle: 'Contournement développeur',
+      devText: 'L’application est ouverte par le contournement (?dev=…), pas par une clé. Voilà à quoi ressemble le produit sans paiement — un visiteur normal n’arrive jamais ici.',
+      devOff: 'Désactiver le contournement',
+      noAccess: 'Aucune clé n’est enregistrée ici.',
+      privacyNote: 'La clé et l’e-mail sont vérifiés sur le serveur à l’ouverture, au plus une fois par jour — ainsi un abonnement résilié ferme l’accès aussitôt. Votre date et votre lieu de naissance ne sont envoyés nulle part.'
+    },
     bal: {
       how: 'Comment c’est calculé',
       method: 'Compté par poids, pas par nombre de points : Soleil, Lune et Ascendant 3 chacun, Mercure, Vénus, Mars et MC 2, Jupiter et Saturne 1,5, Uranus, Neptune et Pluton 1. La raison : Pluton reste vingt ans dans un signe — le compter à égalité avec le Soleil décrirait toute une génération, pas vous. Somme des poids : {n}.',
@@ -3570,6 +3738,30 @@ var IT = {
     modes: { cardinal: 'Cardinale', fixed: 'Fisso', mutable: 'Mutabile' },
     /* Баланс стихий и крестов: разбор того, что посчитал
        Engine.balance. Веса и порог дефицита — там же. */
+    /* Раздел «Доступ и подписка» (шестерёнка в шапке, #settings). */
+    set: {
+      nav: 'Impostazioni',
+      title: 'Accesso e abbonamento',
+      accessTitle: 'Il suo accesso',
+      emailLabel: 'E-mail',
+      keyLabel: 'Chiave di licenza',
+      keyShow: 'Mostra',
+      keyHide: 'Nascondi',
+      checkedLabel: 'Ultimo controllo',
+      checkedNever: 'non ancora controllata',
+      checkNow: 'Controlla adesso',
+      checkOk: 'Abbonamento attivo',
+      manage: 'Gestisci l’abbonamento',
+      manageOff: 'Il link per gestire l’abbonamento non è ancora collegato. Lo trova nell’e-mail di acquisto.',
+      signOut: 'Esci',
+      signOutSure: 'Sicuro? Prema di nuovo',
+      signOutNote: 'La chiave viene rimossa da questo browser. Per tornare la inserisce di nuovo — i dati della sua carta restano dove sono.',
+      devTitle: 'Bypass di sviluppo',
+      devText: 'L’app è aperta tramite il bypass del cancello (?dev=…), non tramite una chiave. Così appare il prodotto senza pagamento — un visitatore normale non arriva mai qui.',
+      devOff: 'Disattiva il bypass',
+      noAccess: 'Qui non è salvata nessuna chiave.',
+      privacyNote: 'Chiave ed e-mail vengono controllate sul server all’apertura, al massimo una volta al giorno — così un abbonamento annullato chiude subito l’accesso. Data e luogo di nascita non vengono inviati da nessuna parte.'
+    },
     bal: {
       how: 'Come viene calcolato',
       method: 'Conteggio a pesi, non a numero di punti: Sole, Luna e Ascendente 3 ciascuno, Mercurio, Venere, Marte e MC 2, Giove e Saturno 1,5, Urano, Nettuno e Plutone 1. Il motivo: Plutone resta vent’anni in un segno, quindi contarlo alla pari del Sole descriverebbe un’intera generazione e non lei. Somma dei pesi: {n}.',
@@ -4061,6 +4253,30 @@ var PT = {
     modes: { cardinal: 'Cardinal', fixed: 'Fixo', mutable: 'Mutável' },
     /* Баланс стихий и крестов: разбор того, что посчитал
        Engine.balance. Веса и порог дефицита — там же. */
+    /* Раздел «Доступ и подписка» (шестерёнка в шапке, #settings). */
+    set: {
+      nav: 'Configurações',
+      title: 'Acesso e assinatura',
+      accessTitle: 'Seu acesso',
+      emailLabel: 'E-mail',
+      keyLabel: 'Chave de licença',
+      keyShow: 'Mostrar',
+      keyHide: 'Ocultar',
+      checkedLabel: 'Última verificação',
+      checkedNever: 'ainda não verificada',
+      checkNow: 'Verificar agora',
+      checkOk: 'Assinatura ativa',
+      manage: 'Gerenciar assinatura',
+      manageOff: 'O link para gerenciar a assinatura ainda não está conectado. Você o encontra no e-mail da compra.',
+      signOut: 'Sair',
+      signOutSure: 'Tem certeza? Pressione de novo',
+      signOutNote: 'A chave é removida deste navegador. Para voltar você a digita outra vez — os dados do seu mapa ficam onde estão.',
+      devTitle: 'Atalho de desenvolvimento',
+      devText: 'O app está aberto pelo atalho do portão (?dev=…), não por uma chave. É assim que o produto fica sem pagamento — um visitante normal nunca chega aqui.',
+      devOff: 'Desligar o atalho',
+      noAccess: 'Nenhuma chave está guardada aqui.',
+      privacyNote: 'A chave e o e-mail são verificados no servidor ao abrir, no máximo uma vez por dia — assim uma assinatura cancelada fecha o acesso na hora. Sua data e local de nascimento não são enviados a lugar nenhum.'
+    },
     bal: {
       how: 'Como isto é calculado',
       method: 'Contado por peso, não por número de pontos: Sol, Lua e Ascendente 3 cada, Mercúrio, Vênus, Marte e MC 2, Júpiter e Saturno 1,5, Urano, Netuno e Plutão 1. O motivo: Plutão fica vinte anos num signo, então contá-lo igual ao Sol descreveria uma geração inteira e não você. Soma dos pesos: {n}.',
@@ -4552,6 +4768,30 @@ var TR = {
     modes: { cardinal: 'Öncü', fixed: 'Sabit', mutable: 'Değişken' },
     /* Баланс стихий и крестов: разбор того, что посчитал
        Engine.balance. Веса и порог дефицита — там же. */
+    /* Раздел «Доступ и подписка» (шестерёнка в шапке, #settings). */
+    set: {
+      nav: 'Ayarlar',
+      title: 'Erişim ve abonelik',
+      accessTitle: 'Erişiminiz',
+      emailLabel: 'E-posta',
+      keyLabel: 'Lisans anahtarı',
+      keyShow: 'Göster',
+      keyHide: 'Gizle',
+      checkedLabel: 'Son kontrol',
+      checkedNever: 'henüz kontrol edilmedi',
+      checkNow: 'Şimdi kontrol et',
+      checkOk: 'Abonelik etkin',
+      manage: 'Aboneliği yönet',
+      manageOff: 'Abonelik yönetimi bağlantısı henüz bağlı değil. Satın alma e-postanızda bulabilirsiniz.',
+      signOut: 'Çıkış yap',
+      signOutSure: 'Emin misiniz? Tekrar basın',
+      signOutNote: 'Anahtar bu tarayıcıdan silinir. Geri dönmek için bir kez daha girersiniz — harita verileriniz yerinde kalır.',
+      devTitle: 'Geliştirici atlatması',
+      devText: 'Uygulama anahtarla değil, kapı atlatmasıyla (?dev=…) açık. Ürün ödeme olmadan böyle görünür — normal bir ziyaretçi buraya hiç düşmez.',
+      devOff: 'Atlatmayı kapat',
+      noAccess: 'Burada kayıtlı anahtar yok.',
+      privacyNote: 'Anahtar ve e-posta açılışta sunucuda kontrol edilir, günde en fazla bir kez — böylece iptal edilmiş abonelik erişimi hemen kapatır. Doğum tarihiniz ve yeriniz hiçbir yere gönderilmez.'
+    },
     bal: {
       how: 'Bu nasıl hesaplanıyor',
       method: 'Nokta sayısıyla değil, ağırlıkla sayılır: Güneş, Ay ve Yükselen 3’er, Merkür, Venüs, Mars ve MC 2’şer, Jüpiter ve Satürn 1,5, Uranüs, Neptün ve Plüton 1. Nedeni: Plüton bir burçta yirmi yıl kalır; onu Güneş’le eşit saymak sizi değil, koca bir kuşağı anlatırdı. Ağırlık toplamı: {n}.',
