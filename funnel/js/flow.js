@@ -90,7 +90,10 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
      разработчику — точное имя константы в консоли. Отладочный текст на
      экране покупателя недопустим, тем более на третьем языке. */
   function noCheckout(which) {
-    var note = el('checkoutNote');
+    /* Сообщение ставим на ТОТ экран, который сейчас открыт: пейволл и экран
+       годового плана — разные секции, и заметка, лежащая в скрытой секции,
+       просто не видна — кнопка выглядит сломанной молча. */
+    var note = document.querySelector('.scr.is-active .checkout-note');
     if (note) {
       note.textContent = C.paywall.checkoutOff;
       note.classList.remove('hidden');
@@ -106,21 +109,43 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     var v = pick(n.getAttribute('data-t'));
     if (typeof v === 'string') { n.textContent = v; }
   });
+  /* Имена ролям, у которых нет видимого заголовка. Полоса прогресса, набор
+     плиток и набор чипов объявлялись скринридером безымянными — «индикатор»,
+     «группа», «группа переключателей», — и понять по ним, о чём речь,
+     невозможно. Имена лежат в переводах, поэтому проставляются здесь, а не
+     атрибутом в разметке. */
+  all('[data-tlabel]').forEach(function (n) {
+    var v = pick(n.getAttribute('data-tlabel'));
+    if (typeof v === 'string') { n.setAttribute('aria-label', v); }
+  });
   document.documentElement.lang = window.LANG;
 
-  /* --- прогресс ---------------------------------------------------------- */
+  /* --- прогресс ----------------------------------------------------------
+     Процент и сегменты обязаны двигаться вместе: полоса, которая стоит,
+     пока цифра растёт, читается как «зависло».
+
+     Раньше число зажжённых сегментов считалось как ceil(pct / 20), и на
+     пяти экранах это давало 1, 2, 4, 5, 5. Третий сегмент не загорался
+     никогда, а на последнем шаге — самом важном, прямо перед ценой —
+     полоса не двигалась вовсе: 85% и 100% дают одинаковые пять.
+
+     Теперь сегмент = порядковый номер экрана: шагов ровно столько же,
+     сколько сегментов, так что каждое нажатие видно. Проценты остаются
+     подписью состояния («Твоя карта 65%»), а не счётчиком шагов — счётчик
+     человек читает как «сколько ещё терпеть». */
+  var ORDER = ['s1', 's2', 's3', 's4', 's5'];
   var PCT = { s1: 15, s2: 35, s3: 65, s4: 85, s5: 100 };
 
   function progress(scr) {
     var top = el('top');
-    if (!PCT[scr]) { top.classList.add('hidden'); return; }
+    var step = ORDER.indexOf(scr);
+    if (step < 0) { top.classList.add('hidden'); return; }
     top.classList.remove('hidden');
     var v = PCT[scr];
     el('pct').textContent = C.progress + ' ' + v + '%';
     el('bar').setAttribute('aria-valuenow', v);
-    var lit = Math.ceil(v / 20);          /* 15% -> 1 сегмент, 100% -> 5 */
     all('.bar__seg').forEach(function (seg, i) {
-      seg.classList.toggle('is-on', i < lit);
+      seg.classList.toggle('is-on', i <= step);
     });
   }
 
@@ -419,9 +444,19 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     el('planAfter').textContent = C.billing.renewLine;
     el('planDisc').textContent = C.billing.disclaimer;
 
-    /* Ссылки-заглушки: реальных документов пока нет. См. README, п. «Что не размещено». */
-    /* Ссылка на несуществующий документ хуже, чем его отсутствие: человек
-       жмёт, ничего не происходит, а согласие формально уже дано. */
+    el('legal').innerHTML = legalHtml(C.paywall.cta);
+  }
+
+  /* Строка согласия. Собирается из надписи той кнопки, которая реально стоит
+     на этом экране: на пейволле это «Kontynuuj», на экране годового плана —
+     «Wybierz plan roczny». Согласие, ссылающееся на кнопку, которой на экране
+     нет, — прямой риск при разборе спора по автопродлению.
+
+     Ссылки-заглушки: реальных документов пока нет. См. README, п. «Что не
+     размещено». Ссылка на несуществующий документ хуже, чем его отсутствие:
+     человек жмёт, ничего не происходит, а согласие формально уже дано —
+     поэтому пока URL пуст, выводим название текстом, без <a>. */
+  function legalHtml(ctaLabel) {
     var docLink = function (url, label) {
       return url ? '<a href="' + url + '" target="_blank" rel="noopener">' + label + '</a>' : label;
     };
@@ -429,7 +464,8 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       console.warn('astromap: TERMS_URL/PRIVACY_URL не заданы в js/flow.js — ' +
         'дисклеймер подписки ссылается на документы, которых нет.');
     }
-    el('legal').innerHTML = C.paywall.legal
+    return C.paywall.legal
+      .replace('{cta}', ctaLabel)
       .replace('{terms}', docLink(TERMS_URL, C.paywall.terms))
       .replace('{privacy}', docLink(PRIVACY_URL, C.paywall.privacyInline));
   }
@@ -446,6 +482,9 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     el('hiddenTxt').textContent = hid;
     el('onePrice').textContent = C.billing.yearPrice + ' ' + C.billing.yearPeriod;
     el('oneDisc').textContent = C.billing.yearDisclaimer;
+    /* Экран годового плана — такая же покупка, как пейволл, и до сих пор был
+       единственным экраном со списанием без строки согласия вообще. */
+    el('legalYear').innerHTML = legalHtml(C.recovery.yearCta);
 
     if (el('chips').children.length) { return; }
     C.recovery.survey.forEach(function (s) {
@@ -482,11 +521,11 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       return;
     }
     if (S.screen === 's7') {
+      /* Раньше здесь на экран покупателя выводилась отладочная строка
+         по-русски с номером строки в исходнике — на третьем языке, которого
+         в воронке нет. Тот же noCheckout, что и на пейволле. */
       if (CHECKOUT_URL_YEAR) { window.location.href = CHECKOUT_URL_YEAR; }
-      else {
-        el('answer').textContent =
-          'CHECKOUT_URL_YEAR не заполнен (js/flow.js, строка 9).';
-      }
+      else { noCheckout('CHECKOUT_URL_YEAR'); }
     }
   });
 

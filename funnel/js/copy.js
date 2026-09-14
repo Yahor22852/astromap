@@ -16,9 +16,17 @@
     ctaNext: 'Dalej',
     ctaCalc: 'Policz moją mapę',
     ctaSummary: 'Zobacz podsumowanie',
-    ctaPaywall: 'Kontynuuj',           /* ВАЖНО: на эту кнопку ссылается legal-строка */
     notNow: 'Nie teraz',
     computing: 'Liczę pozycje na moment Twoich urodzin…',
+
+    /* Имена для вспомогательных технологий: у role="progressbar",
+       role="group" и role="radiogroup" нет видимого заголовка, а без имени
+       скринридер объявляет их как безымянные «группа»/«индикатор». */
+    a11y: {
+      progress: 'Postęp tworzenia mapy',
+      themes: 'Działy do wyboru',
+      reasons: 'Powód, dla którego jeszcze nie kupujesz'
+    },
 
     /* ------------------------------------------------ экран 1: дата */
     s1: {
@@ -99,7 +107,12 @@
       planTitle: 'Plan miesięczny',
       cta: 'Kontynuuj',
       checkoutOff: 'Płatność nie jest jeszcze podłączona. Twoje dane są zapisane — wróć tu za chwilę.',
-      legal: 'Klikając „Kontynuuj”, akceptujesz {terms} i {privacy}.',
+      /* {cta} подставляется НАДПИСЬЮ ТОЙ КНОПКИ, что стоит на экране.
+         Раньше название было вписано в строку буквами: поменяв paywall.cta
+         или зайдя на экран годового плана (там кнопка называется иначе),
+         получаешь согласие, которое ссылается на несуществующий контрол —
+         первое, что разбирают в спорах по автопродлению. */
+      legal: 'Klikając „{cta}”, akceptujesz {terms} i {privacy}.',
       privacyInline: 'Politykę prywatności',
       terms: 'Warunki subskrypcji',
       privacy: 'Polityka prywatności'
@@ -210,9 +223,14 @@
     ctaNext: 'Continue',
     ctaCalc: 'Calculate my map',
     ctaSummary: 'See the summary',
-    ctaPaywall: 'Continue',
     notNow: 'Not now',
     computing: 'Calculating positions for the moment you were born…',
+
+    a11y: {
+      progress: 'Progress building your map',
+      themes: 'Sections to choose from',
+      reasons: 'Why you have not bought yet'
+    },
 
     s1: {
       eyebrow: 'Start with one date',
@@ -285,7 +303,7 @@
       planTitle: 'Monthly plan',
       cta: 'Continue',
       checkoutOff: 'Payments are not connected yet. Your details are saved — come back in a moment.',
-      legal: 'By clicking “Continue” you accept the {terms} and the {privacy}.',
+      legal: 'By clicking “{cta}” you accept the {terms} and the {privacy}.',
       privacyInline: 'Privacy Policy',
       terms: 'Subscription Terms',
       privacy: 'Privacy Policy'
