@@ -6,11 +6,26 @@
 <title>AstroMap App</title>
 <script>
 /* Язык выбирается до загрузки текстов: copy.js читает window.ASTROMAP_LANG.
-   По умолчанию английский. Ключ общий с продуктом — astromap.lang. */
+   SUPPORTED держать в паре с ключами в copy.js и reading-copy.js и с пунктами
+   меню #langMenu ниже. Ключ общий с продуктом — astromap.lang, поэтому язык,
+   выбранный до оплаты, открывается и после неё.
+
+   Если явного выбора ещё нет, один раз подставляем язык браузера
+   (navigator.languages) — это не геолокация, а стандартный сигнал
+   предпочтения, доступный статичному сайту. Так же сделано в продукте. */
 (function () {
-  var l = 'en';
-  try { l = localStorage.getItem('astromap.lang') || 'en'; } catch (e) {}
-  if (l !== 'pl' && l !== 'en') { l = 'en'; }
+  var SUPPORTED = ['en', 'pl', 'ru', 'uk', 'de', 'es', 'fr', 'it', 'pt', 'tr'];
+  var l = null;
+  try { l = localStorage.getItem('astromap.lang'); } catch (e) {}
+  if (!l) {
+    var cands = (navigator.languages && navigator.languages.length)
+      ? navigator.languages : [navigator.language || 'en'];
+    for (var i = 0; i < cands.length && !l; i++) {
+      var code = String(cands[i]).slice(0, 2).toLowerCase();
+      if (SUPPORTED.indexOf(code) >= 0) { l = code; }
+    }
+  }
+  if (!l || SUPPORTED.indexOf(l) < 0) { l = 'en'; }
   window.ASTROMAP_LANG = l;
   document.documentElement.lang = l;
 })();
@@ -35,9 +50,24 @@
       <div class="top__row">
         <span class="top__brand" data-t="brand"></span>
         <span class="top__right">
+        <!-- Десяти языкам не хватит места рядными пилюлями, как хватало
+             двум: кнопка с текущим кодом раскрывает список родных названий.
+             Тот же приём, что в шапке продукта. -->
         <span class="lang" role="group" aria-label="Language">
-          <button class="lang__b" data-lang="en" type="button">EN</button>
-          <button class="lang__b" data-lang="pl" type="button">PL</button>
+          <button class="lang__b lang__toggle" id="langToggle" type="button"
+            aria-haspopup="listbox" aria-expanded="false" aria-controls="langMenu">EN</button>
+          <div class="langmenu" id="langMenu" role="listbox" hidden>
+            <button class="langmenu__item" type="button" data-lang="en" role="option">English</button>
+            <button class="langmenu__item" type="button" data-lang="pl" role="option">Polski</button>
+            <button class="langmenu__item" type="button" data-lang="ru" role="option">Русский</button>
+            <button class="langmenu__item" type="button" data-lang="uk" role="option">Українська</button>
+            <button class="langmenu__item" type="button" data-lang="de" role="option">Deutsch</button>
+            <button class="langmenu__item" type="button" data-lang="es" role="option">Español</button>
+            <button class="langmenu__item" type="button" data-lang="fr" role="option">Français</button>
+            <button class="langmenu__item" type="button" data-lang="it" role="option">Italiano</button>
+            <button class="langmenu__item" type="button" data-lang="pt" role="option">Português</button>
+            <button class="langmenu__item" type="button" data-lang="tr" role="option">Türkçe</button>
+          </div>
         </span>
           <span class="top__pct" id="pct"></span>
         </span>
@@ -104,10 +134,22 @@
         <input type="checkbox" id="noTime">
         <span data-t="s3.unknown"></span>
       </label>
+      <!-- Город ищется, а не выбирается из списка: список один на все десять
+           языков и в нём 864 города — прокруткой такой не берут. Поиск
+           понимает кириллицу и местные написания (см. cities.js). -->
       <div class="fields fields--stack">
-        <div class="field field--wide">
+        <div class="field field--wide citypick">
           <label class="field__lab" for="city" data-t="s3.city"></label>
-          <select id="city"></select>
+          <input type="text" id="city" class="citypick__input" autocomplete="off"
+            role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="cityMenu">
+          <input type="hidden" id="cityJson" value="">
+          <div class="citypick__menu" id="cityMenu" role="listbox" hidden></div>
+          <button type="button" class="citypick__manualtoggle" id="cityManual"></button>
+          <div class="citypick__manualbox" id="cityManualBox" hidden>
+            <input type="text" id="cityManualName" autocomplete="off">
+            <select id="cityManualOffset"></select>
+            <button type="button" class="citypick__manualapply" id="cityManualApply"></button>
+          </div>
         </div>
       </div>
       <p class="calc hidden" id="calc"><span data-t="computing"></span><span class="calc__dots"></span></p>
@@ -215,6 +257,7 @@
   </div>
 </div>
 
+<script src="js/cities.js"></script>
 <script src="js/astro.js"></script>
 <script src="js/copy.js"></script>
 <script src="js/flow.js"></script>

@@ -5,12 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AstroMap App</title>
 <script>
-/* Язык выбирается до загрузки текстов: copy.js читает window.ASTROMAP_LANG.
-   По умолчанию английский. Ключ общий с продуктом — astromap.lang. */
+/* Тот же бутстрап, что в index.html: список языков держать в паре. */
 (function () {
-  var l = 'en';
-  try { l = localStorage.getItem('astromap.lang') || 'en'; } catch (e) {}
-  if (l !== 'pl' && l !== 'en') { l = 'en'; }
+  var SUPPORTED = ['en', 'pl', 'ru', 'uk', 'de', 'es', 'fr', 'it', 'pt', 'tr'];
+  var l = null;
+  try { l = localStorage.getItem('astromap.lang'); } catch (e) {}
+  if (!l) {
+    var cands = (navigator.languages && navigator.languages.length)
+      ? navigator.languages : [navigator.language || 'en'];
+    for (var i = 0; i < cands.length && !l; i++) {
+      var code = String(cands[i]).slice(0, 2).toLowerCase();
+      if (SUPPORTED.indexOf(code) >= 0) { l = code; }
+    }
+  }
+  if (!l || SUPPORTED.indexOf(l) < 0) { l = 'en'; }
   window.ASTROMAP_LANG = l;
   document.documentElement.lang = l;
 })();
@@ -32,8 +40,20 @@
     <div class="top__row">
       <span class="top__brand">AstroMap App</span>
       <span class="lang" role="group" aria-label="Language">
-        <button class="lang__b" data-lang="en" type="button">EN</button>
-        <button class="lang__b" data-lang="pl" type="button">PL</button>
+        <button class="lang__b lang__toggle" id="langToggle" type="button"
+          aria-haspopup="listbox" aria-expanded="false" aria-controls="langMenu">EN</button>
+        <div class="langmenu" id="langMenu" role="listbox" hidden>
+          <button class="langmenu__item" type="button" data-lang="en" role="option">English</button>
+          <button class="langmenu__item" type="button" data-lang="pl" role="option">Polski</button>
+          <button class="langmenu__item" type="button" data-lang="ru" role="option">Русский</button>
+          <button class="langmenu__item" type="button" data-lang="uk" role="option">Українська</button>
+          <button class="langmenu__item" type="button" data-lang="de" role="option">Deutsch</button>
+          <button class="langmenu__item" type="button" data-lang="es" role="option">Español</button>
+          <button class="langmenu__item" type="button" data-lang="fr" role="option">Français</button>
+          <button class="langmenu__item" type="button" data-lang="it" role="option">Italiano</button>
+          <button class="langmenu__item" type="button" data-lang="pt" role="option">Português</button>
+          <button class="langmenu__item" type="button" data-lang="tr" role="option">Türkçe</button>
+        </div>
       </span>
     </div>
   </header>
@@ -70,6 +90,7 @@
   </main>
 </div>
 
+<script src="js/cities.js"></script>
 <script src="js/astro.js"></script>
 <script src="js/copy.js"></script>
 <script src="js/reading-copy.js"></script>

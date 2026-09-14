@@ -13,7 +13,6 @@
   var C = window.COPY;
   var R = window.READING;
   var U = R.ui;
-  var CITIES = window.LANG === 'en' ? A.CITIES_EN : A.CITIES_PL;
 
   var el = function (id) { return document.getElementById(id); };
 
@@ -39,19 +38,17 @@
   if (!S || !S.dob || !S.dob.y) { showEmpty(); return; }
 
   /* --- пересборка карты ---------------------------------------------------
-     ГОРОД БЕРЁМ ИЗ СОХРАНЁННОГО ОБЪЕКТА, а не по индексу. Индекс указывает
-     в список городов ТОГО языка, на котором человек проходил воронку, а эта
-     страница читает список ТЕКУЩЕГО языка — списки разные и по составу, и по
-     порядку: CITIES_PL[0] — Warszawa (52.23, +1), CITIES_EN[0] — London
-     (51.51, 0). Достаточно переключить язык кнопкой EN/PL наверху, чтобы
-     разбор пересчитался на другой город в другом поясе: асцендент уезжает,
-     а человек видит просто другой знак, ничего не подозревая.
+     Город — сохранённый объект с координатами. Списков городов на языке
+     интерфейса больше нет вовсе (см. js/cities.js): раньше здесь брался
+     индекс в списке ТЕКУЩЕГО языка, хотя выбирали из списка ТОГО, на котором
+     человек проходил воронку, и одного переключения EN/PL хватало, чтобы
+     разбор пересчитался на другой город в другом поясе.
 
-     Индекс остаётся запасным путём — для карт, сохранённых до того, как
-     воронка начала класть объект. */
-  var city = S.city && typeof S.city.lat === 'number'
-    ? S.city
-    : CITIES[(S.cityIdx === null || S.cityIdx === undefined) ? 0 : S.cityIdx];
+     Анкеты, сохранённые до этого перехода, приходят без объекта. Считать их
+     по выдуманному городу нельзя — показываем пустой экран с просьбой
+     заполнить заново, это честнее чужой карты. */
+  var city = (S.city && typeof S.city.tz !== 'undefined') ? S.city : null;
+  if (!city) { showEmpty(); return; }
   var time = S.time || { known: false, h: null, min: null };
   var natal = A.chart({
     y: S.dob.y, m: S.dob.m, d: S.dob.d,
@@ -151,7 +148,12 @@
   var pr = el('pair');
 
   if (S.partner && S.partner.y) {
-    var p = A.chartDateOnly(S.partner, city.tz);
+    /* Луна партнёра считается на полдень, и часовой пояс тут нужен только
+       как грубая поправка. city.tz бывает строкой IANA — арифметика с ней
+       дала бы NaN и уронила бы весь раздел, поэтому берём её только когда
+       это число (ручной ввод города). */
+    var pTz = (typeof city.tz === 'number') ? city.tz : 0;
+    var p = A.chartDateOnly(S.partner, pTz);
     var syn = A.synastry(natal.sunLon, natal.moonLon, p.sunLon, p.moonLon);
     var band = C.s4.bands[0];
     C.s4.bands.forEach(function (b) { if (syn.score >= b.min) { band = b; } });
@@ -193,14 +195,35 @@
     pr.appendChild(n2);
   }
 
-  Array.prototype.slice.call(document.querySelectorAll('.lang__b')).forEach(function (b) {
-    b.classList.toggle('on', b.getAttribute('data-lang') === window.LANG);
-    b.addEventListener('click', function () {
-      if (b.getAttribute('data-lang') === window.LANG) { return; }
-      try { localStorage.setItem('astromap.lang', b.getAttribute('data-lang')); } catch (e) {}
-      location.reload();
+  /* Меню языков — то же, что в воронке: десять названий списком. */
+  (function bindLang() {
+    var toggle = el('langToggle'), menu = el('langMenu');
+    if (!toggle || !menu) { return; }
+    toggle.textContent = window.LANG.toUpperCase();
+    function close() { menu.hidden = true; toggle.setAttribute('aria-expanded', 'false'); }
+    toggle.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      var open = menu.hidden;
+      menu.hidden = !open;
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
-  });
+    Array.prototype.slice.call(menu.querySelectorAll('.langmenu__item')).forEach(function (b) {
+      var code = b.getAttribute('data-lang');
+      b.classList.toggle('on', code === window.LANG);
+      b.setAttribute('aria-selected', code === window.LANG ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        if (code === window.LANG) { close(); return; }
+        try { localStorage.setItem('astromap.lang', code); } catch (e) {}
+        location.reload();
+      });
+    });
+    document.addEventListener('click', function (ev) {
+      if (!menu.hidden && !menu.contains(ev.target) && ev.target !== toggle) { close(); }
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && !menu.hidden) { close(); toggle.focus(); }
+    });
+  })();
 
   el('disc').textContent = U.disclaimer;
 })();

@@ -2896,6 +2896,11 @@
           T.set.devOff + '</button></div>'));
     }
 
+    if (!LICENSE_API) {
+      blocks.push(card(T.set.gateOffTitle,
+        '<p class="p">' + T.set.gateOffText + '</p>'));
+    }
+
     var a = loadAccess();
     if (a && a.email && a.licenseKey) {
       var checked = a.verifiedAt ? fmtDateTime(new Date(a.verifiedAt)) : T.set.checkedNever;
@@ -2920,7 +2925,10 @@
         (MANAGE_URL ? '' : '<p class="note">' + T.set.manageOff + '</p>') +
         '<p class="note">' + T.set.signOutNote + '</p>';
       blocks.push(card(T.set.accessTitle, body, T.set.privacyNote));
-    } else if (!devBypassActive()) {
+    } else if (!devBypassActive() && LICENSE_API) {
+      /* «Ключа нет» имеет смысл только когда гейт включён. При пустом
+         LICENSE_API карточка выше уже всё объяснила, и вторая строка о том,
+         что ключа нет, звучала бы как поломка. */
       blocks.push(card(T.set.accessTitle, '<p class="empty">' + T.set.noAccess + '</p>'));
     }
 
@@ -3425,6 +3433,25 @@
   function initAccessGate() {
     applyStaticTexts();
     if (devBypassActive()) {
+      showShell();
+      startApp();
+      return;
+    }
+    /* ГЕЙТ БЕЗ ВОРКЕРА НЕ ЗАЩИЩАЕТ, А ЛОМАЕТ. Пока LICENSE_API пуст,
+       проверять ключ нечем: verifyAccess ушёл бы fetch'ем в пустую строку и
+       упал, то есть форма не принимала бы НИКАКОЙ ключ, включая настоящий.
+       Значит, она не отделяла покупателей от чужих — она не пускала никого,
+       и единственным входом оставался dev-обход, живущий в localStorage
+       одного браузера.
+
+       Поэтому при пустом LICENSE_API продукт открывается. Это осознанный
+       размен: пока воркера нет, продукт доступен любому, кто знает адрес.
+       Как только URL вписан, гейт включается сам — ни здесь, ни где-либо
+       ещё править для этого ничего не нужно. Раздел настроек показывает
+       это состояние открытым текстом, чтобы про него нельзя было забыть. */
+    if (!LICENSE_API) {
+      console.warn('astromap: LICENSE_API не задан в js/app.js — гейт выключен, ' +
+        'продукт открыт всем. Впишите URL воркера license-verify.js, и гейт включится сам.');
       showShell();
       startApp();
       return;

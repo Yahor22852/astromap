@@ -23,7 +23,11 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
 
   var C = window.COPY;
   var A = window.Astro;
-  var CITIES = window.LANG === 'en' ? A.CITIES_EN : A.CITIES_PL;
+  /* Один список городов на все языки (см. js/cities.js). Раньше их было два,
+     CITIES_PL и CITIES_EN, и человек выбирал из того, что соответствовало
+     языку интерфейса, — а сохранялся индекс в списке. Десять языков на двух
+     списках не живут вовсе, и от самих списков пришлось отказаться. */
+  var FC = window.FunnelCities;
 
   var el = function (id) { return document.getElementById(id); };
   var all = function (sel) {
@@ -44,7 +48,7 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     dob: { d: null, m: null, y: null },
     themes: [],
     time: { h: null, min: null, known: true },
-    cityIdx: 0,
+    city: null,               /* {n, cc, lat, lon, tz} — объект, не индекс */
     natal: null,
     partner: { d: null, m: null, y: null },
     syn: null
@@ -59,26 +63,20 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
      она пересобирает карту из тех же данных, ничего не пересылая на сервер. */
   function persist() {
     try {
-      /* ГОРОД УХОДИТ ОБЪЕКТОМ. Раньше сюда клался только cityIdx — индекс в
-         списке городов самой воронки. Продукт ждёт объект {n,lat,lon,tz} и,
-         не найдя его, подставлял пустой город: координат нет — значит нет
-         ни асцендента, ни домов (0 вместо 12), а время считалось как UTC+0
-         вместо настоящего пояса, что сдвигает всю карту. То есть у каждого,
-         кто приходил из воронки, персональный слой продукта — дом Луны,
-         дом ретрограда, дом транзита — не работал вовсе.
+      /* ГОРОД УХОДИТ ОБЪЕКТОМ, и теперь он объектом же и хранится в S.
+         Индекса больше нет нигде: он означал позицию в списке, а списков
+         было два разных, так что одно число значило разные города — из-за
+         этого продукт не получал координат (ни асцендента, ни домов) и
+         считал время как UTC+0, а страница разбора меняла человеку место
+         рождения при переключении языка.
 
-         Индекс сам по себе и не мог сработать: списки городов у польской и
-         английской версии разные, так что одно и то же число означает
-         разные города. cityIdx оставлен рядом — на нём держится страница
-         разбора внутри самой воронки. */
-      var cityObj = CITIES[S.cityIdx || 0];
+         cityIdx больше не пишется даже для совместимости: читатели этого
+         поля — продукт и reading.js — оба переведены на объект. */
       localStorage.setItem('astromap.funnel', JSON.stringify({
         dob: S.dob,
         themes: S.themes,
         time: S.time,
-        cityIdx: S.cityIdx,
-        city: cityObj ? { n: cityObj.n, lat: cityObj.lat, lon: cityObj.lon,
-                          tz: cityObj.tz, dst: cityObj.dst || '' } : null,
+        city: S.city,
         partner: S.partner,
         lang: window.LANG,
         savedAt: new Date().toISOString()
@@ -225,7 +223,33 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
   fill(el('y2'), range(1940, thisYear).reverse(), C.s1.year);
   fill(el('hh'), range(0, 23, true), C.s3.hour);
   fill(el('mm'), range(0, 59, true), C.s3.minute);
-  fill(el('city'), CITIES.map(function (c, i) { return { v: i, t: c.n }; }), C.s3.city);
+  el('city').placeholder = C.s3.cityPlaceholder;
+  el('cityManual').textContent = C.s3.cityManual;
+  el('cityManualName').placeholder = C.s3.cityManualName;
+  el('cityManualName').setAttribute('aria-label', C.s3.cityManualName);
+  el('cityManualApply').textContent = C.s3.cityManualApply;
+  el('cityManualOffset').setAttribute('aria-label', C.s3.cityManualOffset);
+  el('city').setAttribute('aria-label', C.s3.city);
+  (function () {
+    /* Смещения от UTC-12 до UTC+14 с получасовыми поясами: Индия +5:30,
+       Непал +5:45, Чатем +12:45 — без них ручной ввод врал бы на полчаса. */
+    var vals = [];
+    for (var h = -12; h <= 14; h++) {
+      vals.push(h);
+      if (h === 3 || h === 4 || h === 5 || h === 6 || h === 9 || h === 10 || h === 12) { vals.push(h + 0.5); }
+      if (h === 5) { vals.push(5.75); }
+      if (h === 12) { vals.push(12.75); }
+    }
+    vals.sort(function (a, b) { return a - b; });
+    el('cityManualOffset').innerHTML = vals.map(function (v) {
+      var sign = v < 0 ? '-' : '+';
+      var abs = Math.abs(v);
+      var hh = Math.floor(abs);
+      var mm = Math.round((abs - hh) * 60);
+      return '<option value="' + v + '"' + (v === 0 ? ' selected' : '') + '>UTC' + sign +
+        (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm + '</option>';
+    }).join('');
+  })();
 
   /* восстановление сохранённой даты */
   if (S.dob.d) { el('d1').value = S.dob.d; el('m1').value = S.dob.m; el('y1').value = S.dob.y; }
@@ -242,8 +266,10 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     if (!dobReady()) { el('s1res').classList.add('hidden'); el('cta').disabled = true; return; }
     persist();
     /* Знак Солнца по дате: расчёт настоящий, не таблица диапазонов. */
-    var tz = CITIES[0].tz;
-    var c = A.chartDateOnly({ y: S.dob.y, m: S.dob.m, d: S.dob.d }, tz);
+    /* Предварительный знак Солнца до выбора города: считаем на полдень UTC.
+       Солнце проходит знак за месяц, поэтому пояс на знак почти не влияет, а
+       у границы знака экран отдельно просит уточнить (флаг nearCusp). */
+    var c = A.chartDateOnly({ y: S.dob.y, m: S.dob.m, d: S.dob.d }, 0);
     S.sunPreview = c;
     el('s1sign').innerHTML = C.signs[c.sun.index] +
       ' <span class="res__deg">' + deg(c.sun.degree) + '</span>';
@@ -285,7 +311,7 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
 
   /* --- экран 3: время и место -------------------------------------------- */
   function timeReady() {
-    var cityOk = el('city').value !== '';
+    var cityOk = !!S.city;
     if (!cityOk) { return false; }
     if (!S.time.known) { return true; }
     return el('hh').value !== '' && el('mm').value !== '';
@@ -293,10 +319,102 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
   function onTime() {
     S.time.h = el('hh').value === '' ? null : +el('hh').value;
     S.time.min = el('mm').value === '' ? null : +el('mm').value;
-    S.cityIdx = el('city').value === '' ? null : +el('city').value;
     el('cta').disabled = !timeReady();
   }
-  ['hh', 'mm', 'city'].forEach(function (id) { el(id).addEventListener('change', onTime); });
+  ['hh', 'mm'].forEach(function (id) { el(id).addEventListener('change', onTime); });
+
+  /* --- выбор города -------------------------------------------------------
+     Поле поиска, а не список: городов 864 на все языки сразу, прокруткой
+     такой список не берут. Выбор кладётся в S.city объектом — именно он и
+     уходит дальше в продукт.
+
+     Набранный, но не выбранный из подсказок текст городом не считается:
+     иначе «Варшава» с опечаткой уехала бы в расчёт как место без координат,
+     и человек увидел бы карту не своего рождения, ничего не заподозрив.
+     Поэтому любое изменение текста сбрасывает выбор, а кнопка «посчитать»
+     снова гаснет. */
+  (function bindCityPick() {
+    var input = el('city'), menu = el('cityMenu');
+    var results = [], active = -1;
+
+    function close() {
+      menu.hidden = true; menu.innerHTML = '';
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
+      active = -1;
+    }
+    function setActive(i) {
+      var opts = all('#cityMenu .citypick__opt');
+      opts.forEach(function (o, oi) { o.classList.toggle('on', oi === i); });
+      active = i;
+      if (opts[i]) { input.setAttribute('aria-activedescendant', opts[i].id); }
+    }
+    function choose(i) {
+      var c = results[i];
+      if (!c) { return; }
+      S.city = FC.toObject(c);
+      input.value = FC.label(c);
+      close();
+      persist();
+      el('cta').disabled = !timeReady();
+    }
+    function render() {
+      if (!results.length) {
+        menu.innerHTML = '<div class="citypick__empty">' + C.s3.cityNoMatch + '</div>';
+      } else {
+        menu.innerHTML = results.map(function (c, i) {
+          return '<div class="citypick__opt" role="option" id="cityopt-' + i +
+            '" data-i="' + i + '">' + FC.label(c) + '</div>';
+        }).join('');
+        all('#cityMenu .citypick__opt').forEach(function (o) {
+          o.addEventListener('mousedown', function (ev) {
+            ev.preventDefault();          /* не терять фокус раньше выбора */
+            choose(+o.getAttribute('data-i'));
+          });
+        });
+      }
+      menu.hidden = false;
+      input.setAttribute('aria-expanded', 'true');
+    }
+
+    input.addEventListener('input', function () {
+      S.city = null;
+      el('cta').disabled = !timeReady();
+      results = FC.search(input.value, 8);
+      if (!results.length && FC.norm(input.value).trim().length < 2) { close(); return; }
+      render();
+    });
+    input.addEventListener('keydown', function (ev) {
+      if (menu.hidden) { return; }
+      if (ev.key === 'ArrowDown') { ev.preventDefault(); setActive(Math.min(active + 1, results.length - 1)); }
+      else if (ev.key === 'ArrowUp') { ev.preventDefault(); setActive(Math.max(active - 1, 0)); }
+      else if (ev.key === 'Enter') { if (active >= 0) { ev.preventDefault(); choose(active); } }
+      else if (ev.key === 'Escape') { close(); }
+    });
+    input.addEventListener('blur', function () { setTimeout(close, 120); });
+
+    /* Города нет в списке. Тогда считаем всё, кроме асцендента: для него
+       нужны координаты, а их человек ввести не может — и выдумывать их
+       нельзя, это и есть та самая «настоящая астрономическая величина». */
+    el('cityManual').addEventListener('click', function () {
+      var box = el('cityManualBox');
+      box.hidden = !box.hidden;
+      if (!box.hidden) { el('cityManualName').focus(); }
+    });
+    el('cityManualApply').addEventListener('click', function () {
+      var name = el('cityManualName').value.trim();
+      if (!name) { el('cityManualName').focus(); return; }
+      S.city = { n: name, lat: null, lon: null,
+                 tz: parseFloat(el('cityManualOffset').value), dst: '' };
+      input.value = name;
+      el('cityManualBox').hidden = true;
+      close();
+      persist();
+      el('cta').disabled = !timeReady();
+      el('s3note').textContent = C.s3.cityManualNote;
+      el('s3note').classList.remove('hidden');
+    });
+  })();
 
   el('noTime').addEventListener('change', function () {
     S.time.known = !this.checked;
@@ -319,7 +437,7 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
   }
 
   function calcChart() {
-    var city = CITIES[S.cityIdx];
+    var city = S.city;
     var parts = {
       y: S.dob.y, m: S.dob.m, d: S.dob.d,
       h: S.time.known ? S.time.h : 12,
@@ -376,8 +494,12 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       el('cta').disabled = true;
       return;
     }
-    var city = CITIES[S.cityIdx || 0];
-    var p = A.chartDateOnly(S.partner, city.tz);
+    /* Партнёр без времени рождения: Луну считаем на полдень его дня. Пояс
+       берём от города пользователя только если он числовой (ручной ввод);
+       для IANA-строки смещение зависит от даты, а тут важна не минута, и
+       экран об этом честно предупреждает. */
+    var pTz = (S.city && typeof S.city.tz === 'number') ? S.city.tz : 0;
+    var p = A.chartDateOnly(S.partner, pTz);
     S.syn = A.synastry(S.natal.sunLon, S.natal.moonLon, p.sunLon, p.moonLon);
     S.partnerChart = p;
     persist();
@@ -551,17 +673,36 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
   /* Переключатель языка: перезагружаем страницу, потому что тексты
      подставляются один раз на старте. Введённая дата не теряется —
      она уже в localStorage. */
-  /* Продукт умеет десять языков, воронка — два. Если в общем ключе стоит,
-     например, 'ru', copy.js отдаёт английский; подсветить надо именно EN,
-     иначе ни одна кнопка не активна и переключатель выглядит сломанным. */
-  all('.lang__b').forEach(function (b) {
-    b.classList.toggle('on', b.getAttribute('data-lang') === window.LANG);
-    b.addEventListener('click', function () {
-      if (b.getAttribute('data-lang') === window.LANG) { return; }
-      try { localStorage.setItem('astromap.lang', b.getAttribute('data-lang')); } catch (e) {}
-      location.reload();
+  /* Кнопка с текущим кодом раскрывает список родных названий — десяти
+     языкам рядных пилюль не хватит. Устроено так же, как в продукте. */
+  (function bindLang() {
+    var toggle = el('langToggle'), menu = el('langMenu');
+    if (!toggle || !menu) { return; }
+    toggle.textContent = window.LANG.toUpperCase();
+    function close() { menu.hidden = true; toggle.setAttribute('aria-expanded', 'false'); }
+    toggle.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      var open = menu.hidden;
+      menu.hidden = !open;
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
-  });
+    all('.langmenu__item').forEach(function (b) {
+      var code = b.getAttribute('data-lang');
+      b.classList.toggle('on', code === window.LANG);
+      b.setAttribute('aria-selected', code === window.LANG ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        if (code === window.LANG) { close(); return; }
+        try { localStorage.setItem('astromap.lang', code); } catch (e) {}
+        location.reload();
+      });
+    });
+    document.addEventListener('click', function (ev) {
+      if (!menu.hidden && !menu.contains(ev.target) && ev.target !== toggle) { close(); }
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && !menu.hidden) { close(); toggle.focus(); }
+    });
+  })();
 
   progress('s1');
   dock('s1');

@@ -139,7 +139,9 @@
       devText: 'Aplikacja jest otwarta pominięciem bramki (?dev=…), a nie kluczem. Tak wygląda produkt bez opłaty — normalny użytkownik tu nie trafi.',
       devOff: 'Wyłącz obejście',
       noAccess: 'Nie ma tu zapisanego klucza.',
-      privacyNote: 'Klucz i e-mail są sprawdzane na serwerze przy każdym otwarciu, nie rzadziej niż raz na dobę — dzięki temu anulowana subskrypcja zamyka dostęp od razu. Data i miejsce urodzenia nigdzie nie są wysyłane.'
+      privacyNote: 'Klucz i e-mail są sprawdzane na serwerze przy każdym otwarciu, nie rzadziej niż raz na dobę — dzięki temu anulowana subskrypcja zamyka dostęp od razu. Data i miejsce urodzenia nigdzie nie są wysyłane.',
+      gateOffTitle: 'Bramka jest wyłączona',
+      gateOffText: 'Adres serwera licencji (LICENSE_API) nie jest jeszcze wpisany, więc nie ma czym sprawdzić klucza — formularz odrzuciłby nawet prawdziwy. Do tego czasu aplikacja jest otwarta dla każdego, kto zna adres. Po wpisaniu adresu bramka włączy się sama.'
     },
     bal: {
       how: 'Jak to policzono',
@@ -662,7 +664,9 @@
       devText: 'The app is open through the gate bypass (?dev=…), not through a key. This is what the product looks like without paying — a normal visitor never lands here.',
       devOff: 'Turn the bypass off',
       noAccess: 'No key is stored here.',
-      privacyNote: 'The key and email are checked against the server on open, at most once a day — that way a cancelled subscription closes access straight away. Your date and place of birth are never sent anywhere.'
+      privacyNote: 'The key and email are checked against the server on open, at most once a day — that way a cancelled subscription closes access straight away. Your date and place of birth are never sent anywhere.',
+      gateOffTitle: 'The gate is off',
+      gateOffText: 'The licence server address (LICENSE_API) is not filled in yet, so there is nothing to check a key against — the form would reject even a real one. Until then the app is open to anyone who knows the address. Once the address is in, the gate switches itself back on.'
     },
     bal: {
       how: 'How this is counted',
@@ -1185,7 +1189,9 @@ var RU = {
       devText: 'Приложение открыто обходом гейта (?dev=…), а не ключом. Так продукт выглядит без оплаты — обычный посетитель сюда не попадает.',
       devOff: 'Снять обход',
       noAccess: 'Здесь не сохранён ключ.',
-      privacyNote: 'Ключ и почта проверяются на сервере при открытии, не чаще раза в сутки — поэтому отменённая подписка закрывает доступ сразу. Дата и место рождения никуда не отправляются.'
+      privacyNote: 'Ключ и почта проверяются на сервере при открытии, не чаще раза в сутки — поэтому отменённая подписка закрывает доступ сразу. Дата и место рождения никуда не отправляются.',
+      gateOffTitle: 'Гейт выключен',
+      gateOffText: 'Адрес сервера лицензий (LICENSE_API) пока не вписан, поэтому проверять ключ нечем — форма отвергла бы даже настоящий. До этого момента продукт открыт любому, кто знает адрес. Как только адрес появится, гейт включится сам.'
     },
     bal: {
       how: 'Как это посчитано',
@@ -1700,7 +1706,9 @@ var UK = {
       devText: 'Застосунок відкрито обходом брами (?dev=…), а не ключем. Так продукт виглядає без оплати — звичайний відвідувач сюди не потрапляє.',
       devOff: 'Зняти обхід',
       noAccess: 'Тут не збережено ключа.',
-      privacyNote: 'Ключ і пошта перевіряються на сервері при відкритті, не частіше ніж раз на добу — тому скасована підписка закриває доступ одразу. Дата й місце народження нікуди не надсилаються.'
+      privacyNote: 'Ключ і пошта перевіряються на сервері при відкритті, не частіше ніж раз на добу — тому скасована підписка закриває доступ одразу. Дата й місце народження нікуди не надсилаються.',
+      gateOffTitle: 'Брама вимкнена',
+      gateOffText: 'Адресу сервера ліцензій (LICENSE_API) ще не вписано, тож перевіряти ключ нічим — форма відкинула б навіть справжній. До того часу продукт відкритий кожному, хто знає адресу. Щойно адреса з’явиться, брама ввімкнеться сама.'
     },
     bal: {
       how: 'Як це пораховано',
@@ -2215,7 +2223,9 @@ var DE = {
       devText: 'Die App ist über die Gate-Umgehung (?dev=…) offen, nicht über einen Schlüssel. So sieht das Produkt ohne Bezahlung aus — ein normaler Besucher landet hier nie.',
       devOff: 'Umgehung abschalten',
       noAccess: 'Hier ist kein Schlüssel gespeichert.',
-      privacyNote: 'Schlüssel und E-Mail werden beim Öffnen gegen den Server geprüft, höchstens einmal täglich — so schließt ein gekündigtes Abo den Zugang sofort. Geburtsdatum und -ort werden nirgendwohin gesendet.'
+      privacyNote: 'Schlüssel und E-Mail werden beim Öffnen gegen den Server geprüft, höchstens einmal täglich — so schließt ein gekündigtes Abo den Zugang sofort. Geburtsdatum und -ort werden nirgendwohin gesendet.',
+      gateOffTitle: 'Das Zugangstor ist aus',
+      gateOffText: 'Die Adresse des Lizenzservers (LICENSE_API) ist noch nicht eingetragen, es gibt also nichts, wogegen ein Schlüssel geprüft werden könnte — das Formular würde auch einen echten ablehnen. Bis dahin ist die App für jeden offen, der die Adresse kennt. Sobald die Adresse steht, schaltet sich das Tor von selbst wieder ein.'
     },
     bal: {
       how: 'Wie das gerechnet wird',
@@ -2730,7 +2740,9 @@ var ES = {
       devText: 'La aplicación está abierta por el atajo de la puerta (?dev=…), no por una clave. Así se ve el producto sin pagar — un visitante normal nunca llega aquí.',
       devOff: 'Desactivar el atajo',
       noAccess: 'Aquí no hay ninguna clave guardada.',
-      privacyNote: 'La clave y el correo se comprueban en el servidor al abrir, como mucho una vez al día — así una suscripción cancelada cierra el acceso de inmediato. Su fecha y lugar de nacimiento no se envían a ninguna parte.'
+      privacyNote: 'La clave y el correo se comprueban en el servidor al abrir, como mucho una vez al día — así una suscripción cancelada cierra el acceso de inmediato. Su fecha y lugar de nacimiento no se envían a ninguna parte.',
+      gateOffTitle: 'La puerta está desactivada',
+      gateOffText: 'La dirección del servidor de licencias (LICENSE_API) todavía no está puesta, así que no hay con qué comprobar una clave: el formulario rechazaría incluso una real. Hasta entonces la aplicación está abierta a cualquiera que conozca la dirección. En cuanto esté la dirección, la puerta se activa sola.'
     },
     bal: {
       how: 'Cómo se calcula',
@@ -3245,7 +3257,9 @@ var FR = {
       devText: 'L’application est ouverte par le contournement (?dev=…), pas par une clé. Voilà à quoi ressemble le produit sans paiement — un visiteur normal n’arrive jamais ici.',
       devOff: 'Désactiver le contournement',
       noAccess: 'Aucune clé n’est enregistrée ici.',
-      privacyNote: 'La clé et l’e-mail sont vérifiés sur le serveur à l’ouverture, au plus une fois par jour — ainsi un abonnement résilié ferme l’accès aussitôt. Votre date et votre lieu de naissance ne sont envoyés nulle part.'
+      privacyNote: 'La clé et l’e-mail sont vérifiés sur le serveur à l’ouverture, au plus une fois par jour — ainsi un abonnement résilié ferme l’accès aussitôt. Votre date et votre lieu de naissance ne sont envoyés nulle part.',
+      gateOffTitle: 'Le contrôle d’accès est désactivé',
+      gateOffText: 'L’adresse du serveur de licences (LICENSE_API) n’est pas encore renseignée : il n’y a rien pour vérifier une clé, le formulaire rejetterait même une vraie. En attendant, l’application est ouverte à quiconque connaît l’adresse. Dès que l’adresse est là, le contrôle se réactive tout seul.'
     },
     bal: {
       how: 'Comment c’est calculé',
@@ -3760,7 +3774,9 @@ var IT = {
       devText: 'L’app è aperta tramite il bypass del cancello (?dev=…), non tramite una chiave. Così appare il prodotto senza pagamento — un visitatore normale non arriva mai qui.',
       devOff: 'Disattiva il bypass',
       noAccess: 'Qui non è salvata nessuna chiave.',
-      privacyNote: 'Chiave ed e-mail vengono controllate sul server all’apertura, al massimo una volta al giorno — così un abbonamento annullato chiude subito l’accesso. Data e luogo di nascita non vengono inviati da nessuna parte.'
+      privacyNote: 'Chiave ed e-mail vengono controllate sul server all’apertura, al massimo una volta al giorno — così un abbonamento annullato chiude subito l’accesso. Data e luogo di nascita non vengono inviati da nessuna parte.',
+      gateOffTitle: 'Il cancello è disattivato',
+      gateOffText: 'L’indirizzo del server delle licenze (LICENSE_API) non è ancora inserito, quindi non c’è nulla con cui verificare una chiave: il modulo rifiuterebbe anche quella vera. Fino ad allora l’app è aperta a chiunque conosca l’indirizzo. Appena l’indirizzo c’è, il cancello si riattiva da solo.'
     },
     bal: {
       how: 'Come viene calcolato',
@@ -4275,7 +4291,9 @@ var PT = {
       devText: 'O app está aberto pelo atalho do portão (?dev=…), não por uma chave. É assim que o produto fica sem pagamento — um visitante normal nunca chega aqui.',
       devOff: 'Desligar o atalho',
       noAccess: 'Nenhuma chave está guardada aqui.',
-      privacyNote: 'A chave e o e-mail são verificados no servidor ao abrir, no máximo uma vez por dia — assim uma assinatura cancelada fecha o acesso na hora. Sua data e local de nascimento não são enviados a lugar nenhum.'
+      privacyNote: 'A chave e o e-mail são verificados no servidor ao abrir, no máximo uma vez por dia — assim uma assinatura cancelada fecha o acesso na hora. Sua data e local de nascimento não são enviados a lugar nenhum.',
+      gateOffTitle: 'O portão está desligado',
+      gateOffText: 'O endereço do servidor de licenças (LICENSE_API) ainda não está preenchido, então não há com o que verificar uma chave — o formulário rejeitaria até uma verdadeira. Até lá o app fica aberto a qualquer um que saiba o endereço. Assim que o endereço estiver lá, o portão se liga sozinho.'
     },
     bal: {
       how: 'Como isto é calculado',
@@ -4790,7 +4808,9 @@ var TR = {
       devText: 'Uygulama anahtarla değil, kapı atlatmasıyla (?dev=…) açık. Ürün ödeme olmadan böyle görünür — normal bir ziyaretçi buraya hiç düşmez.',
       devOff: 'Atlatmayı kapat',
       noAccess: 'Burada kayıtlı anahtar yok.',
-      privacyNote: 'Anahtar ve e-posta açılışta sunucuda kontrol edilir, günde en fazla bir kez — böylece iptal edilmiş abonelik erişimi hemen kapatır. Doğum tarihiniz ve yeriniz hiçbir yere gönderilmez.'
+      privacyNote: 'Anahtar ve e-posta açılışta sunucuda kontrol edilir, günde en fazla bir kez — böylece iptal edilmiş abonelik erişimi hemen kapatır. Doğum tarihiniz ve yeriniz hiçbir yere gönderilmez.',
+      gateOffTitle: 'Kapı kapalı',
+      gateOffText: 'Lisans sunucusunun adresi (LICENSE_API) henüz girilmedi, dolayısıyla anahtarı karşılaştıracak bir şey yok — form gerçeğini bile reddederdi. O zamana kadar uygulama adresi bilen herkese açık. Adres girildiği anda kapı kendiliğinden geri açılır.'
     },
     bal: {
       how: 'Bu nasıl hesaplanıyor',
