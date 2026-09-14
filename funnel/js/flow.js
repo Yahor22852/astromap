@@ -491,15 +491,83 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     el('cta').disabled = !timeReady();
   });
 
-  function type(node, text, done) {
-    if (reduced) { node.textContent = text; if (done) { done(); } return; }
-    node.textContent = '';
+  /* --- расчёт по стадиям ---------------------------------------------------
+     Раньше здесь стояла одна строка «Считаю позиции…» и setTimeout на 1100
+     мс — то есть выдуманная пауза, за которой ничего не происходило: сам
+     расчёт занимает доли миллисекунды.
+
+     Теперь стадий четыре, и каждая делает ровно то, что написано в её
+     подписи: переводит местное время рождения в UTC по таймзоне города,
+     считает долготу Солнца, считает долготу Луны, считает Асцендент. Работа
+     настоящая, но быстрая, поэтому у каждой стадии есть минимальное время
+     на экране — иначе подпись невозможно прочитать. Это не имитация работы:
+     строка не врёт о том, что происходит, она только держится достаточно
+     долго, чтобы её увидели.
+
+     Асцендент считается не всегда: без времени рождения или без координат
+     его нет, и стадии для него тоже нет — вместо неё строка о том, почему. */
+  var STAGE_MS = 260;
+
+  function stageListHtml(stages) {
+    return stages.map(function (st, i) {
+      return '<li class="calc__s" data-i="' + i + '"><i class="calc__m"></i>' +
+        '<span class="calc__t">' + st + '</span></li>';
+    }).join('');
+  }
+
+  function runStages(stages, work, done) {
+    var box = el('calc');
+    box.innerHTML = stageListHtml(stages);
+    box.classList.remove('hidden');
+    var nodes = all('#calc .calc__s');
     var i = 0;
     (function step() {
-      node.textContent = text.slice(0, ++i);
-      if (i < text.length) { setTimeout(step, 14); }
-      else if (done) { done(); }
+      if (i >= stages.length) { done(); return; }
+      var node = nodes[i];
+      node.classList.add('is-now');
+      var t0 = Date.now();
+      work[i]();                                   /* настоящая операция */
+      var rest = reduced ? 0 : Math.max(0, STAGE_MS - (Date.now() - t0));
+      setTimeout(function () {
+        node.classList.remove('is-now');
+        node.classList.add('is-done');
+        i++;
+        step();
+      }, rest);
     })();
+  }
+
+  /* --- Большая тройка ------------------------------------------------------
+     Один блок, а не три карточки подряд. Три карточки читаются как три
+     независимых результата, а это одна конфигурация: что человек есть, что
+     он чувствует и каким его видят. Поэтому у каждой строки есть подпись
+     роли — без неё «Телец, Телец, Рак» не складывается ни во что.
+
+     Строка Асцендента остаётся на месте и без него: тройка из двух
+     элементов выглядит как поломка, а не как следствие незаполненного поля. */
+  function big3Html() {
+    var n = S.natal;
+    var row = function (key, label, role, sign, text) {
+      var head = sign
+        ? '<span class="b3__sign">' + C.signs[sign.index] + '</span>' +
+          '<span class="b3__deg">' + deg(sign.degree) + '</span>'
+        /* Причина отсутствия Асцендента бывает разная, и называть надо ту,
+           которая есть: без времени рождения — одно, с временем, но без
+           координат (ручной ввод места) — другое. Раньше во втором случае
+           здесь стояло «нужно время рождения», хотя время человек указал. */
+        : '<span class="b3__none">' +
+          (!S.time.known ? C.s3.ascEmptyShort : C.s3.ascEmptyPlace) + '</span>';
+      return '<div class="b3__r b3__r--' + key + (sign ? '' : ' b3__r--empty') + '">' +
+        '<div class="b3__k">' + label + '</div>' +
+        '<div class="b3__v">' + head + '</div>' +
+        '<div class="b3__role">' + role + '</div>' +
+        (text ? '<p class="b3__t">' + text + '</p>' : '') +
+        '</div>';
+    };
+    return '<p class="b3__lead">' + C.s3.big3Lead + '</p>' +
+      row('sun', C.map.sun, C.s3.roleSun, n.sun, C.sun[n.sun.index]) +
+      row('moon', C.map.moon, C.s3.roleMoon, n.moon, C.moon[n.moon.index]) +
+      row('asc', C.map.asc, C.s3.roleAsc, n.asc, n.asc ? C.asc[n.asc.index] : '');
   }
 
   function calcChart() {
@@ -510,42 +578,62 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       min: S.time.known ? S.time.min : 0,
       timeKnown: S.time.known
     };
-    S.natal = A.chart(parts, city);
-    persist();
+    var willHaveAsc = !!(S.time.known && city &&
+      typeof city.lat === 'number' && typeof city.lon === 'number');
 
-    el('calc').classList.remove('hidden');
+    /* Расчёт разобран на те же четыре шага, что подписаны на экране, и
+       каждый шаг действительно выполняется на своей стадии. Собрать всё
+       одним вызовом A.chart() было бы проще, но тогда подписи описывали бы
+       работу, которая уже закончилась до появления первой строки.
+
+       Результат обязан совпадать с A.chart() до последнего знака — это
+       проверяется тестом на наборе городов и дат. */
+    var jd = null, out = { jd: null, sunLon: null, moonLon: null };
+    var stages = [C.s3.stageTz, C.s3.stageSun, C.s3.stageMoon];
+    var work = [
+      function () {
+        var utc = FC.toUTC(parts.y, parts.m, parts.d, parts.h, parts.min, city);
+        var dayStart = Date.UTC(parts.y, parts.m - 1, parts.d, 0, 0, 0);
+        jd = A.julianDay(parts.y, parts.m, parts.d, (utc.getTime() - dayStart) / 3600000);
+        out.jd = jd;
+      },
+      function () { out.sunLon = A.sunLongitude(jd); out.sun = A.signOf(out.sunLon); },
+      function () { out.moonLon = A.moonLongitude(jd); out.moon = A.signOf(out.moonLon); }
+    ];
+    if (willHaveAsc) {
+      stages.push(C.s3.stageAsc);
+      work.push(function () {
+        out.ascLon = A.ascendant(jd, city.lat, city.lon).asc;
+        out.asc = A.signOf(out.ascLon);
+      });
+    }
+    work.push(function () { S.natal = out; });
+    stages.push(C.s3.stageDone);
+
     el('cta').disabled = true;
 
-    setTimeout(function () {
+    runStages(stages, work, function () {
+      persist();
       el('calc').classList.add('hidden');
-      var m = S.natal.moon;
-      el('moonSign').innerHTML = C.signs[m.index] +
-        ' <span class="res__deg">' + deg(m.degree) + '</span>';
       drawMap(el('s3map'), false);
       el('s3map').classList.remove('hidden');
-      el('moonBox').classList.remove('hidden');
+      el('big3').innerHTML = big3Html();
+      el('big3').classList.remove('hidden');
       scrollToBlock(el('s3map'));
-      type(el('moonLine'), C.moon[m.index], function () {
-        if (S.natal.asc) {
-          var a = S.natal.asc;
-          el('ascSign').innerHTML = C.signs[a.index] +
-            ' <span class="res__deg">' + deg(a.degree) + '</span>';
-          el('ascBox').classList.remove('hidden');
-          /* Асцендент приезжает последним — карта перерисовывается, и третья
-             точка встаёт на место уже на глазах, а не появляется вместе с
-             остальными до того, как о ней сказали. */
-          drawMap(el('s3map'), false);
-          el('ascBox').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
-          type(el('ascLine'), C.asc[a.index]);
-        }
-        if ((S.natal.moon.nearCusp) || (S.natal.asc && S.natal.asc.nearCusp)) {
-          el('s3note').textContent = C.s3.cuspNote;
-          el('s3note').classList.remove('hidden');
-        }
-        el('cta').textContent = C.ctaNext;
-        el('cta').disabled = false;
-      });
-    }, reduced ? 100 : 1100);
+
+      var notes = [];
+      if (!willHaveAsc) {
+        notes.push(S.time.known ? C.s3.cityManualNote : C.s3.unknownNote);
+      }
+      if (S.natal.moon.nearCusp || (S.natal.asc && S.natal.asc.nearCusp)) {
+        notes.push(C.s3.cuspNote);
+      }
+      el('s3note').textContent = notes.join(' ');
+      el('s3note').classList.toggle('hidden', !notes.length);
+
+      el('cta').textContent = C.ctaNext;
+      el('cta').disabled = false;
+    });
   }
 
   /* --- экран 4: совместимость -------------------------------------------- */

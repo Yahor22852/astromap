@@ -158,18 +158,16 @@
           </div>
         </div>
       </div>
-      <p class="calc hidden" id="calc"><span data-t="computing"></span><span class="calc__dots"></span></p>
+      <!-- Стадии расчёта. Каждая строка соответствует операции, которая
+           действительно выполняется в этот момент (см. calcChart в flow.js);
+           выдуманных шагов здесь нет. -->
+      <ol class="calc hidden" id="calc"></ol>
       <div class="mapbox hidden" id="s3map"></div>
-      <div class="res hidden" id="moonBox">
-        <div class="res__lab" data-t="s3.moonLabel"></div>
-        <div class="res__val" id="moonSign"></div>
-        <div class="res__txt" id="moonLine"></div>
-      </div>
-      <div class="res hidden" id="ascBox">
-        <div class="res__lab" data-t="s3.ascLabel"></div>
-        <div class="res__val" id="ascSign"></div>
-        <div class="res__txt" id="ascLine"></div>
-      </div>
+
+      <!-- Большая тройка одним объектом, а не тремя карточками подряд:
+           Солнце, Луна и Асцендент — это одна конфигурация, и три
+           отдельных блока читались бы как три независимых результата. -->
+      <div class="big3 hidden" id="big3"></div>
       <p class="res__meta hidden" id="s3note"></p>
     </section>
 

@@ -186,17 +186,64 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .res__txt { margin-top: 8px; font-size: 15px; line-height: 22px; color: var(--ink-dim); }
 .res__meta { margin-top: 10px; font-size: 12px; color: var(--ink-faint); }
 
-.calc { margin-top: 22px; font-size: 14px; color: var(--ink-dim); }
-.calc__dots::after {
-  content: '·';
-  animation: dots 1.2s steps(4, end) infinite;
+/* --- стадии расчёта ---------------------------------------------------------
+   Раньше здесь была одна строка с бегущими точками и пауза в 1100 мс, за
+   которой ничего не происходило. Теперь список шагов, и каждый шаг —
+   настоящая операция: перевод времени рождения в UTC, Солнце, Луна,
+   Асцендент. Маркер показывает состояние: идёт, сделано.
+
+   Не .hidden целиком, а построчно: человек должен видеть, что уже посчитано,
+   а не одну подменяющуюся строку — иначе непонятно, сколько ещё ждать. */
+.calc { margin: 22px 0 0; padding: 0; list-style: none; }
+.calc__s {
+  display: flex; align-items: center; gap: 10px; padding: 5px 0;
+  font-size: 14px; color: var(--ink-faint);
+  transition: color .2s ease;
 }
-@keyframes dots {
-  0%   { content: '·'; }
-  25%  { content: '··'; }
-  50%  { content: '···'; }
-  75%  { content: '····'; }
+.calc__m {
+  flex: 0 0 auto; width: 14px; height: 14px; border-radius: 50%;
+  border: 1px solid var(--card-line); position: relative;
 }
+.calc__s.is-now { color: var(--ink); }
+.calc__s.is-now .calc__m { border-color: var(--gold); }
+.calc__s.is-now .calc__m::after {
+  content: ''; position: absolute; inset: 3px; border-radius: 50%;
+  background: var(--gold); animation: calc-pulse 1s ease-in-out infinite;
+}
+.calc__s.is-done { color: var(--ink-dim); }
+.calc__s.is-done .calc__m { border-color: var(--gold-line); background: var(--gold-soft); }
+.calc__s.is-done .calc__m::after {
+  content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px;
+  border: solid var(--gold); border-width: 0 1.5px 1.5px 0; transform: rotate(42deg);
+}
+@keyframes calc-pulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+@media (prefers-reduced-motion: reduce) {
+  .calc__s.is-now .calc__m::after { animation: none; }
+}
+
+/* --- Большая тройка ---------------------------------------------------------
+   Один блок, а не три карточки подряд: Солнце, Луна и Асцендент — одна
+   конфигурация, и три отдельные коробки читались бы как три независимых
+   результата. Строки разделены линией, а не рамками.
+
+   Подпись роли обязательна: без неё «Телец, Телец, Рак» не складывается ни
+   во что — три слова, между которыми не видно связи. */
+.big3 { margin-top: 20px; }
+.big3.hidden { display: none; }
+.b3__lead { margin: 0 0 14px; font-size: 14px; line-height: 1.5; color: var(--ink-dim); }
+.b3__r { padding: 16px 0; border-top: 1px solid var(--card-line-2); }
+.b3__r:first-of-type { border-top: 0; padding-top: 4px; }
+.b3__k {
+  font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--gold);
+}
+.b3__v { margin-top: 4px; display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.b3__sign { font-family: var(--serif); font-size: 34px; font-weight: 600; line-height: 1.05; }
+.b3__deg { font-family: var(--serif); font-size: 19px; color: var(--ink-dim); }
+.b3__none { font-size: 15px; color: var(--ink-faint); }
+.b3__role { margin-top: 2px; font-size: 13px; color: var(--ink-faint); }
+.b3__t { margin: 9px 0 0; font-size: 15px; line-height: 1.55; color: var(--ink-dim); }
+.b3__r--empty .b3__k { color: var(--ink-faint); }
 
 /* --- плитки тем ---------------------------------------------------------- */
 .tiles { margin-top: 20px; }

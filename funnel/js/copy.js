@@ -77,6 +77,19 @@
       unknownNote: 'Policzę Słońce i Księżyc. Ascendent zostanie pusty — dopiszesz go, gdy znajdziesz godzinę w akcie urodzenia.',
       moonLabel: 'Księżyc',
       ascLabel: 'Ascendent',
+      ascEmptyShort: 'brak godziny',
+      ascEmptyPlace: 'potrzebne dokładne miejsce',
+      /* Подписи стадий расчёта. Каждая обязана соответствовать операции,
+         которая идёт в этот момент, — см. calcChart в flow.js. */
+      stageTz: 'Ustalam Twoje niebo urodzenia',
+      stageSun: 'Liczę Słońce',
+      stageMoon: 'Liczę Księżyc',
+      stageAsc: 'Szukam Ascendentu',
+      stageDone: 'Składam mapę',
+      big3Lead: 'Trzy punkty, od których zaczyna się każda mapa. Razem, nie osobno.',
+      roleSun: 'kim jesteś w rdzeniu',
+      roleMoon: 'jak przeżywasz i czego potrzebujesz',
+      roleAsc: 'jak Twoja mapa spotyka świat',
       cuspNote: 'Twoje światło stoi na granicy znaku — przy tak dokładnej pozycji warto sprawdzić godzinę co do minuty.'
     },
 
@@ -294,6 +307,17 @@
       unknownNote: 'I\u2019ll calculate the Sun and the Moon. The Ascendant stays empty until you find the time on your birth certificate.',
       moonLabel: 'Moon',
       ascLabel: 'Ascendant',
+      ascEmptyShort: 'no birth time',
+      ascEmptyPlace: 'needs an exact place',
+      stageTz: 'Locating your birth sky',
+      stageSun: 'Calculating the Sun',
+      stageMoon: 'Calculating the Moon',
+      stageAsc: 'Finding your Ascendant',
+      stageDone: 'Assembling your map',
+      big3Lead: 'The three points every chart starts from. Together, not separately.',
+      roleSun: 'who you are at the core',
+      roleMoon: 'how you feel and what you need',
+      roleAsc: 'how your chart meets the world',
       cuspNote: 'Your light sits right on a sign boundary — with a position this close, the exact minute matters.'
     },
 
