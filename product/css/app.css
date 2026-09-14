@@ -1506,3 +1506,116 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   stroke: var(--ink); stroke-width: 3; paint-order: stroke;
 }
 .w-pt:focus-visible .w-code { fill: var(--ink); font-weight: 700; }
+
+/* --- баланс стихий и крестов ------------------------------------------------
+   Семь чисел в столбик читаются как техническая сводка: чтобы понять, много
+   это или мало, надо сложить их в уме и поделить. Полоса отвечает на этот
+   вопрос сразу, а число рядом оставляет возможность проверить.
+
+   Ведущая доля выделена цветом акцента, дефицитная — приглушена, но не
+   красным: «мало воды» — это не ошибка и не плохая новость, а особенность
+   раскладки, и подсвечивать её как проблему было бы враньём тоном. Цвет при
+   этом не единственный признак: у ведущей строки жирное число и подпись,
+   у дефицитной — пониженная яркость полосы, так что различие видно и без
+   цветового зрения, и в чёрно-белой печати. */
+.bal__h {
+  margin-top: 18px; font-size: 12px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint);
+}
+.bal__h:first-child { margin-top: 0; }
+.bal__g { margin-top: 10px; }
+.bal__row {
+  display: grid; grid-template-columns: minmax(0, 88px) minmax(0, 1fr) 42px;
+  align-items: center; gap: 10px; padding: 5px 0;
+}
+.bal__n { font-size: 14px; color: var(--ink-dim); }
+.bal__bar {
+  height: 8px; border-radius: 999px; background: var(--line-2); overflow: hidden;
+}
+.bal__bar i {
+  display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--grad-a), var(--grad-b));
+  opacity: .55;
+  /* Ширина приходит инлайном из процента; переход делает перерисовку при
+     смене профиля заметной, а не мгновенной подменой. */
+  transition: width .4s cubic-bezier(.4,0,.2,1);
+}
+.bal__p { font-size: 14px; text-align: right; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.bal__row--top .bal__n, .bal__row--top .bal__p { color: var(--ink); font-weight: 700; }
+.bal__row--top .bal__bar i { opacity: 1; }
+.bal__row--low .bal__bar i { opacity: .3; }
+.bal .p { margin-top: 10px; }
+.bal__m { margin-top: 16px; }
+.bal__m summary {
+  cursor: pointer; font-size: 13px; color: var(--ink-faint);
+  list-style: none; display: inline-flex; align-items: center; gap: 6px;
+}
+.bal__m summary::-webkit-details-marker { display: none; }
+/* Свой маркер вместо системного треугольника: он в разных браузерах разного
+   размера и сбивает базовую линию строки. */
+.bal__m summary::before { content: '+'; font-size: 15px; line-height: 1; width: 12px; }
+.bal__m[open] summary::before { content: '\2212'; }
+.bal__m summary:hover { color: var(--ink-dim); }
+.bal__m summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.bal__m .note { margin-top: 8px; }
+
+/* --- большая тройка на профиле ----------------------------------------------
+   Три равные плитки: Солнце, Луна, Асцендент. Каждая — кнопка в колесо, а не
+   строка таблицы: это точка входа вглубь продукта, и она должна выглядеть
+   нажимаемой. Без времени рождения третья плитка остаётся на месте и
+   объясняет, чего не хватает, — «большая тройка» из двух элементов читалась
+   бы как поломка. */
+.big3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.big3__i {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  padding: 14px; border-radius: 14px;
+  background: var(--surf); border: 1px solid var(--line);
+  font-family: var(--sans); color: inherit;
+  transition: border-color .2s ease, background .2s ease, transform .18s cubic-bezier(.4,0,.2,1);
+}
+.big3__i:hover { border-color: var(--accent); background: rgba(155,138,248,.08); transform: translateY(-1px); }
+.big3__i:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.big3__i--empty { cursor: default; opacity: .6; }
+.big3__i--empty:hover { border-color: var(--line); background: var(--surf); transform: none; }
+.big3__k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); }
+.big3__v { margin-top: 6px; font-family: var(--serif); font-size: 22px; font-weight: 600; line-height: 1.15; }
+.big3__d { margin-top: 4px; font-size: 12px; color: var(--ink-dim); }
+
+/* Ниже 560px три плитки в ряд дают 22px на название знака — «Стрелец»
+   переносится по слогам. Уходим в столбик. */
+@media (max-width: 560px) {
+  .big3 { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Вторичная кнопка: то же место в потоке, что и .btn, но без градиента —
+   «изменить данные» не должно спорить с «сохранить». */
+.btn--ghost {
+  width: 100%; height: 46px; border-radius: var(--r-btn);
+  background: transparent; border: 1px solid var(--line);
+  color: var(--ink-dim); font-family: var(--sans); font-size: 15px; font-weight: 600;
+  cursor: pointer; margin-top: 16px; box-shadow: none;
+}
+.btn--ghost:hover { color: var(--ink); border-color: var(--accent); background: rgba(155,138,248,.08); transform: none; box-shadow: none; }
+.btn--ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Необратимое действие. Не красная кнопка по умолчанию: пока она не
+   взведена, это обычный пункт, и пугать им незачем. Цвет появляется на
+   втором шаге, когда следующее нажатие действительно стирает. */
+.act--warn[data-armed="1"] { color: var(--hard); border-color: var(--hard); background: rgba(240,146,138,.1); }
+
+/* --- раскладка профиля ------------------------------------------------------
+   Профиль вышел из общей двухколоночной сетки. В две колонки карточка
+   «Баланс» вдвое выше карточки с большой тройкой, и рядом с ней остаётся
+   шестьсот пикселей пустоты — строка грида всегда высотой с самую высокую
+   карточку. Плюс на широком экране полоса стихии растягивалась почти на
+   восемьсот пикселей: длина перестаёт читаться как доля, потому что глазу
+   не с чем её сравнить в пределах взгляда.
+
+   Одна колонка с ограничением по ширине: это страница про одного человека,
+   а не сетка равноправных модулей. */
+.view--prof { display: block; }
+/* Колонка прижата влево, а не по центру: заголовок раздела <h1> живёт
+   снаружи .view и всегда стоит у левого края — центрированная колонка
+   отъезжала бы от собственного заголовка. */
+.view--prof > .card { max-width: 720px; margin-right: auto; }
+.view--prof > .card + .card { margin-top: 18px; }

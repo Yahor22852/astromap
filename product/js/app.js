@@ -1599,20 +1599,73 @@
       '</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
-  function chartBalanceHtml() {
-    var b = natal.balance;
-    return '<div class="cols2">' +
-      '<div><div class="card__t2">' + T.ui.elements + '</div>' +
-        Object.keys(b.elements).map(function (k) {
-          return '<div class="kv"><span>' + T.elements[k] + '</span><b>' +
-            b.elements[k] + '</b></div>';
-        }).join('') + '</div>' +
-      '<div><div class="card__t2">' + T.ui.modes + '</div>' +
-        Object.keys(b.modes).map(function (k) {
-          return '<div class="kv"><span>' + T.modes[k] + '</span><b>' +
-            b.modes[k] + '</b></div>';
-        }).join('') + '</div></div>';
+  /* --- баланс стихий и крестов ---------------------------------------------
+
+     Раньше здесь стояла таблица из семи голых чисел: «Огонь 3, Земля 4…».
+     Число точек в стихии само по себе не говорит ничего — непонятно ни от
+     чего оно считается, ни много это или мало, ни что с этим делать. Хуже
+     того, подсчёт «в лоб» считал Плутон наравне с Солнцем, а Плутон стоит в
+     одном знаке двадцать лет: у целого поколения выходил один и тот же
+     «портрет».
+
+     Теперь считаем взвешенно (веса и причина — в engine.js, balance) и
+     показываем три вещи вместо одной: долю каждой стихии полосой, что из
+     этого следует словами, и открытую методику — по каким весам посчитано и
+     что меняется без времени рождения. Методика в <details>: тем, кто хочет
+     проверить, она нужна целиком, остальным — не мешает. */
+  function balGroupHtml(kind, pct, names, top, low) {
+    var keys = Object.keys(pct);
+    var rows = keys.map(function (k) {
+      var v = pct[k];
+      var isTop = top.indexOf(k) >= 0;
+      var isLow = low === k;
+      return '<div class="bal__row' + (isTop ? ' bal__row--top' : '') +
+        (isLow ? ' bal__row--low' : '') + '">' +
+        '<span class="bal__n">' + names[k] + '</span>' +
+        '<span class="bal__bar"><i style="width:' + v + '%"></i></span>' +
+        '<span class="bal__p">' + Math.round(v) + '%</span>' +
+        '</div>';
+    }).join('');
+    return '<div class="bal__g" role="img" aria-label="' +
+      esc(T.ui[kind === 'el' ? 'elements' : 'modes'] + ': ' +
+        keys.map(function (k) { return names[k] + ' ' + Math.round(pct[k]) + '%'; }).join(', ')) +
+      '">' + rows + '</div>';
   }
+
+  /* Словесный вывод. Ничья обрабатывается отдельно: назвать одну из двух
+     равных стихий ведущей — значит придумать человеку акцент, которого в
+     карте нет. Дефицит называется только если доля ниже половины равномерной
+     (порог считает engine.js), иначе говорим, что перекоса нет. */
+  function balSayHtml(top, low, texts, names, evenText) {
+    var out = [];
+    if (top.length === 1) {
+      out.push(sentence(texts[top[0]].lead));
+    } else if (top.length === 2) {
+      out.push(sentence(T.bal.tie2.replace('{a}', names[top[0]]).replace('{b}', names[top[1]])));
+    } else {
+      out.push(sentence(T.bal.tieMany));
+    }
+    out.push(low ? sentence(texts[low].low) : sentence(evenText));
+    return '<p class="p">' + out.join(' ') + '</p>';
+  }
+
+  function balanceHtml(ch) {
+    var b = ch.balance;
+    var method = T.bal.method.replace('{n}', b.total) +
+      (b.withAngles ? '' : ' ' + T.bal.noAngles);
+    return '<div class="bal">' +
+      '<div class="bal__h">' + T.ui.elements + '</div>' +
+      balGroupHtml('el', b.pct.elements, T.elements, b.top.element, b.low.element) +
+      balSayHtml(b.top.element, b.low.element, T.bal.el, T.elements, T.bal.evenEl) +
+      '<div class="bal__h">' + T.ui.modes + '</div>' +
+      balGroupHtml('mo', b.pct.modes, T.modes, b.top.mode, b.low.mode) +
+      balSayHtml(b.top.mode, b.low.mode, T.bal.mo, T.modes, T.bal.evenMo) +
+      '<details class="bal__m"><summary>' + T.bal.how + '</summary>' +
+      '<p class="note">' + method + '</p></details>' +
+      '</div>';
+  }
+
+  function chartBalanceHtml() { return balanceHtml(natal); }
 
   /* Карточка выбранной точки: T.nPoint покрывает все точки, включая ASC/MC;
      T.planetElement — только 10 планет + Node (глубже про стихию знака),
@@ -2492,27 +2545,164 @@
     });
   }
 
-  views.profile = function () {
-    var body = '<p class="p">' + T.ui.profileIntro + '</p>' +
-               personForm('profile', S.profile);
-    var info = '';
-    if (natal) {
-      info = '<div class="kv"><span>' + T.ui.sign + '</span><b>' +
-        signName(natal.byName.Sun.sign) + '</b></div>' +
-        '<div class="kv"><span>' + T.planets.Moon + '</span><b>' +
-        signName(natal.byName.Moon.sign) + '</b></div>' +
-        (natal.asc ? '<div class="kv"><span>' + T.planets.ASC + '</span><b>' +
-          signName(natal.asc.sign) + '</b></div>' : '');
-    }
-    var getList = '<ul class="list">' + T.ui.getList.map(function (x) {
-      return '<li>' + x + '</li>';
-    }).join('') + '</ul>';
+  /* --- профиль --------------------------------------------------------------
 
-    return card(T.ui.profileTitle, body,
-        S.profile && !S.profile.timeKnown ? T.ui.timeMissing : '') +
-      (info ? card(T.ui.positions, info) : card(T.ui.whatYouGet, getList)) +
-      (S.profile ? '' : skyNow());
+     Это первый экран продукта: без данных роутер открывает именно его, и
+     после оплаты человек попадает сюда же. Раньше здесь была форма и три
+     строки «Солнце — Телец», то есть самый слабый экран приложения стоял на
+     входе и выглядел как страница настроек.
+
+     Теперь это опорная точка: кто вы по карте (большая тройка с градусом и
+     домом, каждая ведёт в колесо), чем карта наполнена (баланс стихий),
+     какими данными это посчитано и что с этими данными можно сделать. Форма
+     остаётся, но убирается под кнопку — она нужна раз, а экран открывают
+     много раз. */
+  function bigThreeHtml() {
+    var items = [
+      { name: 'Sun', p: natal.byName.Sun },
+      { name: 'Moon', p: natal.byName.Moon },
+      { name: 'ASC', p: natal.asc }
+    ];
+    var cells = items.map(function (it) {
+      if (!it.p) {
+        /* Без времени рождения асцендента нет. Молча пропустить нельзя:
+           «большая тройка» из двух элементов читается как поломка, а не как
+           следствие незаполненного поля. */
+        return '<div class="big3__i big3__i--empty">' +
+          '<div class="big3__k">' + pName('ASC') + '</div>' +
+          '<div class="big3__v">—</div>' +
+          '<div class="big3__d">' + T.bal.ascNeedsTime + '</div></div>';
+      }
+      var house = it.p.house || (natal.asc ? E.houseOfSign(natal, it.p.sign.index) : null);
+      return '<button type="button" class="big3__i" data-gopoint="' + it.name + '">' +
+        '<div class="big3__k">' + pName(it.name) + '</div>' +
+        '<div class="big3__v">' + signName(it.p.sign) + '</div>' +
+        '<div class="big3__d">' + fmtDeg(it.p.sign.degree) +
+          (house ? ' · ' + T.houses[house].n : '') +
+          (it.p.retro ? ' · R' : '') + '</div></button>';
+    }).join('');
+    return '<div class="big3">' + cells + '</div>' +
+      '<p class="note">' + T.bal.big3Note + '</p>';
+  }
+
+  function birthLineHtml() {
+    var p = S.profile;
+    var city = cityOf(p);
+    var date = new Date(p.y, p.m - 1, p.d);
+    var time = p.timeKnown
+      ? ((p.h < 10 ? '0' : '') + p.h + ':' + (p.min < 10 ? '0' : '') + p.min)
+      : T.ui.noTime;
+    return '<div class="kv"><span>' + T.ui.date + '</span><b>' + fmtDate(date) + '</b></div>' +
+      '<div class="kv"><span>' + T.ui.time + '</span><b>' + esc(time) + '</b></div>' +
+      '<div class="kv"><span>' + T.ui.city + '</span><b>' +
+        esc(city.n || T.bal.cityUnset) + '</b></div>';
+  }
+
+  views.profile = function () {
+    if (!S.profile) {
+      var getList = '<ul class="list">' + T.ui.getList.map(function (x) {
+        return '<li>' + x + '</li>';
+      }).join('') + '</ul>';
+      return card(T.ui.profileTitle,
+          '<p class="p">' + T.ui.profileIntro + '</p>' + personForm('profile', null)) +
+        card(T.ui.whatYouGet, getList) +
+        skyNow();
+    }
+
+    var name = (S.profile.name || '').trim();
+    var head = '<p class="p">' + (name ? esc(name) + ' — ' : '') +
+      T.bal.mapIntro + '</p>' + bigThreeHtml();
+
+    /* Форма спрятана, но лежит в разметке: так она не перестраивается при
+       каждом открытии, а автозаполнение города продолжает работать — bind()
+       вешает обработчики один раз на весь экран. */
+    var data = birthLineHtml() +
+      '<button type="button" class="btn btn--ghost" id="profEdit" aria-expanded="false" ' +
+        'aria-controls="profForm">' + T.bal.edit + '</button>' +
+      '<div id="profForm" hidden>' + personForm('profile', S.profile) + '</div>';
+
+    var manage =
+      '<p class="p">' + T.bal.dataNote + '</p>' +
+      '<div class="acts">' +
+        '<button type="button" class="act" id="profExport">' + T.bal.exportBtn + '</button>' +
+        '<button type="button" class="act act--warn" id="profClear" data-armed="0">' +
+          T.bal.clearBtn + '</button>' +
+      '</div>';
+
+    /* Первая карточка без заголовка: «Профиль» уже написано в h1 страницы
+       прямо над ней, и два одинаковых слова подряд читаются как недоделка —
+       та же причина, по которой Cosmic Now прячет общий заголовок. */
+    return card('', head) +
+      card(T.ui.balance, balanceHtml(natal)) +
+      card(T.bal.birthData, data,
+        S.profile.timeKnown ? '' : T.ui.timeMissing) +
+      card(T.bal.yourData, manage);
   };
+
+  /* Открыть форму, выгрузить данные, стереть их. Стирание в два нажатия, а
+     не через confirm(): модальное окно браузера выглядит как ошибка сайта, а
+     здесь это обычное действие, которое человек должен успеть передумать. */
+  function bindProfile() {
+    var edit = el('profEdit'), form = el('profForm');
+    if (edit && form) {
+      edit.addEventListener('click', function () {
+        var open = form.hidden;
+        form.hidden = !open;
+        edit.setAttribute('aria-expanded', open ? 'true' : 'false');
+        edit.textContent = open ? T.bal.editClose : T.bal.edit;
+        if (open) { var i = form.querySelector('input'); if (i) { i.focus(); } }
+      });
+    }
+    var exp = el('profExport');
+    if (exp) {
+      exp.addEventListener('click', function () {
+        /* Выгружаем всё, что продукт о человеке хранит, а не только профиль:
+           иначе «выгрузить данные» — неправда, сохранённые события остались
+           бы только в этом браузере. */
+        var saved = [];
+        try { saved = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); } catch (e) { /* игнор */ }
+        var bundle = {
+          exportedAt: new Date().toISOString(),
+          lang: window.APP_LANG,
+          profile: S.profile, partner: S.partner, saved: saved
+        };
+        var blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'astromap-profile.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      });
+    }
+    var clr = el('profClear');
+    if (clr) {
+      clr.addEventListener('click', function () {
+        if (clr.getAttribute('data-armed') !== '1') {
+          clr.setAttribute('data-armed', '1');
+          clr.textContent = T.bal.clearSure;
+          setTimeout(function () {
+            if (!clr.isConnected) { return; }
+            clr.setAttribute('data-armed', '0');
+            clr.textContent = T.bal.clearBtn;
+          }, 5000);
+          return;
+        }
+        /* Стираем и ключ воронки: иначе следующая загрузка увидит его и
+           импортирует обратно ровно то, что человек только что удалил. */
+        S = { profile: null, partner: null };
+        try {
+          localStorage.removeItem(KEY);
+          localStorage.removeItem(SAVED_KEY);
+          localStorage.removeItem('astromap.funnel');
+        } catch (e) { /* приватный режим */ }
+        recalc();
+        route();
+      });
+    }
+  }
 
   /* --- роутер ------------------------------------------------------------- */
   var ORDER = ['today', 'horoscope', 'chart', 'match', 'numbers', 'moon', 'retro', 'profile'];
@@ -2609,6 +2799,8 @@
     /* Карта: колесо и инспектор в два столбца, таблицы под ними. */
     view.classList.toggle('view--chart', h === 'chart');
     view.classList.toggle('view--num', h === 'numbers' && !!S.profile);
+    /* Профиль — одна колонка: страница про одного человека, а не сетка. */
+    view.classList.toggle('view--prof', h === 'profile' && !!S.profile);
     /* Перезапуск CSS-анимации: снять класс, форсировать reflow, вернуть класс.
        Без чтения offsetWidth браузер схлопнёт снятие+возврат в один кадр. */
     view.classList.remove('fade-in');
@@ -2682,6 +2874,7 @@
     bindGoChart(el('view'));
     bindTerms(document.getElementById('view'));
     bindCityPick();
+    bindProfile();
 
     Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {
       b.addEventListener('click', function () {

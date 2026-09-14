@@ -145,19 +145,108 @@
       });
     }
 
-    out.balance = balance(points);
+    out.balance = balance(points, out.asc, out.mc);
     return out;
   }
 
-  function balance(points) {
-    var e = { fire: 0, earth: 0, air: 0, water: 0 };
-    var m = { cardinal: 0, fixed: 0, mutable: 0 };
-    points.forEach(function (p) {
-      if (p.name === 'Node') { return; }
-      e[p.sign.element] += 1;
-      m[p.sign.mode] += 1;
+  /* --- баланс стихий и крестов ---------------------------------------------
+
+     ВЕСА, А НЕ ПОДСЧЁТ ТОЧЕК. Простой подсчёт «сколько планет в огне»
+     приравнивает Солнце к Плутону, и это ломает смысл: Уран, Нептун и Плутон
+     проходят знак за 7–20 лет, так что у всех, кто родился в одно
+     десятилетие, эти три точки стоят в одних и тех же знаках. Считая их
+     наравне, получаем «портрет», общий для целого поколения, — то есть
+     ничего личного. Поэтому вес падает по мере того, как точка становится
+     общей для многих:
+
+       Солнце, Луна, Асцендент — 3   что человек есть, что чувствует,
+                                     как входит в комнату; ASC вообще
+                                     меняется каждые две минуты
+       Меркурий, Венера, Марс  — 2   личные планеты, знак меняется за недели
+       MC                      — 2   угол, но менее личный, чем ASC
+       Юпитер, Сатурн          — 1.5 социальные, знак за год-два
+       Уран, Нептун, Плутон    — 1   поколенческие
+
+     Узел исключён: это не тело, а точка пересечения орбит, и в раскладе по
+     стихиям традиционно не участвует.
+
+     БЕЗ ВРЕМЕНИ РОЖДЕНИЯ асцендента и MC нет, и из суммы уходит 5 весов из
+     23 — больше пятой части. Результат остаётся осмысленным, но это уже
+     другой расклад, и экран обязан об этом сказать: withAngles говорит,
+     учтены углы или нет.
+
+     Проценты считаются от фактической суммы весов, поэтому складываются в
+     100 и с углами, и без них.
+
+     «Не хватает» — не любой минимум, а доля меньше половины равномерной:
+     при четырёх стихиях равномерно — 25%, порог 12.5%. Иначе у совершенно
+     ровной карты одна стихия всё равно объявлялась бы дефицитной только
+     потому, что оказалась на десятую долю процента ниже прочих. */
+  var BAL_W = {
+    Sun: 3, Moon: 3, ASC: 3, MC: 2,
+    Mercury: 2, Venus: 2, Mars: 2,
+    Jupiter: 1.5, Saturn: 1.5,
+    Uranus: 1, Neptune: 1, Pluto: 1
+  };
+
+  function balance(points, asc, mc) {
+    var counts = { elements: { fire: 0, earth: 0, air: 0, water: 0 },
+                   modes: { cardinal: 0, fixed: 0, mutable: 0 } };
+    var w = { elements: { fire: 0, earth: 0, air: 0, water: 0 },
+              modes: { cardinal: 0, fixed: 0, mutable: 0 } };
+    var total = 0;
+
+    var all = points.slice();
+    if (asc) { all.push(asc); }
+    if (mc) { all.push(mc); }
+
+    all.forEach(function (p) {
+      var weight = BAL_W[p.name];
+      if (!weight) { return; }                    /* Node и всё незнакомое */
+      counts.elements[p.sign.element] += 1;
+      counts.modes[p.sign.mode] += 1;
+      w.elements[p.sign.element] += weight;
+      w.modes[p.sign.mode] += weight;
+      total += weight;
     });
-    return { elements: e, modes: m };
+
+    function pct(obj) {
+      var out = {};
+      Object.keys(obj).forEach(function (k) {
+        out[k] = total ? Math.round(obj[k] / total * 1000) / 10 : 0;
+      });
+      return out;
+    }
+    /* Ничья — не деталь, а другой ответ. Земля 34.8% и вода 34.8% — это не
+       «земная карта», и называть одну из них ведущей только потому, что она
+       раньше в объекте, значит придумать человеку акцент, которого нет.
+       Возвращаем список: один ключ — ведущая стихия, два и больше — поровну. */
+    function top(obj) {
+      var best = Object.keys(obj).reduce(function (a, b) {
+        return obj[b] > obj[a] ? b : a;
+      });
+      return Object.keys(obj).filter(function (k) { return obj[k] === obj[best]; });
+    }
+    /* Порог дефицита — половина равномерной доли: 12.5% для стихий (их
+       четыре), 16.7% для крестов (их три). */
+    function low(obj, n) {
+      var k = Object.keys(obj).reduce(function (a, b) {
+        return obj[b] < obj[a] ? b : a;
+      });
+      return obj[k] < 100 / n / 2 ? k : null;
+    }
+
+    var p = { elements: pct(w.elements), modes: pct(w.modes) };
+    return {
+      counts: counts,
+      weighted: w,
+      pct: p,
+      total: total,
+      withAngles: !!asc,
+      /* top.element / top.mode — массивы: длина 1 = ведущая, больше = поровну */
+      top: { element: top(p.elements), mode: top(p.modes) },
+      low: { element: low(p.elements, 4), mode: low(p.modes, 3) }
+    };
   }
 
   /* --- аспекты ------------------------------------------------------------ */
@@ -433,7 +522,7 @@
       out.mc = { name: 'MC', lon: ml, sign: signOf(ml), weight: 8 };
     }
     out.aspects = chartAspects(out);
-    out.balance = balance(out.points);
+    out.balance = balance(out.points, out.asc, out.mc);
     return out;
   }
 
@@ -445,6 +534,6 @@
     transitEvents: transitEvents, activeTransits: activeTransits,
     houseOfSign: houseOfSign, contactsFor: contactsFor,
     synastry: synastry, composite: composite, midpoint: midpoint,
-    meanNode: meanNode
+    meanNode: meanNode, balance: balance, BAL_W: BAL_W
   };
 });

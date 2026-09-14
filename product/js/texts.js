@@ -115,6 +115,40 @@
                'Wadze', 'Skorpionie', 'Strzelcu', 'Koziorożcu', 'Wodniku', 'Rybach'],
     elements: { fire: 'Ogień', earth: 'Ziemia', air: 'Powietrze', water: 'Woda' },
     modes: { cardinal: 'Kardynalny', fixed: 'Stały', mutable: 'Zmienny' },
+    /* Баланс стихий и крестов: разбор того, что посчитал
+       Engine.balance. Веса и порог дефицита — там же. */
+    bal: {
+      how: 'Jak to policzono',
+      method: 'Liczone wagami, nie sztukami: Słońce, Księżyc i Ascendent po 3, Merkury, Wenus, Mars i MC po 2, Jowisz i Saturn po 1,5, Uran, Neptun i Pluton po 1. Powód: Pluton stoi w jednym znaku dwadzieścia lat, więc licząc go na równi z Słońcem, dostalibyśmy portret całego pokolenia. Suma wag: {n}.',
+      noAngles: 'Bez godziny urodzenia nie ma Ascendentu ani MC — z sumy odpada 5 wag z 23, a to inny rozkład.',
+      tie2: '{a} i {b} idą równo — żaden z nich nie nadaje tonu samodzielnie',
+      tieMany: 'żywioły rozłożone są niemal równo, bez wyraźnego akcentu',
+      evenEl: 'żaden żywioł nie jest tu zaniedbany',
+      evenMo: 'żaden z krzyży nie jest zaniedbany',
+      ascNeedsTime: 'potrzebna godzina urodzenia',
+      big3Note: 'Słońce, Księżyc i Ascendent to trzy punkty, od których zaczyna się każda mapa. Dotknij, żeby zobaczyć je w kole.',
+      mapIntro: 'oto trzy punkty, na których stoi Twoja mapa.',
+      birthData: 'Dane urodzenia',
+      yourData: 'Twoje dane',
+      cityUnset: 'nie podano',
+      edit: 'Zmień dane',
+      editClose: 'Zwiń',
+      dataNote: 'Wszystko liczy się w tej przeglądarce i nigdzie nie jest wysyłane. Wyjściem jest plik JSON: profil, druga osoba i zapisane wydarzenia.',
+      exportBtn: 'Pobierz moje dane',
+      clearBtn: 'Usuń wszystko',
+      clearSure: 'Na pewno? Naciśnij ponownie',
+      el: {
+        fire: { lead: 'ogień prowadzi: zaczynasz szybciej, niż planujesz, i tempo bierzesz na siebie', low: 'ognia jest mało — rozruch rzadko przychodzi sam, częściej potrzebny jest powód z zewnątrz' },
+        earth: { lead: 'ziemia prowadzi: wierzysz temu, co da się sprawdzić, policzyć i dotknąć', low: 'ziemi jest mało — konkret i rutyna kosztują więcej wysiłku niż pomysły' },
+        air: { lead: 'powietrze prowadzi: najpierw nazwać i zrozumieć, dopiero potem poczuć', low: 'powietrza jest mało — dystans do własnej sytuacji przychodzi z trudem' },
+        water: { lead: 'woda prowadzi: nastrój pokoju czytasz wcześniej niż jego treść', low: 'wody jest mało — emocje łatwiej opisać niż przeżyć' }
+      },
+      mo: {
+        cardinal: { lead: 'przewaga kardynalna: ruszasz pierwsza lub pierwszy, nawet bez pełnego planu', low: 'kardynalnego mało — start bywa najtrudniejszą częścią' },
+        fixed: { lead: 'przewaga stała: doprowadzasz do końca i nie lubisz, gdy zmienia się zasady w trakcie', low: 'stałego mało — utrzymanie kursu kosztuje więcej niż jego obranie' },
+        mutable: { lead: 'przewaga zmienna: dostosowujesz się szybciej, niż zdążysz się przywiązać', low: 'zmiennego mało — nagła zmiana planu odbiera więcej sił niż innym' }
+      }
+    },
     mcElementText: {
       'air-air': 'Dwa znaki powietrza potrafią rozmawiać bez końca i rzadko brakuje im pomysłów, choć więź bywa bardziej intelektualna niż emocjonalna.',
       'air-earth': 'Powietrze wnosi pomysły, a ziemia strukturę, więc ta para musi się nauczyć przekładać plany na konkretne, przyziemne kroki.',
@@ -575,6 +609,40 @@
                'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'],
     elements: { fire: 'Fire', earth: 'Earth', air: 'Air', water: 'Water' },
     modes: { cardinal: 'Cardinal', fixed: 'Fixed', mutable: 'Mutable' },
+    /* Баланс стихий и крестов: разбор того, что посчитал
+       Engine.balance. Веса и порог дефицита — там же. */
+    bal: {
+      how: 'How this is counted',
+      method: 'Counted by weight, not by headcount: Sun, Moon and Ascendant 3 each, Mercury, Venus, Mars and MC 2 each, Jupiter and Saturn 1.5, Uranus, Neptune and Pluto 1. The reason: Pluto sits in one sign for twenty years, so counting it level with the Sun would describe a whole generation rather than you. Total weight: {n}.',
+      noAngles: 'With no birth time there is no Ascendant and no MC — 5 of the 23 weights drop out, and that is a different balance.',
+      tie2: '{a} and {b} are level — neither sets the tone on its own',
+      tieMany: 'the elements sit almost evenly, with no clear emphasis',
+      evenEl: 'no element is thin on the ground here',
+      evenMo: 'none of the three modes is thin here',
+      ascNeedsTime: 'needs a birth time',
+      big3Note: 'Sun, Moon and Ascendant are the three points every chart starts from. Tap one to see it in the wheel.',
+      mapIntro: 'these are the three points your chart rests on.',
+      birthData: 'Birth data',
+      yourData: 'Your data',
+      cityUnset: 'not set',
+      edit: 'Change details',
+      editClose: 'Close',
+      dataNote: 'Everything is calculated in this browser and sent nowhere. The export is a JSON file: your profile, the second person and your saved events.',
+      exportBtn: 'Download my data',
+      clearBtn: 'Erase everything',
+      clearSure: 'Sure? Press again',
+      el: {
+        fire: { lead: 'fire leads: you start sooner than you plan, and you carry the pace yourself', low: 'fire is thin — the first push rarely arrives on its own, it usually needs a reason from outside' },
+        earth: { lead: 'earth leads: you trust what can be checked, counted and touched', low: 'earth is thin — the concrete and the routine cost more effort than the ideas do' },
+        air: { lead: 'air leads: name it and understand it first, feel it afterwards', low: 'air is thin — stepping back from your own situation takes real work' },
+        water: { lead: 'water leads: you read the mood of a room before you read its content', low: 'water is thin — feelings are easier for you to describe than to sit in' }
+      },
+      mo: {
+        cardinal: { lead: 'cardinal weighted: you move first, plan or no plan', low: 'cardinal is thin — starting is often the hardest part' },
+        fixed: { lead: 'fixed weighted: you see things through and dislike rules changing halfway', low: 'fixed is thin — holding a course costs more than choosing one' },
+        mutable: { lead: 'mutable weighted: you adapt faster than you attach', low: 'mutable is thin — a sudden change of plan takes more out of you than most' }
+      }
+    },
     mcElementText: {
       'air-air': 'Two air signs talk endlessly and rarely run out of ideas, though the bond can stay more cerebral than emotional.',
       'air-earth': 'Air brings ideas and earth brings structure, so this pairing has to work to translate plans into real, grounded steps.',
@@ -1035,6 +1103,40 @@ var RU = {
                'Весов', 'Скорпиона', 'Стрельца', 'Козерога', 'Водолея', 'Рыб'],
     elements: { fire: 'Огонь', earth: 'Земля', air: 'Воздух', water: 'Вода' },
     modes: { cardinal: 'Кардинальный', fixed: 'Фиксированный', mutable: 'Мутабельный' },
+    /* Баланс стихий и крестов: разбор того, что посчитал
+       Engine.balance. Веса и порог дефицита — там же. */
+    bal: {
+      how: 'Как это посчитано',
+      method: 'Считается весами, а не числом точек: Солнце, Луна и Асцендент по 3, Меркурий, Венера, Марс и MC по 2, Юпитер и Сатурн по 1,5, Уран, Нептун и Плутон по 1. Причина: Плутон стоит в одном знаке двадцать лет, и если считать его наравне с Солнцем, получится портрет целого поколения, а не ваш. Сумма весов: {n}.',
+      noAngles: 'Без времени рождения нет ни Асцендента, ни MC — из суммы уходит 5 весов из 23, а это уже другой расклад.',
+      tie2: '{a} и {b} идут вровень — ни одна не задаёт тон в одиночку',
+      tieMany: 'стихии распределены почти ровно, без выраженного акцента',
+      evenEl: 'ни одна стихия здесь не в дефиците',
+      evenMo: 'ни один из крестов здесь не в дефиците',
+      ascNeedsTime: 'нужно время рождения',
+      big3Note: 'Солнце, Луна и Асцендент — три точки, с которых начинается любая карта. Нажмите, чтобы увидеть их в колесе.',
+      mapIntro: 'вот три точки, на которых держится ваша карта.',
+      birthData: 'Данные рождения',
+      yourData: 'Ваши данные',
+      cityUnset: 'не указан',
+      edit: 'Изменить данные',
+      editClose: 'Свернуть',
+      dataNote: 'Всё считается в этом браузере и никуда не отправляется. Выгрузка — файл JSON: профиль, второй человек и сохранённые события.',
+      exportBtn: 'Скачать мои данные',
+      clearBtn: 'Удалить всё',
+      clearSure: 'Точно? Нажмите ещё раз',
+      el: {
+        fire: { lead: 'ведёт огонь: вы начинаете раньше, чем успеваете спланировать, и темп держите сами', low: 'огня мало — первый толчок редко приходит сам, обычно нужен повод извне' },
+        earth: { lead: 'ведёт земля: вы верите тому, что можно проверить, посчитать и потрогать', low: 'земли мало — конкретика и режим даются тяжелее, чем замыслы' },
+        air: { lead: 'ведёт воздух: сначала назвать и понять, чувствовать — потом', low: 'воздуха мало — отойти на шаг от собственной ситуации получается с трудом' },
+        water: { lead: 'ведёт вода: настроение комнаты вы считываете раньше, чем её содержание', low: 'воды мало — чувства легче описать, чем побыть в них' }
+      },
+      mo: {
+        cardinal: { lead: 'перевес кардинального: вы трогаетесь первым, с планом или без', low: 'кардинального мало — начать обычно и есть самая трудная часть' },
+        fixed: { lead: 'перевес фиксированного: вы доводите до конца и не любите, когда правила меняют посередине', low: 'фиксированного мало — держать курс стоит дороже, чем его выбрать' },
+        mutable: { lead: 'перевес мутабельного: вы приспосабливаетесь быстрее, чем успеваете привязаться', low: 'мутабельного мало — внезапная смена плана забирает у вас больше сил, чем у других' }
+      }
+    },
     mcElementText: {
       'air-air': 'Два воздушных знака могут говорить бесконечно и почти никогда не исчерпывают темы, хотя связь рискует остаться скорее умственной, чем эмоциональной.',
       'air-earth': 'Воздух приносит идеи, земля — структуру, поэтому этой паре придётся потрудиться, чтобы превращать планы в реальные, приземлённые шаги.',
@@ -1487,6 +1589,40 @@ var UK = {
                'Терезів', 'Скорпіона', 'Стрільця', 'Козерога', 'Водолія', 'Риб'],
     elements: { fire: 'Вогонь', earth: 'Земля', air: 'Повітря', water: 'Вода' },
     modes: { cardinal: 'Кардинальний', fixed: 'Фіксований', mutable: 'Мутабельний' },
+    /* Баланс стихий и крестов: разбор того, что посчитал
+       Engine.balance. Веса и порог дефицита — там же. */
+    bal: {
+      how: 'Як це пораховано',
+      method: 'Рахується вагами, а не кількістю точок: Сонце, Місяць і Асцендент по 3, Меркурій, Венера, Марс і MC по 2, Юпітер і Сатурн по 1,5, Уран, Нептун і Плутон по 1. Причина: Плутон стоїть в одному знаку двадцять років, і якщо рахувати його нарівні із Сонцем, вийде портрет цілого покоління, а не ваш. Сума ваг: {n}.',
+      noAngles: 'Без часу народження немає ні Асцендента, ні MC — із суми зникає 5 ваг із 23, а це вже інший розклад.',
+      tie2: '{a} і {b} ідуть урівень — жодна не задає тон самотужки',
+      tieMany: 'стихії розподілені майже рівно, без вираженого акценту',
+      evenEl: 'жодна стихія тут не в дефіциті',
+      evenMo: 'жоден із хрестів тут не в дефіциті',
+      ascNeedsTime: 'потрібен час народження',
+      big3Note: 'Сонце, Місяць і Асцендент — три точки, з яких починається будь-яка карта. Натисніть, щоб побачити їх у колі.',
+      mapIntro: 'ось три точки, на яких тримається ваша карта.',
+      birthData: 'Дані народження',
+      yourData: 'Ваші дані',
+      cityUnset: 'не вказано',
+      edit: 'Змінити дані',
+      editClose: 'Згорнути',
+      dataNote: 'Усе рахується в цьому браузері й нікуди не надсилається. Вивантаження — файл JSON: профіль, друга людина та збережені події.',
+      exportBtn: 'Завантажити мої дані',
+      clearBtn: 'Видалити все',
+      clearSure: 'Точно? Натисніть ще раз',
+      el: {
+        fire: { lead: 'веде вогонь: ви починаєте раніше, ніж встигаєте спланувати, і темп тримаєте самі', low: 'вогню мало — перший поштовх рідко приходить сам, зазвичай потрібен привід ззовні' },
+        earth: { lead: 'веде земля: ви вірите тому, що можна перевірити, порахувати й торкнутися', low: 'землі мало — конкретика й режим даються важче, ніж задуми' },
+        air: { lead: 'веде повітря: спершу назвати й зрозуміти, відчувати — потім', low: 'повітря мало — відійти на крок від власної ситуації вдається важко' },
+        water: { lead: 'веде вода: настрій кімнати ви зчитуєте раніше, ніж її зміст', low: 'води мало — почуття легше описати, ніж побути в них' }
+      },
+      mo: {
+        cardinal: { lead: 'перевага кардинального: ви рушаєте першим, з планом чи без', low: 'кардинального мало — почати зазвичай і є найважчою частиною' },
+        fixed: { lead: 'перевага фіксованого: ви доводите до кінця й не любите, коли правила міняють посередині', low: 'фіксованого мало — тримати курс коштує дорожче, ніж його обрати' },
+        mutable: { lead: 'перевага мутабельного: ви пристосовуєтеся швидше, ніж встигаєте прив’язатися', low: 'мутабельного мало — раптова зміна плану забирає у вас більше сил, ніж в інших' }
+      }
+    },
     mcElementText: {
       'air-air': 'Два повітряних знаки можуть говорити нескінченно і майже ніколи не вичерпують теми, хоча зв’язок ризикує лишитися радше розумовим, ніж емоційним.',
       'air-earth': 'Повітря приносить ідеї, земля — структуру, тож цій парі доведеться попрацювати, щоб перетворювати плани на реальні, приземлені кроки.',
@@ -1939,6 +2075,40 @@ var DE = {
                'Waage', 'Skorpion', 'Schütze', 'Steinbock', 'Wassermann', 'Fische'],
     elements: { fire: 'Feuer', earth: 'Erde', air: 'Luft', water: 'Wasser' },
     modes: { cardinal: 'Kardinal', fixed: 'Fix', mutable: 'Veränderlich' },
+    /* Баланс стихий и крестов: разбор того, что посчитал
+       Engine.balance. Веса и порог дефицита — там же. */
+    bal: {
+      how: 'Wie das gerechnet wird',
+      method: 'Gewichtet gezählt, nicht nach Stückzahl: Sonne, Mond und Aszendent je 3, Merkur, Venus, Mars und MC je 2, Jupiter und Saturn je 1,5, Uranus, Neptun und Pluto je 1. Der Grund: Pluto steht zwanzig Jahre in einem Zeichen — zählte man ihn wie die Sonne, beschriebe das eine ganze Generation und nicht Sie. Summe der Gewichte: {n}.',
+      noAngles: 'Ohne Geburtszeit gibt es weder Aszendent noch MC — 5 von 23 Gewichten fallen weg, und das ist eine andere Verteilung.',
+      tie2: '{a} und {b} liegen gleichauf — keines gibt allein den Ton an',
+      tieMany: 'die Elemente liegen fast gleichauf, ohne deutlichen Schwerpunkt',
+      evenEl: 'kein Element kommt hier zu kurz',
+      evenMo: 'keine der drei Qualitäten kommt hier zu kurz',
+      ascNeedsTime: 'Geburtszeit nötig',
+      big3Note: 'Sonne, Mond und Aszendent sind die drei Punkte, mit denen jedes Horoskop beginnt. Antippen, um sie im Rad zu sehen.',
+      mapIntro: 'das sind die drei Punkte, auf denen Ihr Horoskop steht.',
+      birthData: 'Geburtsdaten',
+      yourData: 'Ihre Daten',
+      cityUnset: 'nicht angegeben',
+      edit: 'Daten ändern',
+      editClose: 'Schließen',
+      dataNote: 'Alles wird in diesem Browser gerechnet und nirgendwohin gesendet. Der Export ist eine JSON-Datei: Profil, zweite Person und gespeicherte Ereignisse.',
+      exportBtn: 'Meine Daten laden',
+      clearBtn: 'Alles löschen',
+      clearSure: 'Sicher? Noch einmal drücken',
+      el: {
+        fire: { lead: 'Feuer führt: Sie starten früher, als Sie planen, und halten das Tempo selbst', low: 'wenig Feuer — der erste Anstoß kommt selten von allein, meist braucht es einen Anlass von außen' },
+        earth: { lead: 'Erde führt: Sie trauen dem, was sich prüfen, zählen und anfassen lässt', low: 'wenig Erde — das Konkrete und der Alltag kosten mehr Kraft als die Ideen' },
+        air: { lead: 'Luft führt: erst benennen und verstehen, fühlen danach', low: 'wenig Luft — einen Schritt von der eigenen Lage zurückzutreten fällt schwer' },
+        water: { lead: 'Wasser führt: Sie lesen die Stimmung eines Raums, bevor Sie seinen Inhalt lesen', low: 'wenig Wasser — Gefühle lassen sich leichter beschreiben als aushalten' }
+      },
+      mo: {
+        cardinal: { lead: 'kardinales Übergewicht: Sie gehen zuerst los, mit Plan oder ohne', low: 'wenig Kardinales — das Anfangen ist meist der schwerste Teil' },
+        fixed: { lead: 'fixes Übergewicht: Sie bringen zu Ende und mögen es nicht, wenn mittendrin die Regeln wechseln', low: 'wenig Fixes — Kurs halten kostet mehr als Kurs wählen' },
+        mutable: { lead: 'veränderliches Übergewicht: Sie passen sich schneller an, als Sie sich binden', low: 'wenig Veränderliches — ein plötzlicher Planwechsel nimmt Ihnen mehr als anderen' }
+      }
+    },
     mcElementText: {
       'air-air': 'Zwei Luftzeichen reden endlos und gehen selten die Themen aus, auch wenn die Verbindung eher gedanklich als emotional bleiben kann.',
       'air-earth': 'Luft bringt Ideen, Erde bringt Struktur — dieses Paar muss daran arbeiten, Pläne in echte, bodenständige Schritte zu übersetzen.',
@@ -2391,6 +2561,40 @@ var ES = {
                'Libra', 'Escorpio', 'Sagitario', 'Capricornio', 'Acuario', 'Piscis'],
     elements: { fire: 'Fuego', earth: 'Tierra', air: 'Aire', water: 'Agua' },
     modes: { cardinal: 'Cardinal', fixed: 'Fijo', mutable: 'Mutable' },
+    /* Баланс стихий и крестов: разбор того, что посчитал
+       Engine.balance. Веса и порог дефицита — там же. */
+    bal: {
+      how: 'Cómo se calcula',
+      method: 'Se cuenta por peso, no por número de puntos: Sol, Luna y Ascendente 3 cada uno, Mercurio, Venus, Marte y MC 2, Júpiter y Saturno 1,5, Urano, Neptuno y Plutón 1. El motivo: Plutón pasa veinte años en un signo, así que contarlo igual que al Sol describiría a toda una generación y no a usted. Suma de pesos: {n}.',
+      noAngles: 'Sin hora de nacimiento no hay Ascendente ni MC — se pierden 5 de los 23 pesos, y eso ya es otro reparto.',
+      tie2: '{a} y {b} van parejos — ninguno marca el tono por sí solo',
+      tieMany: 'los elementos están casi igualados, sin un acento claro',
+      evenEl: 'aquí ningún elemento se queda corto',
+      evenMo: 'aquí ninguna de las tres modalidades se queda corta',
+      ascNeedsTime: 'hace falta la hora de nacimiento',
+      big3Note: 'Sol, Luna y Ascendente son los tres puntos con los que empieza toda carta. Toque uno para verlo en la rueda.',
+      mapIntro: 'estos son los tres puntos sobre los que se apoya su carta.',
+      birthData: 'Datos de nacimiento',
+      yourData: 'Sus datos',
+      cityUnset: 'sin indicar',
+      edit: 'Cambiar datos',
+      editClose: 'Cerrar',
+      dataNote: 'Todo se calcula en este navegador y no se envía a ninguna parte. La exportación es un archivo JSON: su perfil, la segunda persona y los eventos guardados.',
+      exportBtn: 'Descargar mis datos',
+      clearBtn: 'Borrarlo todo',
+      clearSure: '¿Seguro? Pulse otra vez',
+      el: {
+        fire: { lead: 'manda el fuego: empieza antes de terminar de planear, y el ritmo lo lleva usted', low: 'poco fuego — el primer impulso rara vez llega solo, suele necesitar un motivo externo' },
+        earth: { lead: 'manda la tierra: confía en lo que se puede comprobar, contar y tocar', low: 'poca tierra — lo concreto y la rutina cuestan más esfuerzo que las ideas' },
+        air: { lead: 'manda el aire: primero nombrarlo y entenderlo, sentirlo después', low: 'poco aire — tomar distancia de la propia situación cuesta trabajo' },
+        water: { lead: 'manda el agua: lee el ánimo de una sala antes que su contenido', low: 'poca agua — las emociones se describen mejor de lo que se habitan' }
+      },
+      mo: {
+        cardinal: { lead: 'peso cardinal: usted arranca primero, con plan o sin él', low: 'poco cardinal — empezar suele ser la parte más difícil' },
+        fixed: { lead: 'peso fijo: usted termina lo que empieza y no lleva bien que cambien las reglas a mitad', low: 'poco fijo — sostener el rumbo cuesta más que elegirlo' },
+        mutable: { lead: 'peso mutable: se adapta más rápido de lo que se apega', low: 'poco mutable — un cambio de plan repentino le quita más que a otros' }
+      }
+    },
     mcElementText: {
       'air-air': 'Dos signos de aire hablan sin parar y casi nunca se les acaban los temas, aunque el vínculo puede quedarse más en lo mental que en lo emocional.',
       'air-earth': 'El aire aporta ideas y la tierra aporta estructura, así que esta pareja tiene que esforzarse por convertir los planes en pasos reales y concretos.',
@@ -2843,6 +3047,40 @@ var FR = {
                'Balance', 'Scorpion', 'Sagittaire', 'Capricorne', 'Verseau', 'Poissons'],
     elements: { fire: 'Feu', earth: 'Terre', air: 'Air', water: 'Eau' },
     modes: { cardinal: 'Cardinal', fixed: 'Fixe', mutable: 'Mutable' },
+    /* Баланс стихий и крестов: разбор того, что посчитал
+       Engine.balance. Веса и порог дефицита — там же. */
+    bal: {
+      how: 'Comment c’est calculé',
+      method: 'Compté par poids, pas par nombre de points : Soleil, Lune et Ascendant 3 chacun, Mercure, Vénus, Mars et MC 2, Jupiter et Saturne 1,5, Uranus, Neptune et Pluton 1. La raison : Pluton reste vingt ans dans un signe — le compter à égalité avec le Soleil décrirait toute une génération, pas vous. Somme des poids : {n}.',
+      noAngles: 'Sans heure de naissance, ni Ascendant ni MC — 5 poids sur 23 disparaissent, et la répartition n’est plus la même.',
+      tie2: '{a} et {b} sont à égalité — aucun ne donne le ton à lui seul',
+      tieMany: 'les éléments sont presque à égalité, sans accent net',
+      evenEl: 'aucun élément n’est en retrait ici',
+      evenMo: 'aucune des trois modalités n’est en retrait ici',
+      ascNeedsTime: 'heure de naissance requise',
+      big3Note: 'Soleil, Lune et Ascendant sont les trois points par lesquels commence toute carte. Touchez pour les voir dans la roue.',
+      mapIntro: 'voici les trois points sur lesquels repose votre carte.',
+      birthData: 'Données de naissance',
+      yourData: 'Vos données',
+      cityUnset: 'non renseigné',
+      edit: 'Modifier les données',
+      editClose: 'Fermer',
+      dataNote: 'Tout est calculé dans ce navigateur et n’est envoyé nulle part. L’export est un fichier JSON : votre profil, la seconde personne et vos événements enregistrés.',
+      exportBtn: 'Télécharger mes données',
+      clearBtn: 'Tout effacer',
+      clearSure: 'Sûr ? Appuyez encore',
+      el: {
+        fire: { lead: 'le feu domine : vous partez avant d’avoir fini de planifier, et le rythme, c’est vous', low: 'peu de feu — la première impulsion vient rarement seule, il lui faut un motif extérieur' },
+        earth: { lead: 'la terre domine : vous croyez ce qui se vérifie, se compte et se touche', low: 'peu de terre — le concret et la routine coûtent plus d’efforts que les idées' },
+        air: { lead: 'l’air domine : nommer et comprendre d’abord, ressentir ensuite', low: 'peu d’air — prendre du recul sur sa propre situation demande un vrai effort' },
+        water: { lead: 'l’eau domine : vous lisez l’humeur d’une pièce avant son contenu', low: 'peu d’eau — les émotions se décrivent plus facilement qu’elles ne se traversent' }
+      },
+      mo: {
+        cardinal: { lead: 'dominante cardinale : vous démarrez le premier, avec ou sans plan', low: 'peu de cardinal — commencer est souvent le plus dur' },
+        fixed: { lead: 'dominante fixe : vous menez à terme et supportez mal qu’on change les règles en route', low: 'peu de fixe — tenir un cap coûte plus que le choisir' },
+        mutable: { lead: 'dominante mutable : vous vous adaptez plus vite que vous ne vous attachez', low: 'peu de mutable — un changement de plan soudain vous prend plus qu’aux autres' }
+      }
+    },
     mcElementText: {
       'air-air': 'Deux signes d’air parlent sans fin et manquent rarement de sujets, même si le lien peut rester plus cérébral qu’émotionnel.',
       'air-earth': 'L’air apporte des idées et la terre apporte de la structure, donc ce duo doit travailler pour traduire les projets en étapes réelles et concrètes.',
@@ -3295,6 +3533,40 @@ var IT = {
                'Bilancia', 'Scorpione', 'Sagittario', 'Capricorno', 'Acquario', 'Pesci'],
     elements: { fire: 'Fuoco', earth: 'Terra', air: 'Aria', water: 'Acqua' },
     modes: { cardinal: 'Cardinale', fixed: 'Fisso', mutable: 'Mutabile' },
+    /* Баланс стихий и крестов: разбор того, что посчитал
+       Engine.balance. Веса и порог дефицита — там же. */
+    bal: {
+      how: 'Come viene calcolato',
+      method: 'Conteggio a pesi, non a numero di punti: Sole, Luna e Ascendente 3 ciascuno, Mercurio, Venere, Marte e MC 2, Giove e Saturno 1,5, Urano, Nettuno e Plutone 1. Il motivo: Plutone resta vent’anni in un segno, quindi contarlo alla pari del Sole descriverebbe un’intera generazione e non lei. Somma dei pesi: {n}.',
+      noAngles: 'Senza ora di nascita non ci sono né Ascendente né MC — 5 pesi su 23 vengono a mancare, ed è una distribuzione diversa.',
+      tie2: '{a} e {b} sono alla pari — nessuno dei due detta il tono da solo',
+      tieMany: 'gli elementi sono quasi in parità, senza un accento netto',
+      evenEl: 'qui nessun elemento resta scoperto',
+      evenMo: 'qui nessuna delle tre modalità resta scoperta',
+      ascNeedsTime: 'serve l’ora di nascita',
+      big3Note: 'Sole, Luna e Ascendente sono i tre punti da cui parte ogni carta. Tocchi per vederli nella ruota.',
+      mapIntro: 'ecco i tre punti su cui si regge la sua carta.',
+      birthData: 'Dati di nascita',
+      yourData: 'I suoi dati',
+      cityUnset: 'non indicato',
+      edit: 'Modifica i dati',
+      editClose: 'Chiudi',
+      dataNote: 'Tutto viene calcolato in questo browser e non viene inviato da nessuna parte. L’esportazione è un file JSON: profilo, seconda persona ed eventi salvati.',
+      exportBtn: 'Scarica i miei dati',
+      clearBtn: 'Cancella tutto',
+      clearSure: 'Sicuro? Prema di nuovo',
+      el: {
+        fire: { lead: 'guida il fuoco: parte prima di aver finito di pianificare, e il ritmo lo tiene lei', low: 'poco fuoco — la prima spinta arriva di rado da sola, di solito serve un motivo esterno' },
+        earth: { lead: 'guida la terra: crede a ciò che si può verificare, contare e toccare', low: 'poca terra — il concreto e la routine costano più fatica delle idee' },
+        air: { lead: 'guida l’aria: prima nominare e capire, sentire dopo', low: 'poca aria — prendere le distanze dalla propria situazione costa fatica' },
+        water: { lead: 'guida l’acqua: legge l’umore di una stanza prima del suo contenuto', low: 'poca acqua — le emozioni si descrivono meglio di quanto si attraversino' }
+      },
+      mo: {
+        cardinal: { lead: 'prevalenza cardinale: parte per primo, con o senza piano', low: 'poco cardinale — cominciare è spesso la parte più difficile' },
+        fixed: { lead: 'prevalenza fissa: porta a termine e mal sopporta che le regole cambino a metà', low: 'poco fisso — tenere la rotta costa più che sceglierla' },
+        mutable: { lead: 'prevalenza mutabile: si adatta più in fretta di quanto si affezioni', low: 'poco mutabile — un cambio di piano improvviso le toglie più che ad altri' }
+      }
+    },
     mcElementText: {
       'air-air': 'Due segni d’aria parlano senza fine e raramente restano a corto di idee, anche se il legame può restare più cerebrale che emotivo.',
       'air-earth': 'L’aria porta idee e la terra porta struttura, quindi questa coppia deve lavorare per tradurre i piani in passi concreti.',
@@ -3747,6 +4019,40 @@ var PT = {
                'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'],
     elements: { fire: 'Fogo', earth: 'Terra', air: 'Ar', water: 'Água' },
     modes: { cardinal: 'Cardinal', fixed: 'Fixo', mutable: 'Mutável' },
+    /* Баланс стихий и крестов: разбор того, что посчитал
+       Engine.balance. Веса и порог дефицита — там же. */
+    bal: {
+      how: 'Como isto é calculado',
+      method: 'Contado por peso, não por número de pontos: Sol, Lua e Ascendente 3 cada, Mercúrio, Vênus, Marte e MC 2, Júpiter e Saturno 1,5, Urano, Netuno e Plutão 1. O motivo: Plutão fica vinte anos num signo, então contá-lo igual ao Sol descreveria uma geração inteira e não você. Soma dos pesos: {n}.',
+      noAngles: 'Sem hora de nascimento não há Ascendente nem MC — 5 dos 23 pesos saem da conta, e a distribuição passa a ser outra.',
+      tie2: '{a} e {b} estão empatados — nenhum define o tom sozinho',
+      tieMany: 'os elementos estão quase equilibrados, sem acento claro',
+      evenEl: 'aqui nenhum elemento fica de fora',
+      evenMo: 'aqui nenhuma das três modalidades fica de fora',
+      ascNeedsTime: 'é preciso a hora de nascimento',
+      big3Note: 'Sol, Lua e Ascendente são os três pontos por onde começa qualquer mapa. Toque para vê-los na roda.',
+      mapIntro: 'estes são os três pontos em que o seu mapa se apoia.',
+      birthData: 'Dados de nascimento',
+      yourData: 'Os seus dados',
+      cityUnset: 'não informado',
+      edit: 'Alterar dados',
+      editClose: 'Fechar',
+      dataNote: 'Tudo é calculado neste navegador e não é enviado a lugar nenhum. A exportação é um arquivo JSON: perfil, segunda pessoa e eventos salvos.',
+      exportBtn: 'Baixar meus dados',
+      clearBtn: 'Apagar tudo',
+      clearSure: 'Tem certeza? Pressione de novo',
+      el: {
+        fire: { lead: 'o fogo lidera: você começa antes de terminar de planejar, e o ritmo é seu', low: 'pouco fogo — o primeiro impulso raramente vem sozinho, costuma precisar de um motivo de fora' },
+        earth: { lead: 'a terra lidera: você confia no que dá para verificar, contar e tocar', low: 'pouca terra — o concreto e a rotina custam mais esforço do que as ideias' },
+        air: { lead: 'o ar lidera: primeiro nomear e entender, sentir depois', low: 'pouco ar — afastar-se um passo da própria situação dá trabalho' },
+        water: { lead: 'a água lidera: você lê o clima de uma sala antes do conteúdo dela', low: 'pouca água — as emoções são mais fáceis de descrever do que de habitar' }
+      },
+      mo: {
+        cardinal: { lead: 'peso cardinal: você sai primeiro, com plano ou sem', low: 'pouco cardinal — começar costuma ser a parte mais difícil' },
+        fixed: { lead: 'peso fixo: você leva até o fim e não gosta que mudem as regras no meio', low: 'pouco fixo — manter o rumo custa mais do que escolhê-lo' },
+        mutable: { lead: 'peso mutável: você se adapta mais rápido do que se apega', low: 'pouco mutável — uma mudança de plano repentina tira mais de você do que dos outros' }
+      }
+    },
     mcElementText: {
       'air-air': 'Dois signos de ar conversam sem parar e raramente ficam sem ideias, embora o vínculo possa ser mais cerebral do que emocional.',
       'air-earth': 'O ar traz ideias e a terra traz estrutura, então esta dupla precisa se esforçar para traduzir planos em passos reais e concretos.',
@@ -4199,6 +4505,40 @@ var TR = {
                'Terazi', 'Akrep', 'Yay', 'Oğlak', 'Kova', 'Balık'],
     elements: { fire: 'Ateş', earth: 'Toprak', air: 'Hava', water: 'Su' },
     modes: { cardinal: 'Öncü', fixed: 'Sabit', mutable: 'Değişken' },
+    /* Баланс стихий и крестов: разбор того, что посчитал
+       Engine.balance. Веса и порог дефицита — там же. */
+    bal: {
+      how: 'Bu nasıl hesaplanıyor',
+      method: 'Nokta sayısıyla değil, ağırlıkla sayılır: Güneş, Ay ve Yükselen 3’er, Merkür, Venüs, Mars ve MC 2’şer, Jüpiter ve Satürn 1,5, Uranüs, Neptün ve Plüton 1. Nedeni: Plüton bir burçta yirmi yıl kalır; onu Güneş’le eşit saymak sizi değil, koca bir kuşağı anlatırdı. Ağırlık toplamı: {n}.',
+      noAngles: 'Doğum saati olmadan ne Yükselen ne MC vardır — 23 ağırlığın 5’i düşer, bu da başka bir dağılımdır.',
+      tie2: '{a} ile {b} başa baş — hiçbiri tek başına tonu belirlemiyor',
+      tieMany: 'elementler neredeyse eşit dağılmış, belirgin bir vurgu yok',
+      evenEl: 'burada hiçbir element eksik kalmıyor',
+      evenMo: 'burada üç nitelikten hiçbiri eksik kalmıyor',
+      ascNeedsTime: 'doğum saati gerekli',
+      big3Note: 'Güneş, Ay ve Yükselen her haritanın başladığı üç noktadır. Çarkta görmek için dokunun.',
+      mapIntro: 'haritanızın dayandığı üç nokta bunlar.',
+      birthData: 'Doğum bilgileri',
+      yourData: 'Verileriniz',
+      cityUnset: 'belirtilmedi',
+      edit: 'Bilgileri değiştir',
+      editClose: 'Kapat',
+      dataNote: 'Her şey bu tarayıcıda hesaplanır ve hiçbir yere gönderilmez. Dışa aktarım bir JSON dosyasıdır: profiliniz, ikinci kişi ve kaydettiğiniz olaylar.',
+      exportBtn: 'Verilerimi indir',
+      clearBtn: 'Hepsini sil',
+      clearSure: 'Emin misiniz? Tekrar basın',
+      el: {
+        fire: { lead: 'ateş önde: planlamayı bitirmeden başlarsınız, tempoyu da kendiniz taşırsınız', low: 'ateş az — ilk itiş nadiren kendiliğinden gelir, genelde dışarıdan bir sebep gerekir' },
+        earth: { lead: 'toprak önde: doğrulanabilene, sayılabilene ve dokunulabilene güvenirsiniz', low: 'toprak az — somut olan ve rutin, fikirlerden daha çok emek ister' },
+        air: { lead: 'hava önde: önce adını koyup anlamak, hissetmek sonra', low: 'hava az — kendi durumunuza bir adım geri çekilip bakmak zor gelir' },
+        water: { lead: 'su önde: bir odanın havasını içeriğinden önce okursunuz', low: 'su az — duyguları anlatmak, içinde durmaktan kolay gelir' }
+      },
+      mo: {
+        cardinal: { lead: 'öncü ağırlıklı: planlı ya da plansız, ilk siz yola çıkarsınız', low: 'öncü az — başlamak çoğu zaman en zor kısımdır' },
+        fixed: { lead: 'sabit ağırlıklı: başladığınızı bitirirsiniz, yolun ortasında kural değişmesinden hoşlanmazsınız', low: 'sabit az — rotayı tutmak, onu seçmekten pahalıya gelir' },
+        mutable: { lead: 'değişken ağırlıklı: bağlanmadan önce uyum sağlarsınız', low: 'değişken az — ani bir plan değişikliği sizden başkalarına göre daha çok alır' }
+      }
+    },
     mcElementText: {
       'air-air': 'İki hava burcu durmadan konuşur ve nadiren fikirleri tükenir, ancak bağ duygusaldan çok zihinsel kalabilir.',
       'air-earth': 'Hava fikir getirir, toprak ise yapı getirir; bu yüzden bu ikili, planları gerçek ve somut adımlara çevirmek için çaba göstermelidir.',
