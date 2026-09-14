@@ -1735,13 +1735,69 @@
       '</aside>';
   }
 
+  /* --- двойное колесо: натал + небо на выбранную дату ------------------------
+
+     Карта была единственным разделом, который не слушал общие часы: она
+     всегда показывала натал и никогда — небо. То есть раздел, где у человека
+     нарисована его карта, ничего не знал о том, что происходит с ней прямо
+     сейчас, хотя весь остальной продукт про это и говорит.
+
+     Теперь снаружи полосы знаков идёт второе кольцо — положения тел на дату
+     из Clock, той же панелью перемотки, что в Луне и Ретроградах. Транзитную
+     точку можно выбрать так же, как натальную, и инспектор покажет, чего она
+     касается в карте и когда аспект точен.
+
+     Режим выключается: кому нужен чистый натал, тот его получает, и это
+     состояние живёт вместе с выбранной точкой в адресе. */
+  var chartTx = true;
+
+  function chartTxPoints(date) {
+    return E.BODIES.map(function (b) { return E.bodyAt(b, date); });
+  }
+
+  function chartModeHtml() {
+    return '<div class="chartmode" role="group" aria-label="' + esc(T.sec.wheelMode) + '">' +
+      '<button type="button" class="chartmode__b' + (chartTx ? '' : ' on') +
+        '" data-chartmode="natal" aria-pressed="' + (!chartTx) + '">' + T.sec.modeNatal + '</button>' +
+      '<button type="button" class="chartmode__b' + (chartTx ? ' on' : '') +
+        '" data-chartmode="transit" aria-pressed="' + chartTx + '">' + T.sec.modeTransit + '</button>' +
+      '</div>';
+  }
+
+  function chartTxChipsHtml(txPts) {
+    return '<div class="chartchips chartchips--tx">' +
+      '<span class="chartchips__lab">' + T.ui.transitCol + '</span>' +
+      txPts.map(function (p) {
+        return '<button type="button" class="chip chip--tx' +
+          (chartSel === 't:' + p.name ? ' on' : '') + '" data-txpoint="' + p.name + '">' +
+          pName(p.name) + ' ' + ZODIAC_GLYPHS[p.sign.index] +
+          (p.retro ? ' <span class="chip__r">R</span>' : '') + '</button>';
+      }).join('') + '</div>';
+  }
+
   function chartBodyHtml() {
     var pts = chartPts();
-    if (!chartSel || !chartFind(pts, chartSel)) { chartSel = pts[0].name; }
-    return '<div class="chart-pane">' +
-        '<div class="wheelbox">' + W.render(natal, 620, chartSel) +
-          chartChipsHtml(pts) + '</div>' +
-        chartInspectorHtml(pts) +
+    var date = Clock.get();
+    var txPts = chartTx ? chartTxPoints(date) : null;
+    /* Тела те же, что нарисованы на кольце. По умолчанию activeTransits
+       берёт ещё и Узел — он оказался бы в списке контактов точкой, которой
+       на колесе нет, и кликнуть по ней было бы некуда. */
+    var txAsp = chartTx ? E.activeTransits(natal, date, { bodies: E.BODIES }) : null;
+
+    /* Выбор мог остаться с прошлой отрисовки и указывать в выключенное
+       кольцо — тогда возвращаемся на первую натальную точку, а не рисуем
+       инспектор в пустоту. */
+    var selIsTx = chartSel && chartSel.indexOf('t:') === 0;
+    if (selIsTx && !chartTx) { chartSel = pts[0].name; selIsTx = false; }
+    if (!chartSel || (!selIsTx && !chartFind(pts, chartSel))) { chartSel = pts[0].name; selIsTx = false; }
+
+    return (chartTx ? dateBarHtml() : '') + chartModeHtml() +
+      '<div class="chart-pane">' +
+        '<div class="wheelbox">' +
+          W.render(natal, 620, chartSel, { transits: txPts, txAspects: txAsp }) +
+          chartChipsHtml(pts) +
+          (txPts ? chartTxChipsHtml(txPts) : '') + '</div>' +
+        (selIsTx ? chartTxInspectorHtml(txPts, txAsp) : chartInspectorHtml(pts)) +
       '</div>' +
       (natal.asc ? '' : card(null, '<p class="empty">' + T.ui.timeMissing + '</p>')) +
       '<div class="chart-tables">' +
@@ -1751,11 +1807,77 @@
       '</div>';
   }
 
+  /* Инспектор транзитной точки. Отвечает на другой вопрос, чем натальный:
+     не «что это за точка в вас», а «что она сейчас делает с вашей картой».
+     Поэтому вместо трактовки знака — дом, в который она идёт, список
+     контактов с наталом и, для ближайшего из них, точная дата: она уже
+     считается в transits.js, и без неё «квадрат к Солнцу» — факт без срока. */
+  function chartTxInspectorHtml(txPts, txAsp) {
+    var name = chartSel.slice(2);
+    var p = null;
+    txPts.forEach(function (x) { if (x.name === name) { p = x; } });
+    if (!p) { return ''; }
+
+    var house = natal.asc ? E.houseOfSign(natal, p.sign.index) : null;
+    var houseHtml = house
+      ? '<div class="phouse"><span class="phouse__n">' + T.houses[house].n + '</span>' +
+        '<span class="phouse__t">' + T.houses[house].t + '</span></div>'
+      : '<p class="pmuted">' + T.sec.houseUnknown + '</p>';
+
+    var own = txAsp.filter(function (a) { return a.transit === name; })
+      .sort(function (a, b) { return a.orb - b.orb; }).slice(0, 6);
+
+    var aspHtml = own.length ? '<ul class="pasp">' + own.map(function (a) {
+      return '<li class="pasp__i"><button type="button" class="pasp__b" data-point="' + a.natal + '">' +
+        '<span class="pasp__main">' + T.aspects[a.aspect] + ' <b>' + pName(a.natal) + '</b></span>' +
+        toneTag(a.tone) +
+        '<span class="pasp__meta">' + T.sec.orb + ' ' + fmtDeg(a.orb) + ' · ' +
+          (a.applying ? T.sec.applying : T.sec.separating) + '</span>' +
+        '<span class="pasp__go" aria-hidden="true">›</span></button></li>';
+    }).join('') + '</ul>' : '<p class="pmuted">' + T.sec.noContacts + '</p>';
+
+    /* Точные даты ближайшего контакта. Считаются только для одного, самого
+       тесного: Transits.detail прогоняет поиск границ и точных моментов по
+       шагам, и на шести аспектах сразу это заметно подвешивает отрисовку.
+       Аспект без срока — факт, с которым нечего делать: «квадрат к Солнцу»
+       без даты не отличается от «квадрат когда-нибудь». */
+    var exactHtml = '';
+    if (own.length) {
+      var top = own[0];
+      var d = Tr.detail(natal, top, Clock.get());
+      if (d && d.exacts && d.exacts.length) {
+        exactHtml = '<div class="insp__sec"><h3 class="pcard__t">' + T.ui.exactDates + '</h3>' +
+          '<p class="pmuted">' + pName(top.transit) + ' ' + T.aspects[top.aspect] + ' ' +
+          pName(top.natal) + '</p>' +
+          (d.triple ? '<p class="pmuted">' + T.sec.tripleNote + '</p>' : '') +
+          '<ul class="tx-exact">' +
+          d.exacts.slice(0, 3).map(function (m) {
+            return '<li>' + fmtDateTime(m) + '</li>';
+          }).join('') + '</ul></div>';
+      }
+    }
+
+    return '<aside class="insp insp--tx" id="chartInsp">' +
+      '<div class="insp__head"><span class="insp__icon">' + ZODIAC_GLYPHS[p.sign.index] + '</span>' +
+        '<div><div class="insp__title">' + pName(p.name) +
+          ' <span class="insp__badge">' + T.ui.transitCol + '</span></div>' +
+        '<div class="insp__sub">' + signName(p.sign) + ' ' + fmtDeg(p.sign.degree) +
+        (p.retro ? ' · R' : '') + '</div></div></div>' +
+      '<div class="insp__sec">' + houseHtml + '</div>' +
+      '<div class="insp__sec"><h3 class="pcard__t">' + termHtml('transit', T.sec.txTouches) + '</h3>' + aspHtml + '</div>' +
+      exactHtml +
+      '</aside>';
+  }
+
   function rerenderChart() {
     var body = el('chartBody');
     if (!body) { return; }
-    syncHash('chart', [chartSel]);
     body.innerHTML = chartBodyHtml();
+    /* Адрес правим ПОСЛЕ отрисовки: при выключении транзитного кольца
+       chartBodyHtml сбрасывает выбор с транзитной точки на натальную, и
+       адрес, записанный заранее, остался бы ссылаться на 't:Mars', которого
+       на экране уже нет. */
+    syncHash('chart', [chartSel, chartTx && !Clock.isToday() ? Clock.toKey() : null]);
     body.classList.remove('fade-in');
     void body.offsetWidth;
     body.classList.add('fade-in');
@@ -1789,6 +1911,37 @@
         }
       });
     });
+
+    /* Транзитные точки — то же самое, но выбор помечается префиксом 't:',
+       чтобы одно поле chartSel различало натальную Венеру и сегодняшнюю. */
+    Array.prototype.slice.call(body.querySelectorAll('[data-txpoint]')).forEach(function (node) {
+      node.addEventListener('click', function () {
+        select('t:' + node.getAttribute('data-txpoint'));
+      });
+      if (node.classList.contains('w-tx')) {
+        node.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
+            ev.preventDefault();
+            select('t:' + node.getAttribute('data-txpoint'));
+          }
+        });
+      }
+    });
+
+    Array.prototype.slice.call(body.querySelectorAll('[data-chartmode]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        var want = b.getAttribute('data-chartmode') === 'transit';
+        if (want === chartTx) { return; }
+        chartTx = want;
+        /* Тяжёлый шаг: включение кольца считает десять положений тел и все
+           контакты с наталом. Показываем счёт, иначе нажатие выглядит как
+           подвисшая кнопка. */
+        withBusy(body, rerenderChart);
+      });
+    });
+
+    /* Панель перемотки даты — та же, что в Луне и Ретроградах. */
+    bindDateBar(body, function () { withBusy(body, rerenderChart); });
   }
 
   views.chart = function () {
@@ -2759,6 +2912,13 @@
         }
         return;
       }
+      /* На Карте точка может быть транзитной — 't:Mars'. Проверяем имя без
+         префикса, иначе ссылка на транзитную точку молча отбрасывалась бы
+         как мусор и открывала бы карту с натальным Солнцем. */
+      if (name === 'chart' && a.indexOf('t:') === 0) {
+        if (POINT_NAMES.indexOf(a.slice(2)) >= 0) { chartSel = a; chartTx = true; }
+        return;
+      }
       if (POINT_NAMES.indexOf(a) < 0) { return; }
       if (name === 'chart') { chartSel = a; }
       if (name === 'retro' && R.BODIES.indexOf(a) >= 0) { rxBody = a; }
@@ -2812,7 +2972,7 @@
     var dateArg = Clock.isToday() ? null : Clock.toKey();
     if (h === 'retro') { syncHash('retro', [rxBody, dateArg]); }
     if (h === 'moon') { syncHash('moon', [dateArg]); }
-    if (h === 'chart') { syncHash('chart', [chartSel]); }
+    if (h === 'chart') { syncHash('chart', [chartSel, chartTx ? dateArg : null]); }
     if (h === 'horoscope' && txSel) { syncHash('horoscope', [txSel.split('|').join('-')]); }
     if (h === 'retro') { positionSegIndicator('rxSegbar', 'rxSegbarInd', true); }
     if (h === 'horoscope') { positionHzIndicator(true); hzAiEnhance(hzPeriod); }

@@ -502,7 +502,12 @@
         communication: 'Rozmowy częściej wymagają doprecyzowania: to, co wydawało się jasne, dobrze powiedzieć drugi raz.',
         energy: 'Tempo bywa nierówne: sprawy idą nie po prostej, lecz z nawrotami.',
         inner: 'Dobry moment, żeby zauważyć powtarzające się reakcje i to, do czego wracacie myślami.'
-      }
+      },
+      /* Двойное колесо: натал + небо на выбранную дату. */
+      wheelMode: 'Tryb koła',
+      modeNatal: 'Sama mapa',
+      modeTransit: 'Mapa i niebo',
+      txTouches: 'Czego dotyka w Twojej mapie'
     }
   };
 
@@ -992,7 +997,12 @@
         communication: 'Conversations more often need a second pass: what seemed clear is worth saying again.',
         energy: 'The pace can feel uneven — things move in loops rather than a straight line.',
         inner: 'A good moment to notice recurring reactions and what your mind keeps coming back to.'
-      }
+      },
+      /* Двойное колесо: натал + небо на выбранную дату. */
+      wheelMode: 'Wheel mode',
+      modeNatal: 'Natal only',
+      modeTransit: 'Natal and sky',
+      txTouches: 'What it touches in your chart'
     }
   };
 
@@ -1483,7 +1493,12 @@ var RU = {
         communication: 'Разговоры чаще требуют второго захода: то, что казалось понятным, стоит проговорить ещё раз.',
         energy: 'Темп может ощущаться неровным — дела идут не по прямой, а с возвратами.',
         inner: 'Подходящий момент заметить повторяющиеся реакции и то, к чему вы мысленно возвращаетесь.'
-      }
+      },
+      /* Двойное колесо: натал + небо на выбранную дату. */
+      wheelMode: 'Режим колеса',
+      modeNatal: 'Только натал',
+      modeTransit: 'Натал и небо',
+      txTouches: 'Чего касается в вашей карте'
     }
   };
 var UK = {
@@ -1969,7 +1984,12 @@ var UK = {
         communication: 'Розмови частіше потребують другого заходу: те, що здавалося зрозумілим, варто проговорити ще раз.',
         energy: 'Темп може відчуватися нерівним — справи йдуть не по прямій, а з поверненнями.',
         inner: 'Слушний момент помітити повторювані реакції і те, до чого ви подумки повертаєтеся.'
-      }
+      },
+      /* Двойное колесо: натал + небо на выбранную дату. */
+      wheelMode: 'Режим кола',
+      modeNatal: 'Тільки натал',
+      modeTransit: 'Натал і небо',
+      txTouches: 'Чого торкається у вашій карті'
     }
   };
 var DE = {
@@ -2455,7 +2475,12 @@ var DE = {
         communication: 'Gespräche brauchen öfter einen zweiten Durchgang: Was klar schien, sagt man besser noch einmal.',
         energy: 'Das Tempo kann ungleichmäßig wirken — die Dinge laufen in Schleifen statt geradeaus.',
         inner: 'Ein guter Moment, wiederkehrende Reaktionen zu bemerken und das, worauf Ihre Gedanken zurückkommen.'
-      }
+      },
+      /* Двойное колесо: натал + небо на выбранную дату. */
+      wheelMode: 'Rad-Modus',
+      modeNatal: 'Nur Radix',
+      modeTransit: 'Radix und Himmel',
+      txTouches: 'Was es in Ihrem Horoskop berührt'
     }
   };
 var ES = {
@@ -2941,7 +2966,12 @@ var ES = {
         communication: 'Las conversaciones piden una segunda pasada: lo que parecía claro conviene decirlo otra vez.',
         energy: 'El ritmo puede sentirse irregular: las cosas avanzan en bucles y no en línea recta.',
         inner: 'Buen momento para notar reacciones que se repiten y aquello a lo que vuelve con el pensamiento.'
-      }
+      },
+      /* Двойное колесо: натал + небо на выбранную дату. */
+      wheelMode: 'Modo de rueda',
+      modeNatal: 'Solo natal',
+      modeTransit: 'Natal y cielo',
+      txTouches: 'Qué toca en su carta'
     }
   };
 var FR = {
@@ -3427,7 +3457,12 @@ var FR = {
         communication: 'Les échanges demandent souvent un second passage : ce qui semblait clair gagne à être redit.',
         energy: 'Le rythme peut sembler irrégulier : les choses avancent par boucles plutôt qu’en ligne droite.',
         inner: 'Un bon moment pour repérer les réactions qui reviennent et ce vers quoi la pensée retourne.'
-      }
+      },
+      /* Двойное колесо: натал + небо на выбранную дату. */
+      wheelMode: 'Mode de la roue',
+      modeNatal: 'Natal seul',
+      modeTransit: 'Natal et ciel',
+      txTouches: 'Ce qu’il touche dans votre carte'
     }
   };
 var IT = {
@@ -3913,7 +3948,12 @@ var IT = {
         communication: 'Le conversazioni chiedono spesso un secondo passaggio: ciò che sembrava chiaro va detto di nuovo.',
         energy: 'Il ritmo può risultare irregolare: le cose avanzano a cicli invece che in linea retta.',
         inner: 'Buon momento per notare le reazioni che si ripetono e ciò a cui il pensiero torna.'
-      }
+      },
+      /* Двойное колесо: натал + небо на выбранную дату. */
+      wheelMode: 'Modo della ruota',
+      modeNatal: 'Solo natale',
+      modeTransit: 'Natale e cielo',
+      txTouches: 'Che cosa tocca nella sua carta'
     }
   };
 var PT = {
@@ -4399,7 +4439,12 @@ var PT = {
         communication: 'As conversas pedem com mais frequência uma segunda passagem: o que parecia claro vale ser dito de novo.',
         energy: 'O ritmo pode parecer irregular: as coisas avançam em voltas, não em linha reta.',
         inner: 'Bom momento para notar reações que se repetem e aquilo a que o pensamento retorna.'
-      }
+      },
+      /* Двойное колесо: натал + небо на выбранную дату. */
+      wheelMode: 'Modo da roda',
+      modeNatal: 'Só natal',
+      modeTransit: 'Natal e céu',
+      txTouches: 'O que toca no seu mapa'
     }
   };
 var TR = {
@@ -4885,7 +4930,12 @@ var TR = {
         communication: 'Konuşmalar çoğu zaman ikinci bir tur ister: açık görünen şeyi bir kez daha söylemek iyi olur.',
         energy: 'Tempo dalgalı hissedilebilir: işler düz bir çizgide değil, dönerek ilerler.',
         inner: 'Tekrarlayan tepkileri ve zihninizin geri döndüğü şeyleri fark etmek için iyi bir an.'
-      }
+      },
+      /* Двойное колесо: натал + небо на выбранную дату. */
+      wheelMode: 'Çark modu',
+      modeNatal: 'Yalnızca natal',
+      modeTransit: 'Natal ve gökyüzü',
+      txTouches: 'Haritanızda neye dokunuyor'
     }
   };
 

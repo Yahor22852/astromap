@@ -1619,3 +1619,73 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
    отъезжала бы от собственного заголовка. */
 .view--prof > .card { max-width: 720px; margin-right: auto; }
 .view--prof > .card + .card { margin-top: 18px; }
+
+/* --- двойное колесо: транзитное кольцо --------------------------------------
+   Транзитные точки должны читаться как ДРУГОЙ слой, а не как ещё десять
+   планет в карте. Различие сделано тремя признаками сразу, а не одним
+   цветом: точка мельче (11 против 13), заливка полая вместо сплошной, и
+   кольцо физически лежит снаружи полосы знаков. Любого из трёх хватает,
+   чтобы не спутать, — в том числе без цветового зрения. */
+/* Заливка непрозрачная, цветом фона: через полый кружок просвечивали
+   градусные штрихи и линии колец, и двухбуквенный код поверх них не
+   читался. Отличие от натальной точки держится на трёх других признаках —
+   размер (11 против 13), нейтральная обводка вместо акцентной и само
+   положение снаружи полосы знаков. */
+.w-txdot {
+  fill: var(--bg); stroke: var(--neutral); stroke-width: 1.5;
+}
+.w-txdot--r { stroke: var(--hard); stroke-dasharray: 3 2.5; }
+.w-txcode {
+  font-family: var(--sans); font-size: 10px; font-weight: 600;
+  fill: var(--ink-dim); text-anchor: middle; pointer-events: none;
+}
+.w-tx { cursor: pointer; }
+.w-tx--sel .w-txdot { stroke: var(--ink); stroke-width: 2.4; fill: var(--surf-sel); }
+.w-tx--sel .w-txcode { fill: var(--ink); font-weight: 700; }
+/* Гашение мягче, чем у натальных точек: транзитное кольцо и так тоньше и
+   бледнее, и при 0.42 оно пропадало с экрана совсем. */
+.w-tx--dim { opacity: .6; }
+.w-tx:focus { outline: none; }
+.w-tx:focus-visible .w-txdot { stroke: var(--ink); stroke-width: 3; }
+.w-tx:focus-visible .w-txcode { fill: var(--ink); font-weight: 700; }
+
+/* Линия транзит-натал: пунктир, чтобы отличаться от сплошных натальных
+   аспектов в том же круге. Рисуется только для выбранной точки — все сразу
+   (за двадцать линий) превращают внутренний круг в клубок. */
+.w-txasp { stroke-width: 1.6; stroke-dasharray: 5 4; pointer-events: none; }
+
+/* Переключатель режима. Не тумблер: два подписанных состояния честнее —
+   «Только натал» и «Натал и небо» говорят, что получится, а тумблер без
+   подписи заставляет нажать, чтобы узнать. */
+.chartmode { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 14px;
+  border-radius: 999px; background: var(--surf); border: 1px solid var(--line); }
+.chartmode__b {
+  padding: 7px 14px; border: 0; border-radius: 999px; cursor: pointer;
+  background: transparent; color: var(--ink-dim);
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  transition: background .2s ease, color .2s ease;
+}
+.chartmode__b:hover { color: var(--ink); }
+.chartmode__b.on { background: var(--nav-on); color: var(--ink); }
+.chartmode__b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Ряд транзитных чипов под натальными: тот же способ выбрать точку пальцем,
+   что и для натала, — кружки в SVG на ширине телефона мельче рекомендованной
+   цели. Полая рамка повторяет вид точки на кольце. */
+.chartchips--tx { margin-top: 8px; align-items: center; }
+.chartchips__lab {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-faint); margin-right: 4px;
+}
+.chip--tx { border-style: dashed; }
+.chip__r { color: var(--hard); font-weight: 700; }
+
+.insp--tx .insp__icon { border-style: dashed; }
+.insp__badge {
+  margin-left: 6px; padding: 2px 7px; border-radius: 999px;
+  border: 1px dashed var(--line); vertical-align: middle;
+  font-family: var(--sans); font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint);
+}
+.tx-exact { margin: 8px 0 0; padding-left: 18px; }
+.tx-exact li { font-size: 14px; color: var(--ink-dim); padding: 2px 0; }

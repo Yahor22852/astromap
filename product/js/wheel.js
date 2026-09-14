@@ -35,13 +35,35 @@
      в астрологической традиции. Без времени рождения на левом краю 0° Barana.
      selected — имя точки (Sun/Moon/.../ASC/MC) или null/undefined —
      подсвечивает эту точку и её аспекты, гасит остальные. */
-  function render(chart, size, selected) {
+  /* opts.transits — массив точек неба на выбранную дату ({name, lon, sign,
+     retro}); если он есть, колесо становится двойным: натал внутри, транзиты
+     снаружи полосы знаков. opts.txAspects — контакты транзитов с наталом
+     (результат Engine.activeTransits); линии рисуются не все подряд, а только
+     для выбранной точки, иначе внутренний круг превращается в клубок.
+
+     selected для транзитной точки приходит с префиксом 't:' — так одно поле
+     различает «моя Венера» и «Венера на небе сегодня», не заводя второго
+     состояния. */
+  function render(chart, size, selected, opts) {
     size = size || 520;
+    opts = opts || {};
+    var tx = opts.transits && opts.transits.length ? opts.transits : null;
     var cx = size / 2, cy = size / 2;
-    var rOuter = size * 0.47, rSign = size * 0.40, rPlanet = size * 0.345,
-        rInner = size * 0.30;
+
+    /* Без транзитов геометрия ровно прежняя — одиночное колесо не должно
+       меняться из-за того, что рядом появился режим, которым не пользуются.
+       С транзитами полоса знаков уезжает внутрь, освобождая внешнее кольцо. */
+    var rOuter   = size * (tx ? 0.485 : 0.47);
+    var rTx      = size * 0.448;
+    var rSignOut = tx ? size * 0.412 : rOuter;
+    var rSign    = size * (tx ? 0.352 : 0.40);
+    var rPlanet  = size * (tx ? 0.300 : 0.345);
+    var rInner   = size * (tx ? 0.245 : 0.30);
+
     var base = chart.asc ? chart.asc.lon : 0;
     var toAngle = function (lon) { return 180 + (lon - base); };
+    var selName = selected && selected.indexOf('t:') === 0 ? selected.slice(2) : selected;
+    var selIsTx = !!(selected && selected.indexOf('t:') === 0);
 
     /* Колесо — картинка со встроенными кнопками, поэтому role="img" ему не
        годится: он скрыл бы точки от вспомогательных технологий. Даём группе
@@ -53,18 +75,21 @@
     s.push('<title>' + ((g.T && g.T.ui && g.T.ui.chartTitle) || 'Chart') + '</title>');
 
     s.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + rOuter + '" class="w-ring"/>');
+    if (tx) {
+      s.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + rSignOut + '" class="w-ring w-ring--thin"/>');
+    }
     s.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + rSign + '" class="w-ring w-ring--thin"/>');
     s.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + rInner + '" class="w-ring w-ring--thin"/>');
 
     /* сектора знаков */
     for (var i = 0; i < 12; i++) {
       var a = toAngle(i * 30);
-      var p1 = pol(cx, cy, rSign, a), p2 = pol(cx, cy, rOuter, a);
+      var p1 = pol(cx, cy, rSign, a), p2 = pol(cx, cy, rSignOut, a);
       s.push('<line x1="' + p1[0].toFixed(1) + '" y1="' + p1[1].toFixed(1) +
              '" x2="' + p2[0].toFixed(1) + '" y2="' + p2[1].toFixed(1) + '" class="w-spoke"/>');
       /* Подпись сектора — сокращённое название знака, а не номер: цифра
          1..12 читается как номер дома и путает. */
-      var mid = pol(cx, cy, (rSign + rOuter) / 2, toAngle(i * 30 + 15));
+      var mid = pol(cx, cy, (rSign + rSignOut) / 2, toAngle(i * 30 + 15));
       var label = (g.T && g.T.signs) ? g.T.signs[i].slice(0, 3) : String(i + 1);
       s.push('<text x="' + mid[0].toFixed(1) + '" y="' + (mid[1] + 4).toFixed(1) +
              '" class="w-sign">' + label + '</text>');
@@ -93,7 +118,7 @@
       if (!pa || !pb) { return; }
       var A = pol(cx, cy, rInner, toAngle(pa.lon));
       var B = pol(cx, cy, rInner, toAngle(pb.lon));
-      var touches = selected && (x.a === selected || x.b === selected);
+      var touches = !selIsTx && selName && (x.a === selName || x.b === selName);
       var cls = 'w-asp' + (touches ? ' w-asp--sel' : (selected ? ' w-asp--dim' : ''));
       s.push('<line x1="' + A[0].toFixed(1) + '" y1="' + A[1].toFixed(1) +
              '" x2="' + B[0].toFixed(1) + '" y2="' + B[1].toFixed(1) +
@@ -124,7 +149,7 @@
       placed.push({ ang: ang, r: r });
       var c = pol(cx, cy, r, ang);
       var edge = pol(cx, cy, rSign, ang);
-      var isSel = selected && p.name === selected;
+      var isSel = !selIsTx && selName && p.name === selName;
       var cls = 'w-pt' + (isSel ? ' w-pt--sel' : (selected ? ' w-pt--dim' : ''));
       s.push('<g class="' + cls + '" data-point="' + p.name + '" tabindex="0" role="button" aria-label="' +
              pointLabel(p) + '">');
@@ -142,11 +167,71 @@
       s.push('</g>');
     });
 
+    /* --- транзитное кольцо ------------------------------------------------
+       Точки неба на выбранную дату, снаружи полосы знаков. Рисуются мельче
+       натальных и с отдельным классом: это не «ещё десять планет в вашей
+       карте», а другой слой, и спутать их нельзя. Расталкивание своё — с
+       натальными точками они не пересекаются, а между собой скучиваются
+       так же (Меркурий с Солнцем расходятся максимум на 28°). */
+    if (tx) {
+      var txPlaced = [];
+      tx.forEach(function (p) {
+        var tAng = toAngle(p.lon);
+        var tr = rTx;
+        txPlaced.forEach(function (q) {
+          var d = Math.abs(((tAng - q.ang + 540) % 360) - 180);
+          if (d < 11) { tr = Math.min(tr, q.r - 22); }
+        });
+        txPlaced.push({ ang: tAng, r: tr });
+        var tc = pol(cx, cy, tr, tAng);
+        var tEdge = pol(cx, cy, rSignOut, tAng);
+        var tSel = selIsTx && p.name === selName;
+        var tCls = 'w-tx' + (tSel ? ' w-tx--sel' : (selected ? ' w-tx--dim' : ''));
+        /* Подпись обязана называть слой: «Венера в Овне» на внешнем кольце и
+           на внутреннем — два разных факта, и без слова «транзит» незрячий
+           пользователь их не различит. */
+        var txWord = (g.T && g.T.ui && g.T.ui.transitCol) ? g.T.ui.transitCol + ': ' : '';
+        s.push('<g class="' + tCls + '" data-txpoint="' + p.name + '" tabindex="0" role="button" aria-label="' +
+               txWord + pointLabel(p) + '">');
+        s.push('<line x1="' + tc[0].toFixed(1) + '" y1="' + tc[1].toFixed(1) +
+               '" x2="' + tEdge[0].toFixed(1) + '" y2="' + tEdge[1].toFixed(1) + '" class="w-stem"/>');
+        s.push('<circle cx="' + tc[0].toFixed(1) + '" cy="' + tc[1].toFixed(1) +
+               '" r="18" class="w-hit"/>');
+        s.push('<circle cx="' + tc[0].toFixed(1) + '" cy="' + tc[1].toFixed(1) +
+               '" r="11" class="w-txdot' + (p.retro ? ' w-txdot--r' : '') + '"/>');
+        s.push('<text x="' + tc[0].toFixed(1) + '" y="' + (tc[1] + 3.5).toFixed(1) +
+               '" class="w-txcode">' + (CODE[p.name] || p.name.slice(0, 2)) + '</text>');
+        s.push('</g>');
+      });
+
+      /* Контакты транзитов с наталом — только для выбранной точки. Все сразу
+         (их бывает за двадцать) превращают внутренний круг в клубок, из
+         которого не выудить ни одной линии. */
+      if (selName && opts.txAspects) {
+        opts.txAspects.forEach(function (a) {
+          if (selIsTx ? a.transit !== selName : a.natal !== selName) { return; }
+          var tp = null, np = null;
+          tx.forEach(function (p) { if (p.name === a.transit) { tp = p; } });
+          pts.forEach(function (p) { if (p.name === a.natal) { np = p; } });
+          if (!tp || !np) { return; }
+          var P = pol(cx, cy, rInner, toAngle(tp.lon));
+          var Q = pol(cx, cy, rInner, toAngle(np.lon));
+          s.push('<line x1="' + P[0].toFixed(1) + '" y1="' + P[1].toFixed(1) +
+                 '" x2="' + Q[0].toFixed(1) + '" y2="' + Q[1].toFixed(1) +
+                 '" class="w-txasp" stroke="' + (TONE_COLOR[a.tone] || 'var(--neutral)') +
+                 '" opacity="' + Math.max(0.3, 0.9 - a.orb / 12).toFixed(2) + '"/>');
+        });
+      }
+    }
+
     /* оси ASC-DC и MC-IC */
     if (chart.asc) {
       [[chart.asc.lon, 'AC'], [chart.mc.lon, 'MC']].forEach(function (ax) {
+        /* Оси доводим до внешнего края полосы знаков, а не до края колеса:
+           в двойном режиме дальше идёт транзитное кольцо, и ось, прочерченная
+           сквозь него, перечёркивала бы транзитные точки. */
         var a1 = pol(cx, cy, rInner, toAngle(ax[0]));
-        var a2 = pol(cx, cy, rOuter, toAngle(ax[0]));
+        var a2 = pol(cx, cy, rSignOut, toAngle(ax[0]));
         s.push('<line x1="' + a1[0].toFixed(1) + '" y1="' + a1[1].toFixed(1) +
                '" x2="' + a2[0].toFixed(1) + '" y2="' + a2[1].toFixed(1) + '" class="w-axis"/>');
       });
