@@ -28,6 +28,7 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
      языку интерфейса, — а сохранялся индекс в списке. Десять языков на двух
      списках не живут вовсе, и от самих списков пришлось отказаться. */
   var FC = window.FunnelCities;
+  var W = window.FunnelWheel;
 
   var el = function (id) { return document.getElementById(id); };
   var all = function (sel) {
@@ -254,6 +255,69 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
   /* восстановление сохранённой даты */
   if (S.dob.d) { el('d1').value = S.dob.d; el('m1').value = S.dob.m; el('y1').value = S.dob.y; }
 
+  /* --- карта, которая собирается ------------------------------------------
+     Один код рисует круг на первом и на третьем экране, поэтому это
+     буквально одна и та же карта, в которую доезжают точки, а не две
+     похожие картинки. На вход идёт то, что УЖЕ посчитано: Солнце — после
+     даты, Луна и Асцендент — после времени и места.
+
+     Слот без величины остаётся пустым и объясняет, чего не хватает. Это не
+     приём нагнетания: без времени рождения Асцендента действительно не
+     существует, и подставить туда правдоподобное число было бы враньём. */
+  function mapPoints() {
+    var out = [];
+    var n = S.natal;
+    if (n) {
+      out.push({ key: 'sun',  lon: n.sunLon,  short: C.map.sunShort });
+      out.push({ key: 'moon', lon: n.moonLon, short: C.map.moonShort });
+      if (n.asc) { out.push({ key: 'asc', lon: n.ascLon, short: C.map.ascShort }); }
+    } else if (S.sunPreview) {
+      out.push({ key: 'sun', lon: S.sunPreview.sunLon, short: C.map.sunShort });
+    }
+    return out;
+  }
+
+  function mapSlots() {
+    var n = S.natal, p = S.sunPreview;
+    var sun = n ? n.sun : (p ? p.sun : null);
+    var fmt = function (sign) { return C.signs[sign.index] + ' ' + deg(sign.degree); };
+    return [
+      { label: C.map.sun,  value: sun ? fmt(sun) : C.map.waitDate, pending: !sun },
+      { label: C.map.moon, value: n ? fmt(n.moon) : C.map.waitTime, pending: !n },
+      { label: C.map.asc,  value: (n && n.asc) ? fmt(n.asc)
+          : (n ? C.map.noAsc : C.map.waitTime), pending: !(n && n.asc) }
+    ];
+  }
+
+  /* Текстовое описание круга для тех, кто его не видит: SVG без подписи —
+     для скринридера просто «изображение». */
+  function mapAria(slots) {
+    return slots.filter(function (sl) { return !sl.pending; })
+      .map(function (sl) { return sl.label + ' — ' + sl.value; }).join(', ');
+  }
+
+  /* legend: на первом экране круг — единственный результат, и подписи нужны
+     рядом с ним. На третьем те же значения уже стоят в карточках Луны и
+     Асцендента под картой, и вторая их копия — лишний блок и лишняя высота. */
+  function drawMap(node, withLegend) {
+    if (!node || !W) { return; }
+    var slots = mapSlots();
+    node.innerHTML = W.render({ points: mapPoints(), signs: C.signs, aria: mapAria(slots) }) +
+      (withLegend ? W.legend(slots) : '');
+  }
+
+  /* Прокрутка к блоку с поправкой на липкую шапку: scrollIntoView с
+     block:'center' на коротком экране заводит верх карты под шапку, и
+     первая точка — Солнце — оказывается закрыта ровно в тот момент, когда
+     на неё нужно смотреть. */
+  function scrollToBlock(node) {
+    if (!node) { return; }
+    var top = el('top');
+    var pad = (top && !top.classList.contains('hidden') ? top.offsetHeight : 0) + 16;
+    var y = node.getBoundingClientRect().top + window.pageYOffset - pad;
+    window.scrollTo({ top: Math.max(0, y), behavior: reduced ? 'auto' : 'smooth' });
+  }
+
   /* --- экран 1 ----------------------------------------------------------- */
   function dobReady() { return !!(S.dob.d && S.dob.m && S.dob.y); }
 
@@ -276,6 +340,8 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     el('s1line').textContent = C.sun[c.sun.index];
     el('s1el').textContent = C.s1.elementLabel + ': ' + C.elements[c.sun.element] +
       (c.sun.nearCusp ? ' · ' + C.s3.cuspNote : '');
+    drawMap(el('s1map'), true);
+    el('s1mapnote').textContent = C.map.firstPoint;
     el('s1res').classList.remove('hidden');
     el('cta').disabled = false;
   }
@@ -455,14 +521,20 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       var m = S.natal.moon;
       el('moonSign').innerHTML = C.signs[m.index] +
         ' <span class="res__deg">' + deg(m.degree) + '</span>';
+      drawMap(el('s3map'), false);
+      el('s3map').classList.remove('hidden');
       el('moonBox').classList.remove('hidden');
-      el('moonBox').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+      scrollToBlock(el('s3map'));
       type(el('moonLine'), C.moon[m.index], function () {
         if (S.natal.asc) {
           var a = S.natal.asc;
           el('ascSign').innerHTML = C.signs[a.index] +
             ' <span class="res__deg">' + deg(a.degree) + '</span>';
           el('ascBox').classList.remove('hidden');
+          /* Асцендент приезжает последним — карта перерисовывается, и третья
+             точка встаёт на место уже на глазах, а не появляется вместе с
+             остальными до того, как о ней сказали. */
+          drawMap(el('s3map'), false);
           el('ascBox').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
           type(el('ascLine'), C.asc[a.index]);
         }

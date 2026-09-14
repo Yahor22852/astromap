@@ -28,6 +28,16 @@
       reasons: 'Powód, dla którego jeszcze nie kupujesz'
     },
 
+    /* --------------------------------------- карта, которая собирается */
+    map: {
+      sun: 'Słońce', moon: 'Księżyc', asc: 'Ascendent',
+      sunShort: 'Sł', moonShort: 'Ks', ascShort: 'AC',
+      waitDate: 'czeka na datę',
+      waitTime: 'czeka na godzinę i miejsce',
+      noAsc: 'potrzebna godzina urodzenia',
+      firstPoint: 'Pierwszy punkt na mapie. Kolejne dwa dołączą, gdy podasz godzinę i miejsce.'
+    },
+
     /* ------------------------------------------------ экран 1: дата */
     s1: {
       eyebrow: 'Zacznijmy od jednej daty',
@@ -237,6 +247,15 @@
       progress: 'Progress building your map',
       themes: 'Sections to choose from',
       reasons: 'Why you have not bought yet'
+    },
+
+    map: {
+      sun: 'Sun', moon: 'Moon', asc: 'Ascendant',
+      sunShort: 'Su', moonShort: 'Mo', ascShort: 'AC',
+      waitDate: 'waiting for your date',
+      waitTime: 'waiting for time and place',
+      noAsc: 'needs a birth time',
+      firstPoint: 'The first point on your map. The other two arrive once you add the time and place.'
     },
 
     s1: {

@@ -99,11 +99,17 @@
           <select id="y1"></select>
         </div>
       </div>
+      <!-- Результат первого шага — не строчка, а первая точка на карте.
+           Круг и легенда рисуются одним и тем же кодом на всех экранах
+           (js/wheel.js), поэтому на третьем экране это буквально та же
+           карта, в которую доехали ещё две точки. -->
       <div class="res hidden" id="s1res">
+        <div class="mapbox" id="s1map"></div>
         <div class="res__lab" data-t="s1.resultLabel"></div>
         <div class="res__val" id="s1sign"></div>
         <div class="res__txt" id="s1line"></div>
         <div class="res__meta" id="s1el"></div>
+        <p class="mapnote" id="s1mapnote"></p>
       </div>
     </section>
 
@@ -153,6 +159,7 @@
         </div>
       </div>
       <p class="calc hidden" id="calc"><span data-t="computing"></span><span class="calc__dots"></span></p>
+      <div class="mapbox hidden" id="s3map"></div>
       <div class="res hidden" id="moonBox">
         <div class="res__lab" data-t="s3.moonLabel"></div>
         <div class="res__val" id="moonSign"></div>
@@ -258,6 +265,7 @@
 </div>
 
 <script src="js/cities.js"></script>
+<script src="js/wheel.js"></script>
 <script src="js/astro.js"></script>
 <script src="js/copy.js"></script>
 <script src="js/flow.js"></script>

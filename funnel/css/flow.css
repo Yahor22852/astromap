@@ -422,3 +422,67 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   font-family: var(--sans); font-size: 14px; font-weight: 600;
 }
 .citypick__manualapply:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* --- карта, которая собирается ----------------------------------------------
+   Круг появляется на первом экране с одной точкой и доживает до сводки. Это
+   не украшение: до него результатом шага была строчка текста, и собирать было
+   нечего — а значит, и ждать следующего шага незачем.
+
+   Размер ограничен 260px даже там, где места больше: карта — предмет в руках,
+   а не постер. На узком экране она занимает ширину колонки. */
+.mapbox { margin: 2px auto 14px; max-width: 220px; }
+.mapbox.hidden { display: none; }
+.fw { display: block; width: 100%; height: auto; overflow: visible; }
+
+.fw__ring { fill: none; stroke: var(--card-line); stroke-width: 1; }
+.fw__ring--thin { stroke: var(--card-line-2); }
+.fw__spoke { stroke: var(--card-line-2); stroke-width: 1; }
+.fw__sign {
+  font-family: var(--sans); font-size: 7.5px; font-weight: 600;
+  letter-spacing: .04em; fill: var(--ink-faint); text-anchor: middle;
+}
+.fw__axis { stroke: var(--gold-line); stroke-width: 1; stroke-dasharray: 3 3; opacity: .8; }
+.fw__stem { stroke: var(--card-line); stroke-width: 1; }
+.fw__dot { fill: var(--card); stroke: var(--gold-line); stroke-width: 1.4; }
+.fw__code {
+  font-family: var(--sans); font-size: 10px; font-weight: 700;
+  fill: var(--ink); text-anchor: middle;
+}
+/* Солнце — единственная заливка на всём круге: оно приходит первым и должно
+   читаться как то, с чего карта началась. Остальные точки полые, иначе три
+   одинаковых пятна не образуют конфигурации. */
+.fw__pt--sun .fw__dot { fill: var(--gold-soft); stroke: var(--gold); stroke-width: 1.8; }
+.fw__pt--sun .fw__code { fill: var(--gold); }
+
+/* Появление точки — единственная анимация здесь, и она сообщает событие:
+   объект встал на карту. Ничего не движется само по себе. */
+@keyframes fw-in {
+  from { opacity: 0; transform: scale(.72); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.fw__pt { transform-origin: center; animation: fw-in .42s cubic-bezier(.2,.8,.3,1) both; }
+.fw__pt--moon { animation-delay: .1s; }
+.fw__pt--asc  { animation-delay: .2s; }
+@media (prefers-reduced-motion: reduce) {
+  .fw__pt { animation: none; }
+}
+
+/* --- легенда под кругом -----------------------------------------------------
+   Три слота в постоянном порядке. Пустой слот говорит, чего не хватает, и
+   это единственный способ создать ожидание, не соврав: без времени рождения
+   Асцендента не существует, и заполнять его нечем. */
+/* Список, а не вложенная карточка: легенда живёт внутри .res, которая уже
+   карточка, и рамка с фоном давали бы карточку в карточке — ровно то, от
+   чего экран выглядит собранным из коробок. Разделяют строки линии. */
+.fwleg { margin-top: 10px; display: grid; }
+.fwleg__i { display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; padding: 8px 0; }
+.fwleg__i + .fwleg__i { border-top: 1px solid var(--card-line-2); }
+.fwleg__k { font-size: 13px; color: var(--ink-dim); }
+.fwleg__v { font-family: var(--serif); font-size: 17px; font-weight: 600; color: var(--ink);
+  text-align: right; }
+.fwleg__i--wait .fwleg__v {
+  font-family: var(--sans); font-size: 12px; font-weight: 400; color: var(--ink-faint);
+}
+
+.mapnote { margin-top: 12px; font-size: 13px; line-height: 1.5; color: var(--ink-faint); }
