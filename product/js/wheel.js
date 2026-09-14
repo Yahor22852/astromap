@@ -43,7 +43,14 @@
     var base = chart.asc ? chart.asc.lon : 0;
     var toAngle = function (lon) { return 180 + (lon - base); };
 
-    var s = ['<svg viewBox="0 0 ' + size + ' ' + size + '" class="wheel" xmlns="http://www.w3.org/2000/svg">'];
+    /* Колесо — картинка со встроенными кнопками, поэтому role="img" ему не
+       годится: он скрыл бы точки от вспомогательных технологий. Даём группе
+       имя через <title>, а полный текстовый эквивалент карты — таблица
+       позиций под колесом; она же остаётся основным способом выбрать точку
+       пальцем, потому что при сжатии SVG до ширины телефона сами кружки
+       становятся мельче рекомендованного размера цели. */
+    var s = ['<svg viewBox="0 0 ' + size + ' ' + size + '" class="wheel" role="group" xmlns="http://www.w3.org/2000/svg">'];
+    s.push('<title>' + ((g.T && g.T.ui && g.T.ui.chartTitle) || 'Chart') + '</title>');
 
     s.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + rOuter + '" class="w-ring"/>');
     s.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + rSign + '" class="w-ring w-ring--thin"/>');
@@ -123,6 +130,11 @@
              pointLabel(p) + '">');
       s.push('<line x1="' + c[0].toFixed(1) + '" y1="' + c[1].toFixed(1) +
              '" x2="' + edge[0].toFixed(1) + '" y2="' + edge[1].toFixed(1) + '" class="w-stem"/>');
+      /* Прозрачный круг больше видимого: попасть по планете пальцем легче,
+         а рисунок не меняется. Радиус выбран так, чтобы области соседних
+         точек не накладывались — расталкивание держит их дальше 26 единиц. */
+      s.push('<circle cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) +
+             '" r="20" class="w-hit"/>');
       s.push('<circle cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) +
              '" r="13" class="w-dot' + (p.retro ? ' w-dot--r' : '') + '"/>');
       s.push('<text x="' + c[0].toFixed(1) + '" y="' + (c[1] + 4).toFixed(1) +

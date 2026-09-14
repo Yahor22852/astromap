@@ -342,6 +342,19 @@
       12: { n: '12. dom', t: 'samotność, wnętrze, zamykanie spraw' }
     },
     sec: {
+      calculating: 'Liczę…',
+      terms: {
+        orb: 'Odległość kątowa od dokładnego aspektu. Mniejsza wartość zwykle oznacza silniejszy aspekt.',
+        transit: 'Położenie planety na niebie w tej chwili — w odróżnieniu od położenia w momencie urodzenia.',
+        natal: 'Punkt z mapy urodzeniowej: tam, gdzie planeta stała w chwili twoich narodzin.',
+        house: 'Jeden z dwunastu sektorów mapy. Pokazuje, jakiego obszaru życia dotyczy wydarzenie.',
+        aspect: 'Określony kąt między dwoma punktami — na przykład 90° lub 120°. Opisuje charakter ich powiązania.',
+        retrograde: 'Pozorny ruch wsteczny planety widziany z Ziemi. Planeta nie zawraca naprawdę.',
+        station: 'Moment zwrotu: planeta zatrzymuje się i zmienia kierunek ruchu.',
+        shadow: 'Odcinek, który planeta przechodzi trzy razy: przed zwrotem, wstecz i ponownie wprost.',
+        applying: 'Aspekt jeszcze się domyka — odległość do dokładnego kąta maleje.',
+        separating: 'Aspekt się rozchodzi — dokładny kąt już minął.'
+      },
       transitsTo: 'Tranzyty do tego punktu',
       aspectsOf: 'Aspekty tego punktu',
       noAspectsOf: 'Ten punkt nie tworzy aspektów w mapie',
@@ -785,6 +798,19 @@
       12: { n: '12th house', t: 'solitude, inner life, endings' }
     },
     sec: {
+      calculating: 'Calculating…',
+      terms: {
+        orb: 'Angular distance from an exact aspect. A smaller value usually means a stronger aspect.',
+        transit: 'Where a planet is in the sky right now — as opposed to where it stood at your birth.',
+        natal: 'A point from your birth chart: where a planet stood at the moment you were born.',
+        house: 'One of the twelve sectors of the chart. It says which area of life an event touches.',
+        aspect: 'A particular angle between two points — 90° or 120°, say. It describes how they relate.',
+        retrograde: 'A planet appearing to move backwards as seen from Earth. It is not actually turning around.',
+        station: 'The moment of the turn: the planet halts and changes direction.',
+        shadow: 'The stretch a planet covers three times: before the turn, backwards, and forwards again.',
+        applying: 'The aspect is still closing — the distance to the exact angle is shrinking.',
+        separating: 'The aspect is opening — the exact angle has already passed.'
+      },
       transitsTo: 'Transits to this point',
       aspectsOf: 'Aspects of this point',
       noAspectsOf: 'This point makes no aspects in the chart',
@@ -1229,6 +1255,19 @@ var RU = {
       12: { n: '12-й дом', t: 'уединение, внутреннее, завершения' }
     },
     sec: {
+      calculating: 'Считаю…',
+      terms: {
+        orb: 'Угловое расстояние до точного аспекта. Чем оно меньше, тем аспект обычно сильнее.',
+        transit: 'Где планета находится на небе прямо сейчас — в отличие от того, где она стояла при рождении.',
+        natal: 'Точка из карты рождения: там, где планета стояла в момент вашего рождения.',
+        house: 'Один из двенадцати секторов карты. Показывает, какой области жизни касается событие.',
+        aspect: 'Определённый угол между двумя точками — например, 90° или 120°. Описывает характер их связи.',
+        retrograde: 'Видимое попятное движение планеты с Земли. На самом деле планета не разворачивается.',
+        station: 'Момент разворота: планета останавливается и меняет направление движения.',
+        shadow: 'Участок, который планета проходит трижды: до разворота, назад и снова вперёд.',
+        applying: 'Аспект ещё сходится — расстояние до точного угла уменьшается.',
+        separating: 'Аспект расходится — точный угол уже пройден.'
+      },
       transitsTo: 'Транзиты к этой точке',
       aspectsOf: 'Аспекты этой точки',
       noAspectsOf: 'Эта точка не образует аспектов в карте',
@@ -1668,6 +1707,19 @@ var UK = {
       12: { n: '12-й дім', t: 'усамітнення, внутрішнє, завершення' }
     },
     sec: {
+      calculating: 'Рахую…',
+      terms: {
+        orb: 'Кутова відстань до точного аспекту. Що вона менша, то аспект зазвичай сильніший.',
+        transit: 'Де планета перебуває на небі просто зараз — на відміну від її місця при народженні.',
+        natal: 'Точка з карти народження: там, де планета стояла у момент вашого народження.',
+        house: 'Один із дванадцяти секторів карти. Показує, якої сфери життя стосується подія.',
+        aspect: 'Певний кут між двома точками — наприклад, 90° або 120°. Описує характер їхнього звʼязку.',
+        retrograde: 'Видимий зворотний рух планети із Землі. Насправді планета не розвертається.',
+        station: 'Момент розвороту: планета зупиняється і змінює напрям руху.',
+        shadow: 'Ділянка, яку планета проходить тричі: до розвороту, назад і знову вперед.',
+        applying: 'Аспект ще сходиться — відстань до точного кута зменшується.',
+        separating: 'Аспект розходиться — точний кут уже минув.'
+      },
       transitsTo: 'Транзити до цієї точки',
       aspectsOf: 'Аспекти цієї точки',
       noAspectsOf: 'Ця точка не утворює аспектів у карті',
@@ -2107,6 +2159,19 @@ var DE = {
       12: { n: '12. Haus', t: 'Rückzug, Innenleben, Abschlüsse' }
     },
     sec: {
+      calculating: 'Berechne…',
+      terms: {
+        orb: 'Winkelabstand zum exakten Aspekt. Je kleiner er ist, desto stärker wirkt der Aspekt meist.',
+        transit: 'Wo ein Planet gerade jetzt am Himmel steht — im Unterschied zu seinem Stand bei Ihrer Geburt.',
+        natal: 'Ein Punkt aus dem Geburtshoroskop: dort stand der Planet im Moment Ihrer Geburt.',
+        house: 'Einer der zwölf Sektoren des Horoskops. Er sagt, welchen Lebensbereich ein Ereignis berührt.',
+        aspect: 'Ein bestimmter Winkel zwischen zwei Punkten — etwa 90° oder 120°. Er beschreibt ihre Beziehung.',
+        retrograde: 'Scheinbare Rückwärtsbewegung eines Planeten von der Erde aus. Tatsächlich dreht er nicht um.',
+        station: 'Der Moment der Wende: Der Planet hält an und wechselt die Richtung.',
+        shadow: 'Der Abschnitt, den ein Planet dreimal durchläuft: vor der Wende, rückwärts und wieder vorwärts.',
+        applying: 'Der Aspekt läuft noch zu — der Abstand zum exakten Winkel wird kleiner.',
+        separating: 'Der Aspekt trennt sich — der exakte Winkel ist bereits vorbei.'
+      },
       transitsTo: 'Transite zu diesem Punkt',
       aspectsOf: 'Aspekte dieses Punktes',
       noAspectsOf: 'Dieser Punkt bildet keine Aspekte im Horoskop',
@@ -2546,6 +2611,19 @@ var ES = {
       12: { n: 'Casa 12', t: 'soledad, vida interior, cierres' }
     },
     sec: {
+      calculating: 'Calculando…',
+      terms: {
+        orb: 'Distancia angular hasta el aspecto exacto. Cuanto menor, más fuerte suele ser el aspecto.',
+        transit: 'Dónde está un planeta en el cielo ahora mismo, frente a dónde estaba en su nacimiento.',
+        natal: 'Un punto de su carta natal: donde estaba el planeta en el momento en que usted nació.',
+        house: 'Uno de los doce sectores de la carta. Indica a qué área de la vida toca un evento.',
+        aspect: 'Un ángulo concreto entre dos puntos — 90° o 120°, por ejemplo. Describe cómo se relacionan.',
+        retrograde: 'Movimiento aparente hacia atrás visto desde la Tierra. El planeta no da la vuelta realmente.',
+        station: 'El momento del giro: el planeta se detiene y cambia de dirección.',
+        shadow: 'El tramo que el planeta recorre tres veces: antes del giro, hacia atrás y de nuevo hacia delante.',
+        applying: 'El aspecto aún se cierra: la distancia al ángulo exacto disminuye.',
+        separating: 'El aspecto se abre: el ángulo exacto ya pasó.'
+      },
       transitsTo: 'Tránsitos a este punto',
       aspectsOf: 'Aspectos de este punto',
       noAspectsOf: 'Este punto no forma aspectos en la carta',
@@ -2985,6 +3063,19 @@ var FR = {
       12: { n: 'Maison 12', t: 'retrait, vie intérieure, fins de cycle' }
     },
     sec: {
+      calculating: 'Calcul…',
+      terms: {
+        orb: 'Écart angulaire par rapport à l’aspect exact. Plus il est petit, plus l’aspect est généralement fort.',
+        transit: 'Où se trouve une planète dans le ciel en ce moment, par opposition à sa place à votre naissance.',
+        natal: 'Un point du thème de naissance : là où la planète se tenait au moment de votre naissance.',
+        house: 'L’un des douze secteurs du thème. Il indique quel domaine de vie un événement touche.',
+        aspect: 'Un angle précis entre deux points — 90° ou 120°, par exemple. Il décrit leur relation.',
+        retrograde: 'Mouvement apparent de recul vu depuis la Terre. La planète ne fait pas réellement demi-tour.',
+        station: 'Le moment du retournement : la planète s’arrête et change de sens.',
+        shadow: 'Le segment que la planète parcourt trois fois : avant le retournement, en arrière, puis de nouveau en avant.',
+        applying: 'L’aspect se resserre encore — l’écart avec l’angle exact diminue.',
+        separating: 'L’aspect s’écarte — l’angle exact est déjà passé.'
+      },
       transitsTo: 'Transits vers ce point',
       aspectsOf: 'Aspects de ce point',
       noAspectsOf: 'Ce point ne forme aucun aspect dans le thème',
@@ -3424,6 +3515,19 @@ var IT = {
       12: { n: 'Casa 12', t: 'solitudine, vita interiore, chiusure' }
     },
     sec: {
+      calculating: 'Calcolo…',
+      terms: {
+        orb: 'Distanza angolare dall’aspetto esatto. Più è piccola, più l’aspetto è di solito forte.',
+        transit: 'Dove si trova un pianeta in cielo adesso, a differenza di dov’era alla tua nascita.',
+        natal: 'Un punto del tema natale: dove stava il pianeta nel momento in cui sei nato.',
+        house: 'Uno dei dodici settori del tema. Dice quale area della vita tocca un evento.',
+        aspect: 'Un angolo preciso fra due punti — 90° o 120°, per esempio. Descrive come si rapportano.',
+        retrograde: 'Moto apparente all’indietro visto dalla Terra. Il pianeta non gira davvero.',
+        station: 'Il momento del cambio: il pianeta si ferma e inverte la direzione.',
+        shadow: 'Il tratto che il pianeta percorre tre volte: prima del cambio, all’indietro e di nuovo in avanti.',
+        applying: 'L’aspetto si sta ancora chiudendo — la distanza dall’angolo esatto diminuisce.',
+        separating: 'L’aspetto si apre — l’angolo esatto è già passato.'
+      },
       transitsTo: 'Transiti a questo punto',
       aspectsOf: 'Aspetti di questo punto',
       noAspectsOf: 'Questo punto non forma aspetti nel tema',
@@ -3863,6 +3967,19 @@ var PT = {
       12: { n: 'Casa 12', t: 'recolhimento, vida interior, encerramentos' }
     },
     sec: {
+      calculating: 'A calcular…',
+      terms: {
+        orb: 'Distância angular até o aspecto exato. Quanto menor, mais forte costuma ser o aspecto.',
+        transit: 'Onde um planeta está no céu agora, em contraste com onde estava no seu nascimento.',
+        natal: 'Um ponto do mapa natal: onde o planeta estava no momento em que você nasceu.',
+        house: 'Um dos doze setores do mapa. Indica que área da vida um evento toca.',
+        aspect: 'Um ângulo específico entre dois pontos — 90° ou 120°, por exemplo. Descreve como se relacionam.',
+        retrograde: 'Movimento aparente para trás visto da Terra. O planeta não dá meia-volta de verdade.',
+        station: 'O momento da virada: o planeta para e muda de direção.',
+        shadow: 'O trecho que o planeta percorre três vezes: antes da virada, para trás e de novo para a frente.',
+        applying: 'O aspecto ainda está a fechar — a distância até o ângulo exato diminui.',
+        separating: 'O aspecto está a abrir — o ângulo exato já passou.'
+      },
       transitsTo: 'Trânsitos a este ponto',
       aspectsOf: 'Aspectos deste ponto',
       noAspectsOf: 'Este ponto não forma aspectos no mapa',
@@ -4302,6 +4419,19 @@ var TR = {
       12: { n: '12. ev', t: 'inziva, iç dünya, kapanışlar' }
     },
     sec: {
+      calculating: 'Hesaplanıyor…',
+      terms: {
+        orb: 'Tam açıya olan açısal uzaklık. Küçüldükçe açı genellikle güçlenir.',
+        transit: 'Bir gezegenin şu anda gökyüzündeki yeri — doğduğunuzdaki yerinin aksine.',
+        natal: 'Doğum haritanızdaki bir nokta: gezegenin doğduğunuz anda durduğu yer.',
+        house: 'Haritanın on iki diliminden biri. Olayın hayatın hangi alanına dokunduğunu söyler.',
+        aspect: 'İki nokta arasındaki belirli bir açı — örneğin 90° ya da 120°. İlişkilerinin niteliğini anlatır.',
+        retrograde: 'Dünya’dan bakıldığında gezegenin geriye gidiyor görünmesi. Gerçekte geri dönmez.',
+        station: 'Dönüş anı: gezegen durur ve yön değiştirir.',
+        shadow: 'Gezegenin üç kez geçtiği bölüm: dönüşten önce, geriye doğru ve yeniden ileriye.',
+        applying: 'Açı hâlâ kapanıyor — tam açıya olan uzaklık azalıyor.',
+        separating: 'Açı açılıyor — tam açı çoktan geçti.'
+      },
       transitsTo: 'Bu noktaya transitler',
       aspectsOf: 'Bu noktanın açıları',
       noAspectsOf: 'Bu nokta haritada açı kurmuyor',

@@ -224,6 +224,119 @@
     return /[.!?…]$/.test(t) ? t : t + '.';
   }
 
+  /* --- подсказки по терминам ------------------------------------------------
+     Орбис, транзит, натал, станция, тень — слова, без которых продукт не
+     объяснить, и за которыми новичку пришлось бы уходить в поиск. Подсказка
+     открывается на месте.
+
+     Всплывающая панель одна на весь документ и лежит в <body> с position:
+     fixed — а не рядом со словом. Внутри карточек и таблиц есть контейнеры
+     с overflow, и любая панель, вложенная в разметку раздела, обрезалась бы
+     их краем. Отсюда же и доступность: aria-describedby связывает слово с
+     панелью, Esc и клик мимо закрывают.
+
+     Термин — это <button>, поэтому размечать им слово внутри другой кнопки
+     нельзя: вложенные кнопки — невалидная разметка и ломают клик по строке.
+     Поэтому термины стоят только в заголовках и в панели «откуда известно»,
+     где строка не является кнопкой целиком. */
+  var termPop = null, termOpen = null;
+
+  function termHtml(key, label) {
+    return '<button type="button" class="term" data-term="' + key + '">' +
+      label + '<span class="term__i" aria-hidden="true">?</span></button>';
+  }
+
+  function termEnsurePop() {
+    if (termPop) { return termPop; }
+    termPop = document.createElement('div');
+    termPop.className = 'termpop';
+    termPop.id = 'termPop';
+    termPop.setAttribute('role', 'tooltip');
+    termPop.hidden = true;
+    document.body.appendChild(termPop);
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') { termHide(); }
+    });
+    document.addEventListener('click', function (ev) {
+      if (!termOpen) { return; }
+      if (ev.target.closest && (ev.target.closest('.term') || ev.target.closest('.termpop'))) { return; }
+      termHide();
+    });
+    window.addEventListener('resize', termHide);
+    window.addEventListener('scroll', termHide, true);
+    return termPop;
+  }
+
+  function termHide() {
+    if (!termPop) { return; }
+    termPop.hidden = true;
+    if (termOpen) {
+      termOpen.setAttribute('aria-expanded', 'false');
+      termOpen.removeAttribute('aria-describedby');
+      termOpen = null;
+    }
+  }
+
+  function termShow(btn) {
+    var key = btn.getAttribute('data-term');
+    var text = T.sec.terms[key];
+    if (!text) { return; }
+    var pop = termEnsurePop();
+    pop.textContent = text;
+    pop.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    btn.setAttribute('aria-describedby', 'termPop');
+    termOpen = btn;
+
+    /* Позиционируем под словом и прижимаем к краям окна: у самой границы
+       экрана панель иначе уезжает за него. */
+    var r = btn.getBoundingClientRect();
+    var w = Math.min(300, window.innerWidth - 24);
+    pop.style.width = w + 'px';
+    var left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2));
+    var top = r.bottom + 8;
+    if (top + pop.offsetHeight > window.innerHeight - 12) {
+      top = Math.max(12, r.top - pop.offsetHeight - 8);
+    }
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+  }
+
+  function bindTerms(scope) {
+    if (!scope) { return; }
+    Array.prototype.slice.call(scope.querySelectorAll('[data-term]')).forEach(function (b) {
+      b.setAttribute('aria-expanded', 'false');
+      b.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        if (termOpen === b) { termHide(); } else { termHide(); termShow(b); }
+      });
+    });
+  }
+
+  /* --- состояние расчёта ----------------------------------------------------
+     Переключение периода гороскопа на «Год» блокирует поток на 600 мс, на
+     «Полгода» — на 280 мс: расчёт синхронный, и всё это время интерфейс не
+     перерисовывается вовсе — не успевает даже подсветиться нажатая кнопка.
+     Показываем, что идёт счёт, и отдаём кадр браузеру, прежде чем считать.
+
+     Два requestAnimationFrame подряд — не суеверие: первый ставит колбэк на
+     ближайший кадр, но сама отрисовка происходит после него, поэтому
+     запускать блокирующий расчёт нужно со второго. Задержек не добавляем:
+     ждём ровно один кадр. */
+  function busyHtml() {
+    return '<div class="busy" role="status"><span class="busy__dot"></span>' +
+      '<span class="busy__dot"></span><span class="busy__dot"></span>' +
+      '<span class="busy__t">' + T.sec.calculating + '</span></div>';
+  }
+
+  function withBusy(node, work) {
+    if (!node) { work(); return; }
+    node.innerHTML = busyHtml();
+    requestAnimationFrame(function () {
+      requestAnimationFrame(work);
+    });
+  }
+
   function toneTag(t) {
     return '<span class="tag tag--' + t + '">' + T.toneWord[t] + '</span>';
   }
@@ -288,7 +401,7 @@
         '<span class="pasp__go" aria-hidden="true">›</span></button></li>';
     }).join('') + '</ul>' : '<p class="pmuted">' + T.sec.noContacts + '</p>';
 
-    return '<h3 class="pcard__t">' + T.sec.house + '</h3>' + houseHtml +
+    return '<h3 class="pcard__t">' + termHtml('house', T.sec.house) + '</h3>' + houseHtml +
       '<h3 class="pcard__t pcard__t--gap">' + T.sec.contacts + '</h3>' + aspHtml +
       '<div class="acts"><button type="button" class="act" data-gochart="' + body + '">' +
         T.sec.openChart + '</button></div>';
@@ -722,7 +835,10 @@
     Array.prototype.slice.call(view.querySelectorAll('[data-tlrange]')).forEach(function (b) {
       b.addEventListener('click', function () {
         tlRange = +b.getAttribute('data-tlrange');
-        rerenderTimeline();
+        /* 90 дней считаются около 190 мс, 30 — около 90: на глаз это
+           заметная пауза, за которую ничего не происходит. */
+        if (tlRange >= 30) { withBusy(el('cnFeed'), rerenderTimeline); }
+        else { rerenderTimeline(); }
       });
     });
     /* Звёздочка ищет событие среди показанных сейчас и среди уже
@@ -766,6 +882,9 @@
     { key: 'career', icon: '💼' },
     { key: 'luck', icon: '🍀' }
   ];
+  /* Периоды, расчёт которых не укладывается в один кадр (замерено: полгода
+     ~280 мс, год ~610 мс). */
+  var HZ_HEAVY = ['halfyear', 'year'];
   var hzPeriod = 'today';
   var chartSel = null;
 
@@ -1197,8 +1316,9 @@
      так и подписано, чтобы её не читали как вероятность. */
   function txWhyHtml(d) {
     var rows = [
-      [T.sec.orb, fmtDeg(d.orb) + ' / ' + fmtDeg(d.maxOrb)],
-      [T.ui.motion, d.applying ? T.sec.applying : T.sec.separating],
+      [termHtml('orb', T.sec.orb), fmtDeg(d.orb) + ' / ' + fmtDeg(d.maxOrb)],
+      [T.ui.motion, termHtml(d.applying ? 'applying' : 'separating',
+        d.applying ? T.sec.applying : T.sec.separating)],
       [T.sec.windowW, d.days + ' ' + T.sec.dayShort],
       [T.sec.exactCount, String(d.exacts.length)],
       [T.sec.strength, d.strength.toFixed(1)]
@@ -1221,8 +1341,8 @@
       (isLead ? '<span class="tx-hero__badge">' + T.sec.mainNow + '</span>' : '') +
       '<h2 class="tx-hero__h">' + txPair(d) + toneTag(d.tone) + '</h2>' +
       '<div class="tx-hero__ctx">' +
-        '<span><i>' + T.sec.transiting + '</i> ' + transitCtx + '</span>' +
-        '<span><i>' + T.sec.natalW + '</i> ' + natalCtx + '</span>' +
+        '<span>' + termHtml('transit', T.sec.transiting) + ' ' + transitCtx + '</span>' +
+        '<span>' + termHtml('natal', T.sec.natalW) + ' ' + natalCtx + '</span>' +
       '</div>' +
       txWindowHtml(d) +
       '<div class="tx-hero__meta">' +
@@ -1302,6 +1422,7 @@
     if (txSel) { syncHash('horoscope', [txSel.split('|').join('-')]); }
     body.innerHTML = txBodyHtml();
     bindTx();
+    bindTerms(body);
   }
 
   function bindTx() {
@@ -1496,8 +1617,8 @@
         (p.retro ? ' · R' : '') + '</div></div></div>' +
       (houseHtml ? '<div class="insp__sec">' + houseHtml + '</div>' : '') +
       '<p class="insp__text">' + txt + (extra ? ' ' + extra : '') + '</p>' +
-      '<div class="insp__sec"><h3 class="pcard__t">' + T.sec.aspectsOf + '</h3>' + aspHtml + '</div>' +
-      '<div class="insp__sec"><h3 class="pcard__t">' + T.sec.transitsTo + '</h3>' + trHtml + '</div>' +
+      '<div class="insp__sec"><h3 class="pcard__t">' + termHtml('aspect', T.sec.aspectsOf) + '</h3>' + aspHtml + '</div>' +
+      '<div class="insp__sec"><h3 class="pcard__t">' + termHtml('transit', T.sec.transitsTo) + '</h3>' + trHtml + '</div>' +
       '</aside>';
   }
 
@@ -1526,6 +1647,7 @@
     void body.offsetWidth;
     body.classList.add('fade-in');
     bindChart();
+    bindTerms(body);
   }
 
   function bindChart() {
@@ -1829,6 +1951,7 @@
     void body.offsetWidth;
     body.classList.add('fade-in');
     bindMoonBody();
+    bindTerms(body);
   }
 
   function bindMoonBody() {
@@ -1928,9 +2051,9 @@
       '<div class="rx-tl__ticks">' + tick(0, c.shadowStart) + tick(r0, c.stationRetro) +
         tick(r1, c.stationDirect) + tick(100, c.shadowEnd) + '</div>' +
       '<div class="rx-tl__legend">' +
-        '<span class="rx-tl__lg rx-tl__lg--pre">' + T.sec.phase.pre + '</span>' +
-        '<span class="rx-tl__lg rx-tl__lg--retro">' + T.sec.phase.retro + '</span>' +
-        '<span class="rx-tl__lg rx-tl__lg--post">' + T.sec.phase.post + '</span>' +
+        '<span class="rx-tl__lg rx-tl__lg--pre">' + termHtml('shadow', T.sec.phase.pre) + '</span>' +
+        '<span class="rx-tl__lg rx-tl__lg--retro">' + termHtml('retrograde', T.sec.phase.retro) + '</span>' +
+        '<span class="rx-tl__lg rx-tl__lg--post">' + termHtml('shadow', T.sec.phase.post) + '</span>' +
       '</div></div>';
   }
 
@@ -2008,7 +2131,7 @@
         '<span class="rx-date__l">' + T.sec.kd[k.key] + '</span>' +
         '<span class="rx-date__go" aria-hidden="true">\u203a</span></button></li>';
     }).join('');
-    return '<section class="rx-card"><h3 class="pcard__t">' + T.sec.keyDates + '</h3>' +
+    return '<section class="rx-card"><h3 class="pcard__t">' + termHtml('station', T.sec.keyDates) + '</h3>' +
       '<ul class="rx-dates">' + rows + '</ul></section>';
   }
 
@@ -2068,6 +2191,7 @@
     body.classList.add('fade-in');
     positionSegIndicator('rxSegbar', 'rxSegbarInd', true);
     bindRetro();
+    bindTerms(body);
   }
 
   function bindRetro() {
@@ -2467,6 +2591,7 @@
     bindRetro();
     bindTx();
     bindToday();
+    bindTerms(document.getElementById('view'));
     bindCityPick();
 
     Array.prototype.slice.call(document.querySelectorAll('[data-period]')).forEach(function (b) {
@@ -2478,14 +2603,21 @@
         });
         positionHzIndicator(false);
         var body = el('hzBody');
-        if (body) {
-          body.innerHTML = hzContentHtml();
-          body.classList.remove('fade-in');
-          void body.offsetWidth;
-          body.classList.add('fade-in');
-        }
-        bindHzRows();
-        hzAiEnhance(hzPeriod);
+        /* Полгода и год считаются сотнями миллисекунд — показываем счёт.
+           Неделя и месяц укладываются в кадр, там мигание было бы хуже
+           самого ожидания. */
+        var heavy = HZ_HEAVY.indexOf(hzPeriod) >= 0;
+        var draw = function () {
+          if (body) {
+            body.innerHTML = hzContentHtml();
+            body.classList.remove('fade-in');
+            void body.offsetWidth;
+            body.classList.add('fade-in');
+          }
+          bindHzRows();
+          hzAiEnhance(hzPeriod);
+        };
+        if (heavy) { withBusy(body, draw); } else { draw(); }
       });
     });
   }
