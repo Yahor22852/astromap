@@ -174,7 +174,7 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       ghost.textContent = C.s4.skip;
       ghost.classList.remove('hidden');
     }
-    if (id === 's5') { cta.textContent = C.paywall.title; cta.disabled = false; }
+    if (id === 's5') { cta.textContent = C.s5.cta; cta.disabled = false; }
     if (id === 's6') {
       cta.textContent = C.paywall.cta;   /* legal-строка ссылается именно на неё */
       cta.disabled = false;
@@ -859,34 +859,142 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     }).filter(Boolean);
   }
 
+  /* Полная карта, когда ядро продукта успело загрузиться, и трёхточечная,
+     когда нет: на пятом экране человек должен увидеть максимум того, что
+     посчитано, но ждать загрузки ради этого не должен. */
+  function fullMapPoints() {
+    if (!pvData) { return null; }
+    var pts = pvData.natal.points.filter(function (p) { return p.name !== 'Node'; })
+      .map(function (p) { return { key: p.name.toLowerCase(), lon: p.lon, short: pvCode(p.name) }; });
+    if (pvData.natal.asc) {
+      pts.push({ key: 'asc', lon: pvData.natal.asc.lon, short: pvCode('ASC') });
+      pts.push({ key: 'mc', lon: pvData.natal.mc.lon, short: pvCode('MC') });
+    }
+    return pts;
+  }
+
+  function drawAssembled(node) {
+    if (!node || !W) { return; }
+    var pts = fullMapPoints() || mapPoints();
+    node.innerHTML = W.render({
+      points: pts, signs: C.signs,
+      aria: pts.map(function (p) { return p.short; }).join(', ')
+    });
+  }
+
+  /* --- экран 5: карта собрана ---------------------------------------------
+     Раньше здесь была таблица из пяти строк «ключ — значение» — сводка
+     формы, которая читается как страница подтверждения заказа. Теперь это
+     кульминация: круг, который человек строил четыре экрана, его основа,
+     его фокус и небо над картой прямо сейчас.
+
+     Блок «небо сейчас» появляется только если ядро продукта загрузилось:
+     выдумывать эти величины нечем, а без них экран остаётся осмысленным. */
+  function sumSection(title, body) {
+    return '<section class="sum__s"><h2 class="sum__h">' + title + '</h2>' + body + '</section>';
+  }
+
+  function coreHtml() {
+    var n = S.natal;
+    var row = function (label, sign, fallback) {
+      return '<div class="sum__core"><span class="sum__ck">' + label + '</span>' +
+        '<span class="sum__cv">' + (sign
+          ? C.signs[sign.index] + ' <i>' + deg(sign.degree) + '</i>'
+          : '<em>' + fallback + '</em>') + '</span></div>';
+    };
+    return row(C.map.sun, n.sun) + row(C.map.moon, n.moon) +
+      row(C.map.asc, n.asc, S.time.known ? C.s3.ascEmptyPlace : C.s3.ascEmptyShort);
+  }
+
+  function focusHtml() {
+    return '<div class="sum__chips">' + themeNames().map(function (t) {
+      return '<span class="sum__chip">' + t + '</span>';
+    }).join('') + '</div>';
+  }
+
+  function skyNowHtml() {
+    if (!pvData) { return ''; }
+    var d = pvData;
+    var close = d.transits.filter(function (t) { return t.orb < 3; });
+    var rows = [
+      [C.pv.moonNow, C.moonPhase[d.moon.phaseIndex] + ' · ' + C.signs[d.moon.sign.index]],
+      [C.s5.closeNow, String(close.length)]
+    ];
+    if (d.signChange) {
+      rows.push([C.pv.moonShift, C.signs[d.signChange.to.index] + ' · ' + pvInDays(d.signChange.date)]);
+    }
+    if (d.retro.length) {
+      rows.push([C.s5.retroNow, d.retro.map(function (r) { return pvName(r.body); }).join(', ')]);
+    }
+    return '<div class="pv__rows">' + rows.map(function (r) {
+      return '<div class="pv__row"><span class="pv__k">' + r[0] + '</span>' +
+        '<span class="pv__v">' + r[1] + '</span></div>';
+    }).join('') + '</div><p class="sum__note">' + C.s5.skyNote + '</p>';
+  }
+
+  function pairHtml() {
+    if (!S.syn) { return ''; }
+    var band = bandFor(S.syn.score);
+    return '<div class="sum__pair"><span class="sum__pn">' + S.syn.score + '%</span>' +
+      '<span class="sum__pt"><b>' + band.t + '</b>' +
+      C.signs[S.partnerChart.sun.index] + '</span></div>' +
+      '<p class="sum__note">' + C.s4.scoleFoot + '</p>';
+  }
+
   function buildSummary() {
     if (PV && PV.isReady()) { pvCompute(); pvRender(); }
-    var rows = [
-      [C.s5.sun, C.signs[S.natal.sun.index] + ' ' + deg(S.natal.sun.degree)],
-      [C.s5.moon, C.signs[S.natal.moon.index] + ' ' + deg(S.natal.moon.degree)],
-      [C.s5.asc, S.natal.asc
-        ? C.signs[S.natal.asc.index] + ' ' + deg(S.natal.asc.degree)
-        : '<small>' + C.s5.ascEmpty + '</small>'],
-      [C.s5.themesLabel, themeNames().join(', ')]
-    ];
-    if (S.syn) {
-      rows.push([C.s5.pairLabel,
-        C.signs[S.partnerChart.sun.index] + ' · ' + S.syn.score + '%']);
-    }
-    el('sum').innerHTML = rows.map(function (r) {
-      return '<div class="sum__row"><span class="sum__k">' + r[0] +
-             '</span><span class="sum__v">' + r[1] + '</span></div>';
-    }).join('');
+    drawAssembled(el('s5map'));
+    var html = sumSection(C.s5.coreTitle, coreHtml()) +
+      sumSection(C.s5.focusTitle, focusHtml());
+    var sky = skyNowHtml();
+    if (sky) { html += sumSection(C.s5.skyTitle, sky); }
+    if (S.syn) { html += sumSection(C.s5.pairTitle, pairHtml()); }
+    el('sum').innerHTML = html;
   }
 
   /* --- экран 6: пейволл --------------------------------------------------- */
+  /* --- экран 6: пейволл ----------------------------------------------------
+     Продаёт доступ к системе, а не текст. Раньше четыре пункта списка
+     описывали reading.html — три позиции, выбранные разделы, недельный
+     прогноз, разбор пары, — а деньги открывают продукт с восемью разделами.
+     Человек платил за одно и получал другое.
+
+     Теперь на экране его карта, его небо и перечень того, что открывается.
+     Перечислено только существующее: каждая строка соответствует разделу,
+     который в продукте есть и работает. Добавлять сюда что-либо, чего нет,
+     нельзя — это и есть обещание, за которое берут деньги. */
+  function pwMovesHtml() {
+    if (!pvData) { return ''; }
+    var d = pvData;
+    var close = d.transits.filter(function (t) { return t.orb < 3; });
+    var items = [[String(close.length), C.pw.movesAspects]];
+    if (d.signChange) {
+      items.push([pvInDays(d.signChange.date), C.pw.movesMoon.replace('{s}', C.signs[d.signChange.to.index])]);
+    }
+    if (d.retro.length) { items.push([String(d.retro.length), C.pw.movesRetro]); }
+    return '<h2 class="pw__h">' + C.pw.movesTitle + '</h2>' +
+      '<div class="pw__grid">' + items.map(function (i) {
+        return '<div class="pw__cell"><span class="pw__n">' + i[0] + '</span>' +
+          '<span class="pw__l">' + i[1] + '</span></div>';
+      }).join('') + '</div>' +
+      '<p class="pw__note">' + C.pw.movesNote + '</p>';
+  }
+
   function buildPaywall() {
-    var list = C.paywall.includes.slice();
-    list[1] = list[1].replace('{themes}', themeNames().join(', '));
-    if (!S.syn) { list[3] = C.paywall.includesNoPair; }
-    el('inc').innerHTML = list.map(function (t) {
-      return '<div class="inc__i"><i class="inc__d"></i><span class="inc__t">' + t + '</span></div>';
-    }).join('');
+    /* Именная строка: их позиции, а не общий заголовок. */
+    var n = S.natal;
+    var parts = [C.map.sun + ' ' + C.signs[n.sun.index],
+                 C.map.moon + ' ' + C.signs[n.moon.index]];
+    if (n.asc) { parts.push(C.map.asc + ' ' + C.signs[n.asc.index]); }
+    el('pwMe').textContent = parts.join(' · ');
+    drawAssembled(el('pwMap'));
+    el('pwMoves').innerHTML = pwMovesHtml();
+
+    el('inc').innerHTML = '<h2 class="pw__h">' + C.pw.opensTitle + '</h2>' +
+      C.pw.opens.map(function (o) {
+        return '<div class="inc__i"><i class="inc__d"></i><span class="inc__t">' +
+          '<b>' + o.t + '</b>' + o.d + '</span></div>';
+      }).join('');
 
     el('planPrice').textContent = C.billing.priceLine;
     el('planAfter').textContent = C.billing.renewLine;

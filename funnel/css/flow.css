@@ -598,3 +598,56 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   background: var(--card); border: 1px solid var(--card-line-2);
   font-size: 11px; font-weight: 600; letter-spacing: .03em; color: var(--ink-dim);
   vertical-align: 1px; }
+
+/* --- экран 5: карта собрана -------------------------------------------------
+   Разделы, а не таблица «ключ — значение». Раньше здесь были пять строк
+   формы, и экран читался как страница подтверждения заказа. */
+.sum__s { margin-top: 22px; }
+.sum__s:first-child { margin-top: 0; }
+.sum__h {
+  margin: 0 0 10px; font-size: 11px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--gold);
+}
+.sum__core { display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; padding: 9px 0; }
+.sum__core + .sum__core { border-top: 1px solid var(--card-line-2); }
+.sum__ck { font-size: 13px; color: var(--ink-dim); }
+.sum__cv { font-family: var(--serif); font-size: 22px; font-weight: 600; text-align: right; }
+.sum__cv i { font-style: normal; font-size: 15px; color: var(--ink-dim); }
+.sum__cv em { font-style: normal; font-family: var(--sans); font-size: 13px; color: var(--ink-faint); }
+
+.sum__chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.sum__chip { padding: 6px 12px; border-radius: 999px;
+  background: var(--gold-soft); border: 1px solid var(--gold-line);
+  font-size: 13px; font-weight: 600; color: var(--ink); }
+
+.sum__pair { display: flex; align-items: baseline; gap: 14px; }
+.sum__pn { font-family: var(--serif); font-size: 40px; font-weight: 600; line-height: 1; color: var(--gold); }
+.sum__pt { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--ink-dim); }
+.sum__pt b { font-size: 16px; color: var(--ink); font-weight: 600; }
+.sum__note { margin: 12px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-faint); }
+
+/* --- пейволл ----------------------------------------------------------------
+   Сначала их карта и их небо, потом что открывается, и только потом цена.
+   Человек к этому моменту уже трогал продукт в превью, поэтому экран
+   продолжает начатое, а не открывает новую сделку. */
+.pw__me { margin: 6px 0 0; font-size: 14px; color: var(--ink-dim); }
+/* 190px на двенадцати точках не хватало: коды наезжали друг на друга в
+   скоплении вокруг Солнца. Тот же размер, что у колеса в превью. */
+.mapbox--pw { max-width: 260px; margin-top: 14px; }
+.pw__h { margin: 26px 0 12px; font-size: 11px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--gold); }
+.pw__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.pw__cell { padding: 12px 10px; border-radius: var(--radius-sm);
+  background: var(--card); border: 1px solid var(--card-line-2); }
+.pw__n { display: block; font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1.1; }
+.pw__l { display: block; margin-top: 5px; font-size: 11.5px; line-height: 1.35; color: var(--ink-dim); }
+.pw__note { margin: 12px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-faint); }
+
+/* Строка «что открывается»: название полужирным, объяснение обычным — это
+   одна фраза, а не заголовок с подзаголовком, поэтому без второй строки. */
+.inc__t b { font-weight: 600; color: var(--ink); }
+
+@media (max-width: 360px) {
+  .pw__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

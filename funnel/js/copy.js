@@ -158,31 +158,51 @@
 
     /* ------------------------------------------------ экран 5: сводка */
     s5: {
-      eyebrow: 'Twoja mapa jest gotowa',
-      title: 'To zbudowałaś w cztery kroki',
-      titleM: 'To zbudowałeś w cztery kroki',
-      sun: 'Słońce', moon: 'Księżyc', asc: 'Ascendent',
-      ascEmpty: 'brak godziny',
-      themesLabel: 'Twoje działy',
-      pairLabel: 'Relacja',
-      ready: 'Pełny rozbiór tych pozycji jest policzony i czeka.'
+      eyebrow: 'Mapa złożona',
+      /* Род не выбран намеренно: «zbudowałaś/zbudowałeś» требует знать род,
+         а спрашивать его ради грамматики — лишний экран. Формулировка
+         говорит о карте, а не о человеке, и работает для всех. */
+      title: 'Twoja mapa jest gotowa',
+      coreTitle: 'Twój rdzeń',
+      focusTitle: 'Twój fokus',
+      skyTitle: 'Niebo nad Twoją mapą teraz',
+      pairTitle: 'Relacja',
+      closeNow: 'Ciasnych aspektów',
+      retroNow: 'Retrogradacje',
+      skyNote: 'To liczy się na teraz i jutro będzie inne — mapa urodzeniowa zostaje, niebo nad nią się przesuwa.',
+      cta: 'Wejdź do swojej mapy',
+      ready: 'Poniżej ta sama mapa w aplikacji — dotknij, żeby się rozejrzeć.'
+    },
+
+    /* --------------------------------------------- пейволл: что открывается
+       КАЖДАЯ СТРОКА — СУЩЕСТВУЮЩИЙ РАЗДЕЛ ПРОДУКТА. Раньше здесь были четыре
+       пункта, описывавшие reading.html, а деньги открывают приложение с
+       восемью разделами: человек платил за одно, получал другое. Добавлять
+       сюда то, чего в продукте нет, нельзя — это обещание, за которое берут
+       деньги. */
+    pw: {
+      opensTitle: 'Co się otwiera',
+      opens: [
+        { t: 'Karta urodzeniowa. ', d: 'Koło, planety, domy, aspekty i bilans żywiołów — z niebem na dowolny dzień w drugim pierścieniu.' },
+        { t: 'Niebo wobec Twojej karty. ', d: 'Co jest aktywne teraz, kiedy zaczęło się i kiedy wygaśnie, z datami szczytu co do minuty.' },
+        { t: 'Księżyc. ', d: 'Faza, oświetlenie, znak, najbliższy nów i pełnia, cały miesiąc do przodu.' },
+        { t: 'Retrogradacje. ', d: 'Kto zawraca i kiedy, okresy cienia i którego domu Twojej karty dotyczą.' },
+        { t: 'Zgodność. ', d: 'Wskaźnik synastrii, najsilniejsze kontakty i mapa złożona dwóch osób.' },
+        { t: 'Oś czasu. ', d: 'Co ważnego przed Tobą — fazy, zwroty i dokładne aspekty, z możliwością zapisania.' }
+      ],
+      movesTitle: 'Niebo się przesuwa',
+      movesAspects: 'ciasnych aspektów do Twojej karty dziś',
+      movesMoon: 'do wejścia Księżyca w znak {s}',
+      movesRetro: 'planety w ruchu wstecznym',
+      movesNote: 'Wszystkie działy przeliczają się na dowolną datę. Za to jest abonament: mapa urodzeniowa się nie zmienia, niebo nad nią — codziennie.'
     },
 
     /* ------------------------------------------------ пейволл */
     paywall: {
       eyebrow: 'AstroMap App',
-      title: 'Odbierz pełną mapę',
-      /* Список ОБЯЗАН совпадать с тем, что показал онбординг. Не добавлять
-         сюда функций, которых нет: чат с астrologiem, pushe, домы i aspekty. */
-      includes: [
-        'Pełny rozbiór Słońca, Księżyca i Ascendentu — Twoje pozycje, nie opis znaku',
-        'Wybrane przez Ciebie działy: {themes}',
-        'Prognoza na tydzień z tranzytów — przeliczana od nowa co tydzień',
-        'Rozbiór zgodności z osobą, którą podałaś lub podałeś'
-      ],
-      includesNoPair: 'Rozbiór zgodności — dodasz osobę w każdej chwili',
+      title: 'Twoja mapa jest gotowa',
       planTitle: 'Plan miesięczny',
-      cta: 'Kontynuuj',
+      cta: 'Otwórz moją mapę',
       checkoutOff: 'Płatność nie jest jeszcze podłączona. Twoje dane są zapisane — wróć tu za chwilę.',
       /* {cta} подставляется НАДПИСЬЮ ТОЙ КНОПКИ, что стоит на экране.
          Раньше название было вписано в строку буквами: поменяв paywall.cta
@@ -424,28 +444,41 @@
     },
 
     s5: {
-      eyebrow: 'Your map is ready',
-      title: 'This is what you built in four steps',
-      titleM: 'This is what you built in four steps',
-      sun: 'Sun', moon: 'Moon', asc: 'Ascendant',
-      ascEmpty: 'no birth time',
-      themesLabel: 'Your sections',
-      pairLabel: 'Relationship',
-      ready: 'The full reading of these positions is calculated and waiting.'
+      eyebrow: 'Map assembled',
+      title: 'Your map is ready',
+      coreTitle: 'Your core',
+      focusTitle: 'Your focus',
+      skyTitle: 'The sky over your map right now',
+      pairTitle: 'Relationship',
+      closeNow: 'Close aspects',
+      retroNow: 'Retrograde',
+      skyNote: 'This is calculated for right now, and tomorrow it is different — the birth map stays, the sky over it moves.',
+      cta: 'Step into your map',
+      ready: 'Below is that same map inside the app — tap to look around.'
+    },
+
+    pw: {
+      opensTitle: 'What opens',
+      opens: [
+        { t: 'Your birth chart. ', d: 'The wheel, planets, houses, aspects and elemental balance — with the sky of any day in a second ring.' },
+        { t: 'The sky against your chart. ', d: 'What is active now, when it began and when it fades, with peak dates down to the minute.' },
+        { t: 'The Moon. ', d: 'Phase, illumination, sign, the next new and full Moon, a month ahead.' },
+        { t: 'Retrogrades. ', d: 'Who turns and when, the shadow periods, and which house of your chart they touch.' },
+        { t: 'Compatibility. ', d: 'The synastry index, the strongest contacts and the composite chart of two people.' },
+        { t: 'Your timeline. ', d: 'What is coming — phases, turns and exact aspects, with anything worth keeping saved.' }
+      ],
+      movesTitle: 'The sky keeps moving',
+      movesAspects: 'close aspects to your chart today',
+      movesMoon: 'until the Moon enters {s}',
+      movesRetro: 'planets moving backwards',
+      movesNote: 'Every section recalculates for any date you choose. That is what the subscription is for: your birth chart does not change, the sky over it changes daily.'
     },
 
     paywall: {
       eyebrow: 'AstroMap App',
-      title: 'Get your full map',
-      includes: [
-        'A full reading of your Sun, Moon and Ascendant — your positions, not a sign description',
-        'The sections you chose: {themes}',
-        'A weekly forecast from transits — recalculated every week',
-        'The compatibility reading for the person you entered'
-      ],
-      includesNoPair: 'Compatibility reading — add a person any time',
+      title: 'Your map is ready',
       planTitle: 'Monthly plan',
-      cta: 'Continue',
+      cta: 'Unlock my map',
       checkoutOff: 'Payments are not connected yet. Your details are saved — come back in a moment.',
       legal: 'By clicking “{cta}” you accept the {terms} and the {privacy}.',
       privacyInline: 'Privacy Policy',

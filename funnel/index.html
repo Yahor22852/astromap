@@ -204,6 +204,11 @@
     <section class="scr" id="s5">
       <p class="eyebrow" data-t="s5.eyebrow"></p>
       <h1 class="h1" data-t="s5.title"></h1>
+      <!-- Собранная карта, а не сводка формы: круг, который человек строил
+           четыре экрана, его основа, его фокус и небо над ней прямо сейчас.
+           Таблица «ключ — значение» на этом месте читалась как страница
+           подтверждения заказа. -->
+      <div class="mapbox" id="s5map"></div>
       <div class="sum" id="sum"></div>
 
       <!-- Превью продукта на данных этого человека. Считается тем же кодом,
@@ -224,6 +229,12 @@
     <section class="scr" id="s6">
       <p class="eyebrow" data-t="paywall.eyebrow"></p>
       <h1 class="h1" data-t="paywall.title"></h1>
+      <!-- Пейволл показывает ИХ карту и ИХ небо, а не общий прайс: человек
+           к этому моменту уже видел продукт в превью, и цена продолжает
+           начатое, а не открывает новую сделку. -->
+      <p class="pw__me" id="pwMe"></p>
+      <div class="mapbox mapbox--pw" id="pwMap"></div>
+      <div class="pw__moves" id="pwMoves"></div>
       <div class="inc" id="inc"></div>
 
       <div class="plan">
