@@ -182,10 +182,15 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       ghost.classList.remove('hidden');
     }
     if (id === 's7') {
-      cta.textContent = C.recovery.yearCta;
+      /* Кнопка покупки годового плана появляется только когда человек
+         сказал, что дело в цене. В остальных случаях главное действие —
+         вернуться к обычному плану, и оно же стоит на кнопке: предлагать
+         годовой тому, кто «просто смотрит», значит давить. */
+      var priceCase = rcReason === 'price';
+      cta.textContent = priceCase ? C.recovery.yearCta : C.recovery.backToPlan;
       cta.disabled = false;
-      ghost.textContent = C.paywall.planTitle + ' · ' + C.billing.priceLine;
-      ghost.classList.remove('hidden');
+      ghost.textContent = priceCase ? C.recovery.backToPlan : C.notNow;
+      ghost.classList.toggle('hidden', !priceCase);
     }
   }
 
@@ -1033,20 +1038,64 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
   }
 
   /* --- экран 7: recovery -------------------------------------------------- */
+  /* --- экран 7: ответ по существу возражения -------------------------------
+     Раньше экран отвечал абзацем на любой из четырёх ответов и в любом
+     случае показывал годовой план. Скидка в ответ на «просто смотрю» — это
+     не работа с возражением, а давление, и человек это читает именно так.
+
+     Теперь на каждое возражение свой ответ, и годовой план виден только
+     тому, кого остановила цена:
+
+       цена        — годовой план с честным пересчётом
+       не понимаю  — что именно открывается, списком
+       не уверен   — его собственные посчитанные позиции и чем их проверить
+       смотрю      — честный выход: бесплатное чтение, карта сохранена
+
+     Ни один путь не заперт: кнопка «назад к плану» остаётся на месте. */
+  var rcReason = null;
+
+  function rcOpensHtml() {
+    return '<ul class="rc__list">' + C.pw.opens.map(function (o) {
+      return '<li><b>' + o.t + '</b>' + o.d + '</li>';
+    }).join('') + '</ul>';
+  }
+
+  function rcProofHtml() {
+    var n = S.natal;
+    var rows = [[C.map.sun, C.signs[n.sun.index] + ' ' + deg(n.sun.degree)],
+                [C.map.moon, C.signs[n.moon.index] + ' ' + deg(n.moon.degree)]];
+    if (n.asc) { rows.push([C.map.asc, C.signs[n.asc.index] + ' ' + deg(n.asc.degree)]); }
+    return '<div class="pv__rows">' + rows.map(function (r) {
+      return '<div class="pv__row"><span class="pv__k">' + r[0] + '</span>' +
+        '<span class="pv__v">' + r[1] + '</span></div>';
+    }).join('') + '</div>';
+  }
+
+  function rcLookHtml() {
+    /* Выход, а не ловушка. Ссылка на бесплатное чтение ведёт на настоящую
+       страницу разбора — она и так открыта всем, и притворяться, что это
+       подарок за отказ, незачем. */
+    return '<div class="acts"><a class="rc__go" href="reading.html">' +
+      C.recovery.readFree + '</a></div>';
+  }
+
+  function rcRender() {
+    var box = el('rcBody');
+    if (!rcReason) { box.innerHTML = ''; el('altBox').classList.add('hidden'); return; }
+    var body = '<p class="rc__a">' + C.recovery.answers[rcReason] + '</p>';
+    if (rcReason === 'what') { body += rcOpensHtml(); }
+    if (rcReason === 'trust') { body += rcProofHtml(); }
+    if (rcReason === 'look') { body += rcLookHtml(); }
+    box.innerHTML = body;
+    el('altBox').classList.toggle('hidden', rcReason !== 'price');
+    dock('s7');
+  }
+
   function buildRecovery() {
-    /* Показываем НАСТОЯЩИЙ текст, посчитанный для этого человека:
-       первый абзац открыт, остальное под блюром. */
-    var open = C.sun[S.natal.sun.index];
-    var hid = C.moon[S.natal.moon.index] + ' ' +
-              (S.natal.asc ? C.asc[S.natal.asc.index] + ' ' : '') +
-              (S.syn ? bandFor(S.syn.score).d : '');
-    el('revealed').textContent = open;
-    el('hiddenTxt').textContent = hid;
     el('onePrice').textContent = C.billing.yearPrice + ' ' + C.billing.yearPeriod;
     el('oneDisc').textContent = C.billing.yearDisclaimer;
-    /* Экран годового плана — такая же покупка, как пейволл, и до сих пор был
-       единственным экраном со списанием без строки согласия вообще. */
     el('legalYear').innerHTML = legalHtml(C.recovery.yearCta);
+    rcRender();
 
     if (el('chips').children.length) { return; }
     C.recovery.survey.forEach(function (s) {
@@ -1059,7 +1108,8 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       b.addEventListener('click', function () {
         all('.chip').forEach(function (c) { c.setAttribute('aria-checked', 'false'); });
         b.setAttribute('aria-checked', 'true');
-        el('answer').textContent = C.recovery.answers[s.k];
+        rcReason = s.k;
+        rcRender();
         document.dispatchEvent(new CustomEvent('funnel:answer',
           { detail: { step: 's7', reason: s.k } }));
       });
@@ -1091,9 +1141,9 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       return;
     }
     if (S.screen === 's7') {
-      /* Раньше здесь на экран покупателя выводилась отладочная строка
-         по-русски с номером строки в исходнике — на третьем языке, которого
-         в воронке нет. Тот же noCheckout, что и на пейволле. */
+      /* Годовой план покупается только из ценового сценария; в остальных
+         случаях эта же кнопка возвращает к обычному плану. */
+      if (rcReason !== 'price') { go('s6'); return; }
       if (CHECKOUT_URL_YEAR) { window.location.href = CHECKOUT_URL_YEAR; }
       else { noCheckout('CHECKOUT_URL_YEAR'); }
     }

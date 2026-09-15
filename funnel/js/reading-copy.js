@@ -28,6 +28,9 @@
       noPair: 'Nie dodałeś drugiej osoby. Wróć do formularza, żeby policzyć zgodność.',
       empty: 'Nie znaleziono zapisanej mapy w tej przeglądarce. Wypełnij formularz od nowa.',
       back: 'Wróć do formularza',
+      goTitle: 'To zdjęcie jednego dnia',
+      goText: 'Powyżej Twoja mapa urodzeniowa i niebo z tego tygodnia. Mapa się nie zmieni, niebo nad nią — tak, i to codziennie. W AstroMap te same pozycje przeliczają się na dowolną datę: tranzyty z oknami i datami szczytu, Księżyc, retrogradacje, oś czasu i pełne koło z domami.',
+      goCta: 'Otwórz AstroMap',
       disclaimer: 'Treść ma charakter rozrywkowy i nie zastępuje porady specjalisty.'
     },
 
@@ -163,6 +166,9 @@
       noPair: 'You didn\u2019t add a second person. Go back to the form to calculate compatibility.',
       empty: 'No saved map found in this browser. Please fill in the form again.',
       back: 'Back to the form',
+      goTitle: 'This is one day, photographed',
+      goText: 'Above is your birth chart and the sky of this week. The chart will not change; the sky over it changes daily. In AstroMap those same positions recalculate for any date you choose: transits with their windows and peak dates, the Moon, retrogrades, your timeline and the full wheel with houses.',
+      goCta: 'Open AstroMap',
       disclaimer: 'This content is for entertainment and does not replace professional advice.'
     },
 

@@ -229,12 +229,14 @@
       ],
       answers: {
         price: 'Plan roczny kosztuje 119,99 zł zamiast 479,88 zł, które wychodzą przy płaceniu co miesiąc. To 10 zł miesięcznie.',
-        trust: 'Pozycje na ekranie policzyliśmy z Twojej daty i godziny — to ta sama matematyka, z której korzystają efemerydy. Możesz je sprawdzić w dowolnym kalkulatorze.',
-        what: 'Dostajesz rozbiór trzech policzonych pozycji, wybrane działy, prognozę tygodniową z tranzytów i rozbiór zgodności. Nic poza tym.',
-        look: 'Spokojnie. Twoja mapa zostaje zapisana w tej przeglądarce — wrócisz do niej z tego samego linku.'
+        trust: 'Oto Twoje pozycje, policzone z podanej daty, godziny i miejsca. To ta sama matematyka, z której korzystają efemerydy — sprawdź je w dowolnym kalkulatorze astrologicznym, mają się zgadzać co do dziesiątej części stopnia.',
+        what: 'Dostajesz dostęp do aplikacji, w której Twoja mapa łączy się z aktualnym niebem. Konkretnie:',
+        look: 'Spokojnie. Mapa zostaje zapisana w tej przeglądarce, a rozbiór poniżej jest darmowy i pełny — nic w nim nie jest zasłonięte.'
       },
       yearTitle: 'Plan roczny \u2014 taniej o 75%',
-      yearCta: 'Wybierz plan roczny'
+      yearCta: 'Wybierz plan roczny',
+      backToPlan: 'Wróć do planu miesięcznego',
+      readFree: 'Otwórz darmowy rozbiór'
     },
 
     /* ------------------------------------------------ биллинг */
@@ -500,12 +502,14 @@
       ],
       answers: {
         price: 'The annual plan is $29.99 instead of the $119.88 a year adds up to when paying monthly. That is $2.50 a month.',
-        trust: 'The positions on screen came from your own date and time — the same maths ephemerides use. Check them in any calculator.',
-        what: 'You get a reading of three calculated positions, your chosen sections, a weekly transit forecast and the compatibility reading. Nothing beyond that.',
-        look: 'That\u2019s fine. Your map stays saved in this browser — the same link brings you back to it.'
+        trust: 'Here are your positions, calculated from the date, time and place you gave. This is the same maths ephemerides use — check them in any astrology calculator and they should agree to within a tenth of a degree.',
+        what: 'You get access to the app where your chart meets the current sky. Specifically:',
+        look: 'That’s fine. Your map stays saved in this browser, and the reading below is free and complete — nothing in it is covered up.'
       },
       yearTitle: 'Annual plan \u2014 75% cheaper',
-      yearCta: 'Get the annual plan'
+      yearCta: 'Get the annual plan',
+      backToPlan: 'Back to the monthly plan',
+      readFree: 'Open the free reading'
     },
 
     billing: {

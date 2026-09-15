@@ -108,3 +108,11 @@
   text-decoration: none;
   display: flex;
 }
+
+/* --- переход в продукт ------------------------------------------------------
+   Чтение честное и полное, ничего не заблюрено, поэтому переход в продукт
+   объясняет разницу, а не намекает на спрятанное: это снимок на сегодня, а
+   карта движется вместе с небом. */
+.rd__go { margin-top: 34px; padding-top: 26px; border-top: 1px solid var(--card-line); }
+.rd__gotext { margin: 10px 0 20px; font-size: 15px; line-height: 1.6; color: var(--ink-dim); }
+.rd__go .cta { display: block; text-align: center; text-decoration: none; line-height: 54px; }

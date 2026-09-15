@@ -654,3 +654,21 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .pw__focus { margin: 26px 0 0; padding: 12px 14px; border-radius: var(--radius-sm);
   background: var(--gold-soft); border: 1px solid var(--gold-line);
   font-size: 13.5px; line-height: 1.5; color: var(--ink); }
+
+/* --- recovery по возражениям ------------------------------------------------
+   Ответ зависит от того, что человек назвал причиной. Раньше экран отвечал
+   абзацем на любой ответ и в любом случае показывал годовой план — то есть
+   скидку тому, кто сказал «просто смотрю». */
+.rc { margin-top: 18px; }
+.rc__a { margin: 0; font-size: 15px; line-height: 1.6; color: var(--ink-dim); }
+.rc__list { margin: 14px 0 0; padding: 0; list-style: none; }
+.rc__list li { padding: 11px 0; font-size: 14px; line-height: 1.5; color: var(--ink-dim); }
+.rc__list li + li { border-top: 1px solid var(--card-line-2); }
+.rc__list b { color: var(--ink); font-weight: 600; }
+.rc .pv__rows { margin-top: 14px; }
+.rc__go { display: inline-block; padding: 12px 20px; border-radius: 999px;
+  border: 1px solid var(--gold-line); background: var(--gold-soft);
+  color: var(--ink); text-decoration: none; font-size: 14px; font-weight: 600; }
+.rc__go:hover { border-color: var(--gold); }
+.rc__go:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.alt.hidden { display: none; }
