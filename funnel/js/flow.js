@@ -29,6 +29,7 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
      списках не живут вовсе, и от самих списков пришлось отказаться. */
   var FC = window.FunnelCities;
   var W = window.FunnelWheel;
+  var PV = window.FunnelPreview;
 
   var el = function (id) { return document.getElementById(id); };
   var all = function (sel) {
@@ -685,6 +686,170 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
   }
   ['d2', 'm2', 'y2'].forEach(function (id) { el(id).addEventListener('change', onPartner); });
 
+  /* --- превью продукта -----------------------------------------------------
+     Три раздела продукта на данных этого человека, посчитанные тем же кодом,
+     что и сам продукт. Здесь человек впервые видит, что покупает приложение,
+     а не текст.
+
+     ЗАПЕРТО НЕ ВСЁ. Запирать всё подряд — приём, от которого продукт
+     выглядит дешёвым квизом: непонятно, что там вообще. Видно, ЧТО есть, и
+     закрыта глубина: сколько ещё транзитов, список аспектов, даты
+     разворотов. */
+  var pvData = null, pvTab = 'today';
+
+  var PV_TABS = ['today', 'chart', 'retro'];
+
+  function pvStart() {
+    if (!PV || !S.natal || !S.city) { return; }
+    PV.ensure(function (ok) {
+      if (!ok) { return; }
+      pvCompute();
+      if (S.screen === 's5') { pvRender(); }
+    });
+  }
+
+  function pvCompute() {
+    if (!PV || pvData || !S.city) { return; }
+    var p = { y: S.dob.y, m: S.dob.m, d: S.dob.d,
+              h: S.time.known ? S.time.h : 12,
+              min: S.time.known ? S.time.min : 0 };
+    var utc = FC.toUTC(p.y, p.m, p.d, p.h, p.min, S.city);
+    var lat = typeof S.city.lat === 'number' ? S.city.lat : null;
+    var lon = typeof S.city.lon === 'number' ? S.city.lon : null;
+    try {
+      pvData = PV.compute(utc, lat, lon, S.time.known && lat !== null, new Date());
+    } catch (e) {
+      console.warn('astromap: превью не посчиталось', e);
+      pvData = null;
+    }
+  }
+
+  function pvName(n) { return (C.pv.points[n] || n); }
+  function pvCode(n) { return (C.pv.codes[n] || n.slice(0, 2)); }
+
+  function pvToneTag(tone) {
+    return '<span class="pv__tone pv__tone--' + tone + '">' + C.pv.tone[tone] + '</span>';
+  }
+
+  /* Локализованное число дней: «через 3 дня» собирается из шаблона, а не
+     склеивается из слова и цифры — в польском и русском форма зависит от
+     числа, и склейка даёт «через 3 дней». */
+  function pvInDays(date) {
+    var days = Math.max(0, Math.round((date - new Date()) / 86400000));
+    if (days === 0) { return C.pv.today; }
+    if (days === 1) { return C.pv.tomorrow; }
+    return C.pv.inDays.replace('{n}', days);
+  }
+
+  function pvTodayHtml(d) {
+    var rows = [];
+    rows.push('<div class="pv__row"><span class="pv__k">' + C.pv.moonNow + '</span>' +
+      '<span class="pv__v">' + C.moonPhase[d.moon.phaseIndex] + ' · ' +
+      C.signs[d.moon.sign.index] + '</span></div>');
+    rows.push('<div class="pv__row"><span class="pv__k">' + C.pv.illum + '</span>' +
+      '<span class="pv__v">' + Math.round(d.moon.illum * 100) + '%</span></div>');
+    if (d.signChange) {
+      rows.push('<div class="pv__row"><span class="pv__k">' + C.pv.moonShift + '</span>' +
+        '<span class="pv__v">' + C.signs[d.signChange.to.index] + ' · ' +
+        pvInDays(d.signChange.date) + '</span></div>');
+    }
+
+    /* ТЕСНЫЕ, А НЕ ВСЕ. activeTransits отдаёт всё, что попало в орбис
+       аспекта, — на обычной карте это под шестьдесят штук, и число «57
+       активных» не значит ничего: половина из них в пяти градусах от
+       точности и не чувствуется. Берём орбис до трёх градусов — это
+       примерно двадцать, и каждый из них действительно тесный. */
+    var close = d.transits.filter(function (t) { return t.orb < 3; });
+
+    /* Строка собрана так, чтобы не склонять названия: «Солнце · тригон ·
+       Солнце», а чья это точка — подписью ниже. Шаблон вида «в тригоне к
+       твоему {точка}» в польском ломается на каждом втором слове: Słońce
+       среднего рода, Księżyc мужского, Wenus женского, и одного «Twoim» на
+       всех не бывает. */
+    var top = close.slice(0, 2).map(function (t) {
+      return '<li class="pv__t"><span class="pv__tmain"><b>' + pvName(t.transit) + '</b>' +
+        '<span class="pv__asp">' + C.pv.aspects[t.aspect] + '</span>' +
+        '<b>' + pvName(t.natal) + '</b></span>' +
+        pvToneTag(t.tone) +
+        '<span class="pv__tmeta">' + C.pv.fromSky + ' → ' + C.pv.toChart +
+        ' · ' + C.pv.orb + ' ' + deg(t.orb) + '</span></li>';
+    }).join('');
+
+    var rest = Math.max(0, close.length - 2);
+    return '<div class="pv__rows">' + rows.join('') + '</div>' +
+      '<h3 class="pv__h3">' + C.pv.activeNow.replace('{n}', close.length) + '</h3>' +
+      '<ul class="pv__list">' + top + '</ul>' +
+      (rest ? pvLocked(C.pv.lockTransits.replace('{n}', rest)) : '');
+  }
+
+  function pvChartHtml(d) {
+    var pts = d.natal.points.filter(function (p) { return p.name !== 'Node'; })
+      .map(function (p) { return { key: p.name.toLowerCase(), lon: p.lon, short: pvCode(p.name) }; });
+    if (d.natal.asc) {
+      pts.push({ key: 'asc', lon: d.natal.asc.lon, short: pvCode('ASC') });
+      pts.push({ key: 'mc', lon: d.natal.mc.lon, short: pvCode('MC') });
+    }
+    var aria = pts.map(function (p) { return p.short; }).join(', ');
+    /* Считаем то, что нарисовано, а не длину массива points: в нём есть
+       Узел, которого на колесе нет, и нет осей, которые есть. Цифра, не
+       сходящаяся с картинкой рядом, — первое, за что цепляется глаз. */
+    var counts = [
+      [C.pv.planets, String(pts.length)],
+      [C.pv.aspectsN, String(d.aspects.length)],
+      [C.pv.housesN, d.natal.houses ? '12' : C.pv.noHouses]
+    ].map(function (r) {
+      return '<div class="pv__row"><span class="pv__k">' + r[0] + '</span>' +
+        '<span class="pv__v">' + r[1] + '</span></div>';
+    }).join('');
+
+    return '<div class="mapbox mapbox--pv">' +
+      W.render({ points: pts, signs: C.signs, aria: aria }) + '</div>' +
+      '<div class="pv__rows">' + counts + '</div>' +
+      pvLocked(C.pv.lockChart);
+  }
+
+  function pvRetroHtml(d) {
+    if (!d.retro.length) {
+      return '<p class="pv__empty">' + C.pv.noRetro + '</p>' + pvLocked(C.pv.lockRetro);
+    }
+    var list = d.retro.map(function (r) {
+      return '<li class="pv__t"><span class="pv__tmain"><b>' + pvName(r.body) + '</b> ' +
+        C.pv.inSign.replace('{s}', C.signs[r.sign.index]) + '</span>' +
+        '<span class="pv__tmeta">' + C.pv.retroNow + '</span></li>';
+    }).join('');
+    return '<h3 class="pv__h3">' + C.pv.retroTitle.replace('{n}', d.retro.length) + '</h3>' +
+      '<ul class="pv__list">' + list + '</ul>' + pvLocked(C.pv.lockRetro);
+  }
+
+  function pvLocked(text) {
+    return '<p class="pv__lock"><span class="pv__lockicon" aria-hidden="true"></span>' + text + '</p>';
+  }
+
+  function pvRender() {
+    var box = el('pv');
+    if (!box || !pvData) { return; }
+    el('pvH').textContent = C.pv.title;
+    el('pvSub').textContent = C.pv.sub;
+    el('pvTabs').innerHTML = PV_TABS.map(function (k) {
+      return '<button type="button" class="pv__tab' + (k === pvTab ? ' on' : '') +
+        '" data-pvtab="' + k + '" role="tab" aria-selected="' + (k === pvTab) + '">' +
+        C.pv.tabs[k] + '</button>';
+    }).join('');
+    var body = pvTab === 'chart' ? pvChartHtml(pvData)
+             : pvTab === 'retro' ? pvRetroHtml(pvData)
+             : pvTodayHtml(pvData);
+    el('pvBody').innerHTML = body;
+    box.classList.remove('hidden');
+    all('#pvTabs [data-pvtab]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var k = b.getAttribute('data-pvtab');
+        if (k === pvTab) { return; }
+        pvTab = k;
+        pvRender();
+      });
+    });
+  }
+
   /* --- экран 5: сводка --------------------------------------------------- */
   function themeNames() {
     return S.themes.map(function (k) {
@@ -695,6 +860,7 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
   }
 
   function buildSummary() {
+    if (PV && PV.isReady()) { pvCompute(); pvRender(); }
     var rows = [
       [C.s5.sun, C.signs[S.natal.sun.index] + ' ' + deg(S.natal.sun.degree)],
       [C.s5.moon, C.signs[S.natal.moon.index] + ' ' + deg(S.natal.moon.degree)],
@@ -792,10 +958,18 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     if (S.screen === 's1') { go('s2'); return; }
     if (S.screen === 's2') { go('s3'); return; }
     if (S.screen === 's3') {
-      if (!S.natal) { calcChart(); } else { go('s4'); }
+      if (!S.natal) { calcChart(); }
+      else {
+        /* Ядро продукта весит около 70 КБ в gzip — грузим его здесь, когда
+           карта уже посчитана и человек уходит на следующий экран. К пятому
+           экрану загрузка обычно закончена; если нет, сводка показывается
+           без превью и оно появляется, когда будет готово. */
+        pvStart();
+        go('s4');
+      }
       return;
     }
-    if (S.screen === 's4') { buildSummary(); go('s5'); return; }
+    if (S.screen === 's4') { buildSummary(); pvStart(); go('s5'); return; }
     if (S.screen === 's5') { buildPaywall(); go('s6'); return; }
     if (S.screen === 's6') {
       if (CHECKOUT_URL) { window.location.href = CHECKOUT_URL; }
@@ -812,7 +986,7 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
   });
 
   el('ghost').addEventListener('click', function () {
-    if (S.screen === 's4') { S.syn = null; buildSummary(); go('s5'); return; }
+    if (S.screen === 's4') { S.syn = null; buildSummary(); pvStart(); go('s5'); return; }
     if (S.screen === 's6') { buildRecovery(); go('s7'); return; }
     if (S.screen === 's7') { go('s6'); return; }
   });

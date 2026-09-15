@@ -28,6 +28,53 @@
       reasons: 'Powód, dla którego jeszcze nie kupujesz'
     },
 
+    /* --------------------------------------------- превью продукта
+       Названия планет, аспектов и фаз нужны здесь, потому что превью
+       считается кодом продукта, а тексты продукта (500 КБ на десять языков)
+       тащить в воронку ради тридцати слов нельзя.
+
+       Коды точек на колесе — двухбуквенные, а не астрологические символы:
+       ♀♂♃ есть не во всех шрифтах, и на части машин вместо них пустые
+       квадраты. Так же сделано в продукте. */
+    pv: {
+      title: 'Twoja mapa w AstroMap',
+      sub: 'To ta sama mapa, policzona tym samym kodem co w aplikacji. Dotknij, żeby zobaczyć.',
+      tabs: { today: 'Dziś', chart: 'Karta', retro: 'Retrogradacje' },
+      points: {
+        Sun: 'Słońce', Moon: 'Księżyc', Mercury: 'Merkury', Venus: 'Wenus', Mars: 'Mars',
+        Jupiter: 'Jowisz', Saturn: 'Saturn', Uranus: 'Uran', Neptune: 'Neptun', Pluto: 'Pluton',
+        Node: 'Węzeł', ASC: 'Ascendent', MC: 'MC'
+      },
+      codes: {
+        Sun: 'Sł', Moon: 'Ks', Mercury: 'Me', Venus: 'We', Mars: 'Ma',
+        Jupiter: 'Jo', Saturn: 'Sa', Uranus: 'Ur', Neptune: 'Ne', Pluto: 'Pl',
+        ASC: 'AC', MC: 'MC'
+      },
+      /* Аспекты существительными в именительном падеже: строка собирается
+         как «Słońce · trygon · Słońce», без склонения названий. */
+      aspects: {
+        conjunction: 'koniunkcja', sextile: 'sekstyl',
+        square: 'kwadratura', trine: 'trygon', opposition: 'opozycja'
+      },
+      tone: { soft: 'łatwy', hard: 'trudny', neutral: 'neutralny' },
+      fromSky: 'niebo teraz', toChart: 'Twoja mapa',
+      moonNow: 'Księżyc teraz',
+      illum: 'Oświetlenie',
+      moonShift: 'Zmiana znaku',
+      today: 'dziś', tomorrow: 'jutro', inDays: 'za {n} dni',
+      orb: 'orbis',
+      activeNow: 'Ciasne aspekty teraz: {n}',
+      lockTransits: 'Pozostałe {n} wraz z dokładnymi datami szczytu — w aplikacji.',
+      planets: 'Punktów na karcie', aspectsN: 'Aspektów w karcie', housesN: 'Domy',
+      noHouses: 'brak godziny',
+      lockChart: 'Lista aspektów, domy i pozycje na dowolną datę — w aplikacji.',
+      retroTitle: 'Retrogradacje teraz: {n}',
+      retroNow: 'ruch wsteczny',
+      inSign: 'w znaku {s}',
+      noRetro: 'W tej chwili żadna planeta nie jest retrogradna.',
+      lockRetro: 'Daty zwrotów, cienie i to, którego domu Twojej karty dotyczą — w aplikacji.'
+    },
+
     /* --------------------------------------- карта, которая собирается */
     map: {
       sun: 'Słońce', moon: 'Księżyc', asc: 'Ascendent',
@@ -193,6 +240,9 @@
       yearDisclaimer: 'Plan roczny kosztuje 119,99 zł i odnawia się automatycznie co rok, o ile nie anulujesz go co najmniej 24 godziny przed końcem bieżącego okresu. Przy planie miesięcznym rok kosztuje 479,88 zł. Anulujesz w każdej chwili w ustawieniach konta \u2014 zobacz Warunki subskrypcji.'
     },
 
+    moonPhase: ['Nów', 'Przybywający sierp', 'Pierwsza kwadra', 'Przybywający garb',
+                'Pełnia', 'Ubywający garb', 'Ostatnia kwadra', 'Ubywający sierp'],
+
     signs: ['Baran', 'Byk', 'Bliźnięta', 'Rak', 'Lew', 'Panna',
             'Waga', 'Skorpion', 'Strzelec', 'Koziorożec', 'Wodnik', 'Ryby'],
     signsIn: ['w Baranie', 'w Byku', 'w Bliźniętach', 'w Raku', 'w Lwie', 'w Pannie',
@@ -260,6 +310,43 @@
       progress: 'Progress building your map',
       themes: 'Sections to choose from',
       reasons: 'Why you have not bought yet'
+    },
+
+    pv: {
+      title: 'Your map inside AstroMap',
+      sub: 'The same map, calculated by the same code as the app. Tap to look around.',
+      tabs: { today: 'Today', chart: 'Chart', retro: 'Retrogrades' },
+      points: {
+        Sun: 'Sun', Moon: 'Moon', Mercury: 'Mercury', Venus: 'Venus', Mars: 'Mars',
+        Jupiter: 'Jupiter', Saturn: 'Saturn', Uranus: 'Uranus', Neptune: 'Neptune', Pluto: 'Pluto',
+        Node: 'Lunar Node', ASC: 'Ascendant', MC: 'MC'
+      },
+      codes: {
+        Sun: 'Su', Moon: 'Mo', Mercury: 'Me', Venus: 'Ve', Mars: 'Ma',
+        Jupiter: 'Ju', Saturn: 'Sa', Uranus: 'Ur', Neptune: 'Ne', Pluto: 'Pl',
+        ASC: 'AC', MC: 'MC'
+      },
+      aspects: {
+        conjunction: 'conjunct', sextile: 'sextile',
+        square: 'square', trine: 'trine', opposition: 'opposite'
+      },
+      tone: { soft: 'easy', hard: 'hard', neutral: 'neutral' },
+      fromSky: 'sky now', toChart: 'your map',
+      moonNow: 'Moon right now',
+      illum: 'Illumination',
+      moonShift: 'Changes sign',
+      today: 'today', tomorrow: 'tomorrow', inDays: 'in {n} days',
+      orb: 'orb',
+      activeNow: 'Close aspects right now: {n}',
+      lockTransits: 'The other {n}, with the exact peak dates, are in the app.',
+      planets: 'Points on your chart', aspectsN: 'Aspects in your chart', housesN: 'Houses',
+      noHouses: 'no birth time',
+      lockChart: 'The aspect list, the houses and any date you choose are in the app.',
+      retroTitle: 'Retrograde right now: {n}',
+      retroNow: 'moving backwards',
+      inSign: 'in {s}',
+      noRetro: 'No planet is retrograde at the moment.',
+      lockRetro: 'Turn dates, shadow periods and which house of your chart they touch are in the app.'
     },
 
     map: {
@@ -396,6 +483,9 @@
       yearPeriod: 'per year',
       yearDisclaimer: 'The annual plan is $29.99 and renews automatically every year unless you cancel at least 24 hours before the end of the current period. Paying monthly, a year costs $119.88. Cancel anytime in your account settings \u2014 see our Subscription Terms.'
     },
+
+    moonPhase: ['New Moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous',
+                'Full Moon', 'Waning gibbous', 'Last quarter', 'Waning crescent'],
 
     signs: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
             'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'],

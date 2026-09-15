@@ -533,3 +533,68 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 }
 
 .mapnote { margin-top: 12px; font-size: 13px; line-height: 1.5; color: var(--ink-faint); }
+
+/* --- превью продукта --------------------------------------------------------
+   Три раздела продукта на данных этого человека. Здесь человек впервые видит,
+   что покупает приложение, а не текст.
+
+   Вкладки, а не три блока подряд: переключение — это и есть доказательство,
+   что перед ним интерфейс, по которому ходят, а не картинка. */
+.pv { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--card-line-2); }
+.pv.hidden { display: none; }
+.pv__h { margin: 0; font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1.15; }
+.pv__sub { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: var(--ink-dim); }
+
+.pv__tabs { display: flex; gap: 4px; margin-top: 16px; padding: 4px;
+  background: var(--card); border: 1px solid var(--card-line); border-radius: 999px; }
+.pv__tab {
+  flex: 1 1 0; min-width: 0; padding: 9px 6px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--ink-dim); cursor: pointer;
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: background .2s ease, color .2s ease;
+}
+.pv__tab.on { background: var(--gold-soft); color: var(--ink); }
+.pv__tab:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.pv__body { margin-top: 16px; }
+.pv__rows { display: grid; }
+.pv__row { display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; padding: 9px 0; }
+.pv__row + .pv__row { border-top: 1px solid var(--card-line-2); }
+.pv__k { font-size: 13px; color: var(--ink-dim); }
+.pv__v { font-family: var(--serif); font-size: 18px; font-weight: 600; text-align: right; }
+
+.pv__h3 { margin: 18px 0 8px; font-size: 11px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--gold); }
+.pv__list { margin: 0; padding: 0; list-style: none; }
+.pv__t { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px;
+  padding: 11px 0; border-top: 1px solid var(--card-line-2); align-items: baseline; }
+.pv__t:first-child { border-top: 0; }
+.pv__tmain { font-size: 15px; line-height: 1.45; }
+.pv__tmeta { grid-column: 1 / -1; font-size: 12px; color: var(--ink-faint); }
+.pv__tone { justify-self: end; font-size: 10px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+.pv__tone--soft { background: rgba(111,233,194,.14); color: #6FE9C2; }
+.pv__tone--hard { background: rgba(240,146,138,.14); color: #F0928A; }
+.pv__tone--neutral { background: var(--gold-soft); color: var(--gold); }
+.pv__empty { margin: 0; font-size: 15px; color: var(--ink-dim); }
+
+/* Заперта глубина, а не факт существования. Запирать всё подряд — приём, от
+   которого продукт выглядит дешёвым квизом: непонятно, что там вообще.
+   Поэтому строка называет, ЧТО именно лежит за оплатой. */
+.pv__lock { margin: 16px 0 0; display: flex; gap: 9px; align-items: flex-start;
+  padding: 12px 14px; background: var(--card); border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm); font-size: 13px; line-height: 1.5; color: var(--ink-dim); }
+.pv__lockicon { flex: 0 0 auto; width: 12px; height: 12px; margin-top: 3px;
+  border: 1.5px solid var(--gold); border-radius: 2px; position: relative; }
+.pv__lockicon::before { content: ''; position: absolute; left: 2px; right: 2px; top: -4px;
+  height: 5px; border: 1.5px solid var(--gold); border-bottom: 0; border-radius: 3px 3px 0 0; }
+
+/* Колесо превью крупнее карты из онбординга: на нём десять планет плюс оси,
+   и при 220px коды начинают наезжать друг на друга. */
+.mapbox--pv { max-width: 300px; margin-bottom: 18px; }
+.pv__asp { display: inline-block; margin: 0 7px; padding: 2px 8px; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--card-line-2);
+  font-size: 11px; font-weight: 600; letter-spacing: .03em; color: var(--ink-dim);
+  vertical-align: 1px; }

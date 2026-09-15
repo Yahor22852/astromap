@@ -205,6 +205,18 @@
       <p class="eyebrow" data-t="s5.eyebrow"></p>
       <h1 class="h1" data-t="s5.title"></h1>
       <div class="sum" id="sum"></div>
+
+      <!-- Превью продукта на данных этого человека. Считается тем же кодом,
+           что и сам продукт (см. js/preview.js), поэтому цифры здесь и после
+           оплаты — один расчёт. Если ядро не загрузилось, блок остаётся
+           пустым и экран работает как раньше. -->
+      <section class="pv hidden" id="pv">
+        <h2 class="pv__h" id="pvH"></h2>
+        <p class="pv__sub" id="pvSub"></p>
+        <div class="pv__tabs" id="pvTabs" role="tablist"></div>
+        <div class="pv__body" id="pvBody"></div>
+      </section>
+
       <p class="hint" data-t="s5.ready"></p>
     </section>
 
@@ -264,6 +276,7 @@
 
 <script src="js/cities.js"></script>
 <script src="js/wheel.js"></script>
+<script src="js/preview.js"></script>
 <script src="js/astro.js"></script>
 <script src="js/copy.js"></script>
 <script src="js/flow.js"></script>
