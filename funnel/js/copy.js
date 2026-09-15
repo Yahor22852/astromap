@@ -181,6 +181,7 @@
        сюда то, чего в продукте нет, нельзя — это обещание, за которое берут
        деньги. */
     pw: {
+      focusLine: 'Twój fokus — {areas} — jedzie razem z mapą: w aplikacji decyduje, co pokazujemy najpierw.',
       opensTitle: 'Co się otwiera',
       opens: [
         { t: 'Karta urodzeniowa. ', d: 'Koło, planety, domy, aspekty i bilans żywiołów — z niebem na dowolny dzień w drugim pierścieniu.' },
@@ -458,6 +459,7 @@
     },
 
     pw: {
+      focusLine: 'Your focus — {areas} — travels with the map: in the app it decides what you see first.',
       opensTitle: 'What opens',
       opens: [
         { t: 'Your birth chart. ', d: 'The wheel, planets, houses, aspects and elemental balance — with the sky of any day in a second ring.' },

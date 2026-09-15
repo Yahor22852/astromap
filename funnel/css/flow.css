@@ -651,3 +651,6 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 @media (max-width: 360px) {
   .pw__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.pw__focus { margin: 26px 0 0; padding: 12px 14px; border-radius: var(--radius-sm);
+  background: var(--gold-soft); border: 1px solid var(--gold-line);
+  font-size: 13.5px; line-height: 1.5; color: var(--ink); }

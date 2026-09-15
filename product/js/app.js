@@ -53,7 +53,11 @@
   };
 
   /* --- состояние ---------------------------------------------------------- */
-  var S = { profile: null, partner: null };
+  var S = { profile: null, partner: null, focus: [] };
+
+  /* Области, на которые может указывать фокус. Совпадают с ключами
+     AREA_POINTS в transits.js — там же лежат точки карты каждой области. */
+  var FOCUS_AREAS = ['love', 'career', 'inner', 'self'];
 
   function load() {
     try {
@@ -82,6 +86,18 @@
             timeKnown: !!(p.time && p.time.known),
             city: srcCity
           };
+          /* ФОКУС ИЗ ВОРОНКИ. Темы, которые человек выбирал на втором
+             экране, до сих пор сохранялись и не читались здесь ни разу —
+             то есть вопрос задавался и забывался. Теперь они приходят сюда
+             и влияют на то, что показано первым: в «Сегодня» появляется
+             блок по фокусу, а проводник транзитов открывается на нужной
+             области. Ключи воронки и области продукта совпадают, кроме
+             двух — их и переводим. */
+          if (Array.isArray(p.themes) && p.themes.length) {
+            S.focus = p.themes.map(function (t) {
+              return t === 'money' ? 'career' : (t === 'calm' ? 'inner' : t);
+            }).filter(function (t) { return FOCUS_AREAS.indexOf(t) >= 0; });
+          }
           if (p.partner && p.partner.y) {
             S.partner = { name: '', y: p.partner.y, m: p.partner.m, d: p.partner.d,
                           h: null, min: null, timeKnown: false, city: srcCity };
@@ -578,6 +594,53 @@
       '</button>';
   }
 
+  /* --- фокус ----------------------------------------------------------------
+     Темы, выбранные в воронке, доезжают сюда и решают, что показано первым.
+     Раньше ответ на этот вопрос сохранялся и не читался нигде — экран
+     спрашивал и забывал, а человек это чувствует.
+
+     ВЛИЯНИЕ ЧЕСТНОЕ: ничего не прячется и не выдумывается. В «Сегодня»
+     добавляется блок с самыми тесными транзитами к точкам выбранных
+     областей, а проводник открывается на первой из них — переключить на
+     «все» можно одним нажатием, чипы стоят там же. */
+  function focusPoints() {
+    var out = [];
+    (S.focus || []).forEach(function (k) {
+      (Tr.AREA_POINTS[k] || []).forEach(function (p) {
+        if (out.indexOf(p) < 0) { out.push(p); }
+      });
+    });
+    return out;
+  }
+
+  function focusNames() {
+    return (S.focus || []).map(function (k) { return T.sec.filters[k] || k; });
+  }
+
+  function focusBlockHtml(now) {
+    var pts = focusPoints();
+    if (!pts.length) { return ''; }
+    var rows = E.activeTransits(natal, now).filter(function (t) {
+      return pts.indexOf(t.natal) >= 0;
+    }).slice(0, 2);
+    if (!rows.length) { return ''; }
+    return '<section class="cn-focus">' +
+      '<h3 class="cn-focus__h">' + T.sec.focusTitle.replace('{areas}', focusNames().join(' · ')) + '</h3>' +
+      rows.map(function (t) {
+        var target = natal.byName[t.natal] ||
+          (t.natal === 'ASC' ? natal.asc : null) || (t.natal === 'MC' ? natal.mc : null);
+        var house = target && target.house;
+        return '<button type="button" class="cn-focus__b" data-cngo="horoscope/' +
+          esc(t.transit + '-' + t.natal + '-' + t.aspect) + '">' +
+          '<span class="cn-focus__p">' + pName(t.transit) + ' ' + T.aspects[t.aspect] + ' ' +
+            pName(t.natal) + '</span>' + toneTag(t.tone) +
+          '<span class="cn-focus__m">' + T.sec.orb + ' ' + fmtDeg(t.orb) +
+            (house ? ' · ' + T.houses[house].n : '') + '</span>' +
+          '<span class="cn-focus__go" aria-hidden="true">\u203A</span></button>';
+      }).join('') +
+      '</section>';
+  }
+
   views.today = function () {
     if (!natal) { return needProfile('needText') + moonCard() + skyNow(); }
     var now = new Date();
@@ -610,6 +673,9 @@
     } else {
       main = '<div class="cn-main cn-main--empty"><span class="cn-main__l">' + T.sec.mainNow +
         '</span><span class="cn-main__ctx">' + T.ui.noTransits + '</span></div>';
+    }
+    main += focusBlockHtml(now);
+    if (false) {
     }
 
     /* Луна: фаза, знак и — если известно время рождения — дом карты. */
@@ -1335,8 +1401,24 @@
      Луна из главных исключена намеренно (см. transits.js): она меняет
      аспекты по нескольку раз в сутки и всегда вытесняла бы то, что держится
      неделями. В общем списке она остаётся. */
-  var TX_FILTERS = ['all', 'soft', 'hard', 'slow', 'love', 'career', 'growth', 'inner'];
+  /* Области фокуса идут сразу после «всех»: человек выбирал их сам, и искать
+     свою тему в хвосте ряда он не должен. Остальные чипы — в прежнем
+     порядке, ни один не пропал. */
+  var TX_FILTERS_BASE = ['all', 'soft', 'hard', 'slow', 'love', 'career', 'growth', 'inner', 'self'];
+  function txFilters() {
+    var f = (S.focus || []).filter(function (k) { return TX_FILTERS_BASE.indexOf(k) >= 0; });
+    return ['all'].concat(f, TX_FILTERS_BASE.filter(function (k) {
+      return k !== 'all' && f.indexOf(k) < 0;
+    }));
+  }
+  /* Фильтр проводника открывается на первой области фокуса, а не на «всех»:
+     человек сказал, что его интересует, и первым должен увидеть именно это.
+     Чипы стоят рядом, так что «все» — одно нажатие. */
   var txSel = null, txFilter = 'all', txOpen = false, txWhy = false;
+  var txFilterTouched = false;
+  function txDefaultFilter() {
+    return (S.focus && S.focus.length) ? S.focus[0] : 'all';
+  }
 
   function txKey(r) { return r.transit + '|' + r.natal + '|' + r.aspect; }
   /* Тот же ключ для адресной строки: вертикальная черта в хеше выглядит
@@ -1441,7 +1523,7 @@
 
   function txListHtml(all, selKey) {
     var rows = Tr.filterRows(all, txFilter);
-    var chips = TX_FILTERS.map(function (k) {
+    var chips = txFilters().map(function (k) {
       return '<button type="button" class="chip' + (txFilter === k ? ' on' : '') +
         '" data-txfilter="' + k + '">' + T.sec.filters[k] + '</button>';
     }).join('');
@@ -1454,9 +1536,16 @@
           (r.applying ? T.sec.applying : T.sec.separating) + '</span>' +
         '<span class="tx-row__go" aria-hidden="true">›</span></button></li>';
     }).join('');
+    /* Заголовок свёрнутого списка обязан показывать ДЕЙСТВУЮЩИЙ фильтр.
+       Фокус подставляет его при первом входе в раздел, а чипы видны только
+       в развёрнутом виде — без этой подписи человек открывал бы список и
+       обнаруживал, что часть транзитов куда-то делась, без объяснения. */
+    var filterLabel = txFilter === 'all' ? '' :
+      ' <i class="tx-list__f">' + T.sec.filters[txFilter] + '</i>';
     return '<section class="tx-list">' +
       '<button type="button" class="tx-list__toggle" data-txopen="1" aria-expanded="' + txOpen + '">' +
-        T.sec.allActive + ' <b>' + all.length + '</b> <span>' +
+        T.sec.allActive + ' <b>' + (txFilter === 'all' ? all.length : rows.length + ' / ' + all.length) +
+        '</b>' + filterLabel + ' <span>' +
         (txOpen ? T.sec.collapse : T.sec.showAll) + '</span></button>' +
       (txOpen ? '<div class="chartchips tx-list__chips">' + chips + '</div>' +
         '<ul class="tx-list__ul">' + items + '</ul>' : '') +
@@ -1506,6 +1595,7 @@
     each('[data-txfilter]', function (b) {
       b.addEventListener('click', function () {
         txFilter = b.getAttribute('data-txfilter');
+        txFilterTouched = true;
         rerenderTx();
       });
     });
@@ -2790,7 +2880,20 @@
     /* Первая карточка без заголовка: «Профиль» уже написано в h1 страницы
        прямо над ней, и два одинаковых слова подряд читаются как недоделка —
        та же причина, по которой Cosmic Now прячет общий заголовок. */
+    /* Фокус редактируется здесь, а не только приходит из воронки: человек
+       мог выбрать темы полгода назад, и запирать его в том выборе навсегда
+       — это тот же вопрос, который спрашивают и забывают, только наоборот. */
+    var focus = '<p class="p">' + T.sec.focusIntro + '</p>' +
+      '<div class="foc" role="group" aria-label="' + esc(T.sec.focusTitleShort) + '">' +
+      FOCUS_AREAS.map(function (k) {
+        var on = (S.focus || []).indexOf(k) >= 0;
+        return '<button type="button" class="foc__b' + (on ? ' on' : '') +
+          '" data-focus="' + k + '" aria-pressed="' + on + '">' + T.sec.filters[k] + '</button>';
+      }).join('') + '</div>' +
+      '<p class="note">' + T.sec.focusNote + '</p>';
+
     return card('', head) +
+      card(T.sec.focusTitleShort, focus) +
       card(T.ui.balance, balanceHtml(natal)) +
       card(T.bal.birthData, data,
         S.profile.timeKnown ? '' : T.ui.timeMissing) +
@@ -2801,6 +2904,18 @@
      не через confirm(): модальное окно браузера выглядит как ошибка сайта, а
      здесь это обычное действие, которое человек должен успеть передумать. */
   function bindProfile() {
+    Array.prototype.slice.call(document.querySelectorAll('[data-focus]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        var k = b.getAttribute('data-focus');
+        var list = (S.focus || []).slice();
+        var i = list.indexOf(k);
+        if (i >= 0) { list.splice(i, 1); } else { list.push(k); }
+        S.focus = list;
+        save();
+        txFilterTouched = false;      /* новый фокус снова задаёт фильтр */
+        route();
+      });
+    });
     var edit = el('profEdit'), form = el('profForm');
     if (edit && form) {
       edit.addEventListener('click', function () {
@@ -3081,6 +3196,11 @@
     var h = parsed.name || fallback;
     if (ORDER.indexOf(h) < 0) { h = fallback; }
     applyHashState(h, parsed.args);
+    /* Фокус задаёт фильтр ДО отрисовки раздела: если сделать это после,
+       первый кадр рисуется со старым фильтром, а подпись под ним — с новым,
+       и в заголовке списка стоит одна область, а в чипах отмечена другая.
+       Один раз за сессию; дальше человек управляет фильтром сам. */
+    if (h === 'horoscope' && !txFilterTouched) { txFilter = txDefaultFilter(); }
     document.querySelectorAll('.nav__i').forEach(function (a) {
       a.classList.toggle('on', a.getAttribute('href') === '#' + h);
     });

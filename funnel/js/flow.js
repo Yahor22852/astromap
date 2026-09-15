@@ -990,7 +990,13 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     drawAssembled(el('pwMap'));
     el('pwMoves').innerHTML = pwMovesHtml();
 
-    el('inc').innerHTML = '<h2 class="pw__h">' + C.pw.opensTitle + '</h2>' +
+    /* Фокус назван на пейволле, потому что он теперь действительно доезжает
+       до продукта: там он решает, что показано первым в «Сегодня» и на какой
+       области открывается проводник транзитов. До этого патча такой строки
+       здесь быть не могло — вопрос задавался и забывался. */
+    el('inc').innerHTML =
+      '<p class="pw__focus">' + C.pw.focusLine.replace('{areas}', themeNames().join(' · ')) + '</p>' +
+      '<h2 class="pw__h">' + C.pw.opensTitle + '</h2>' +
       C.pw.opens.map(function (o) {
         return '<div class="inc__i"><i class="inc__d"></i><span class="inc__t">' +
           '<b>' + o.t + '</b>' + o.d + '</span></div>';

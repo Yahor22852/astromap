@@ -460,7 +460,7 @@
         career: 'Praca',
         growth: 'Rozwój',
         inner: 'Wnętrze'
-      },
+      , self: 'Ja i granice' },
       upcomingPhases: 'Najbliższe fazy',
       signChange: 'Zmiana znaku',
       hoursShort: 'godz.',
@@ -533,7 +533,12 @@
       wheelMode: 'Tryb koła',
       modeNatal: 'Sama mapa',
       modeTransit: 'Mapa i niebo',
-      txTouches: 'Czego dotyka w Twojej mapie'
+      txTouches: 'Czego dotyka w Twojej mapie',
+      /* Фокус: темы из воронки, доехавшие до продукта. */
+      focusTitle: 'Twój fokus: {areas}',
+      focusTitleShort: 'Twój fokus',
+      focusIntro: 'Działy, które wybrałaś lub wybrałeś na początku. Decydują, co pokazujemy najpierw.',
+      focusNote: 'Nic nie jest ukrywane: fokus zmienia kolejność, a nie zawartość. Przewodnik tranzytów otwiera się na pierwszym z wybranych działów — przełączenie na „Wszystkie” to jedno dotknięcie.'
     }
   };
 
@@ -981,7 +986,7 @@
         career: 'Career',
         growth: 'Growth',
         inner: 'Inner'
-      },
+      , self: 'Me and limits' },
       upcomingPhases: 'Upcoming phases',
       signChange: 'Sign change',
       hoursShort: 'h',
@@ -1054,7 +1059,12 @@
       wheelMode: 'Wheel mode',
       modeNatal: 'Natal only',
       modeTransit: 'Natal and sky',
-      txTouches: 'What it touches in your chart'
+      txTouches: 'What it touches in your chart',
+      /* Фокус: темы из воронки, доехавшие до продукта. */
+      focusTitle: 'Your focus: {areas}',
+      focusTitleShort: 'Your focus',
+      focusIntro: 'The areas you picked at the start. They decide what you see first.',
+      focusNote: 'Nothing is hidden: focus changes the order, not the content. The transit explorer opens on the first area you chose — switching to “All” is one tap.'
     }
   };
 
@@ -1503,7 +1513,7 @@ var RU = {
         career: 'Работа',
         growth: 'Рост',
         inner: 'Внутреннее'
-      },
+      , self: 'Я и границы' },
       upcomingPhases: 'Ближайшие фазы',
       signChange: 'Смена знака',
       hoursShort: 'ч',
@@ -1576,7 +1586,12 @@ var RU = {
       wheelMode: 'Режим колеса',
       modeNatal: 'Только натал',
       modeTransit: 'Натал и небо',
-      txTouches: 'Чего касается в вашей карте'
+      txTouches: 'Чего касается в вашей карте',
+      /* Фокус: темы из воронки, доехавшие до продукта. */
+      focusTitle: 'Ваш фокус: {areas}',
+      focusTitleShort: 'Ваш фокус',
+      focusIntro: 'Разделы, которые вы выбрали в начале. Они решают, что показать первым.',
+      focusNote: 'Ничего не прячется: фокус меняет порядок, а не содержание. Проводник транзитов открывается на первой выбранной области — переключить на «все» можно одним нажатием.'
     }
   };
 var UK = {
@@ -2020,7 +2035,7 @@ var UK = {
         career: 'Робота',
         growth: 'Зростання',
         inner: 'Внутрішнє'
-      },
+      , self: 'Я і межі' },
       upcomingPhases: 'Найближчі фази',
       signChange: 'Зміна знака',
       hoursShort: 'год',
@@ -2093,7 +2108,12 @@ var UK = {
       wheelMode: 'Режим кола',
       modeNatal: 'Тільки натал',
       modeTransit: 'Натал і небо',
-      txTouches: 'Чого торкається у вашій карті'
+      txTouches: 'Чого торкається у вашій карті',
+      /* Фокус: темы из воронки, доехавшие до продукта. */
+      focusTitle: 'Ваш фокус: {areas}',
+      focusTitleShort: 'Ваш фокус',
+      focusIntro: 'Розділи, які ви обрали на початку. Вони вирішують, що показати першим.',
+      focusNote: 'Нічого не ховається: фокус змінює порядок, а не зміст. Провідник транзитів відкривається на першій обраній області — перемкнути на «всі» можна одним натисканням.'
     }
   };
 var DE = {
@@ -2537,7 +2557,7 @@ var DE = {
         career: 'Beruf',
         growth: 'Wachstum',
         inner: 'Innen'
-      },
+      , self: 'Ich und Grenzen' },
       upcomingPhases: 'Nächste Phasen',
       signChange: 'Zeichenwechsel',
       hoursShort: 'Std.',
@@ -2610,7 +2630,12 @@ var DE = {
       wheelMode: 'Rad-Modus',
       modeNatal: 'Nur Radix',
       modeTransit: 'Radix und Himmel',
-      txTouches: 'Was es in Ihrem Horoskop berührt'
+      txTouches: 'Was es in Ihrem Horoskop berührt',
+      /* Фокус: темы из воронки, доехавшие до продукта. */
+      focusTitle: 'Ihr Fokus: {areas}',
+      focusTitleShort: 'Ihr Fokus',
+      focusIntro: 'Die Bereiche, die Sie am Anfang gewählt haben. Sie bestimmen, was zuerst erscheint.',
+      focusNote: 'Nichts wird versteckt: der Fokus ändert die Reihenfolge, nicht den Inhalt. Der Transit-Explorer öffnet im ersten gewählten Bereich — auf „Alle“ umschalten ist ein Tipp.'
     }
   };
 var ES = {
@@ -3054,7 +3079,7 @@ var ES = {
         career: 'Trabajo',
         growth: 'Crecimiento',
         inner: 'Interior'
-      },
+      , self: 'Yo y mis límites' },
       upcomingPhases: 'Próximas fases',
       signChange: 'Cambio de signo',
       hoursShort: 'h',
@@ -3127,7 +3152,12 @@ var ES = {
       wheelMode: 'Modo de rueda',
       modeNatal: 'Solo natal',
       modeTransit: 'Natal y cielo',
-      txTouches: 'Qué toca en su carta'
+      txTouches: 'Qué toca en su carta',
+      /* Фокус: темы из воронки, доехавшие до продукта. */
+      focusTitle: 'Su enfoque: {areas}',
+      focusTitleShort: 'Su enfoque',
+      focusIntro: 'Las áreas que eligió al principio. Deciden qué se ve primero.',
+      focusNote: 'No se oculta nada: el enfoque cambia el orden, no el contenido. El explorador de tránsitos abre en la primera área elegida; cambiar a «Todos» es un toque.'
     }
   };
 var FR = {
@@ -3571,7 +3601,7 @@ var FR = {
         career: 'Travail',
         growth: 'Croissance',
         inner: 'Intérieur'
-      },
+      , self: 'Moi et mes limites' },
       upcomingPhases: 'Prochaines phases',
       signChange: 'Changement de signe',
       hoursShort: 'h',
@@ -3644,7 +3674,12 @@ var FR = {
       wheelMode: 'Mode de la roue',
       modeNatal: 'Natal seul',
       modeTransit: 'Natal et ciel',
-      txTouches: 'Ce qu’il touche dans votre carte'
+      txTouches: 'Ce qu’il touche dans votre carte',
+      /* Фокус: темы из воронки, доехавшие до продукта. */
+      focusTitle: 'Votre focus : {areas}',
+      focusTitleShort: 'Votre focus',
+      focusIntro: 'Les domaines choisis au départ. Ils décident de ce qui apparaît en premier.',
+      focusNote: 'Rien n’est caché : le focus change l’ordre, pas le contenu. L’explorateur de transits s’ouvre sur le premier domaine choisi — passer à « Tous » tient en un geste.'
     }
   };
 var IT = {
@@ -4088,7 +4123,7 @@ var IT = {
         career: 'Lavoro',
         growth: 'Crescita',
         inner: 'Interiore'
-      },
+      , self: 'Io e i miei limiti' },
       upcomingPhases: 'Prossime fasi',
       signChange: 'Cambio di segno',
       hoursShort: 'h',
@@ -4161,7 +4196,12 @@ var IT = {
       wheelMode: 'Modo della ruota',
       modeNatal: 'Solo natale',
       modeTransit: 'Natale e cielo',
-      txTouches: 'Che cosa tocca nella sua carta'
+      txTouches: 'Che cosa tocca nella sua carta',
+      /* Фокус: темы из воронки, доехавшие до продукта. */
+      focusTitle: 'Il suo focus: {areas}',
+      focusTitleShort: 'Il suo focus',
+      focusIntro: 'Le aree scelte all’inizio. Decidono che cosa vede per primo.',
+      focusNote: 'Niente viene nascosto: il focus cambia l’ordine, non il contenuto. L’esploratore dei transiti si apre sulla prima area scelta — passare a «Tutti» è un tocco.'
     }
   };
 var PT = {
@@ -4605,7 +4645,7 @@ var PT = {
         career: 'Trabalho',
         growth: 'Crescimento',
         inner: 'Interior'
-      },
+      , self: 'Eu e meus limites' },
       upcomingPhases: 'Próximas fases',
       signChange: 'Mudança de signo',
       hoursShort: 'h',
@@ -4678,7 +4718,12 @@ var PT = {
       wheelMode: 'Modo da roda',
       modeNatal: 'Só natal',
       modeTransit: 'Natal e céu',
-      txTouches: 'O que toca no seu mapa'
+      txTouches: 'O que toca no seu mapa',
+      /* Фокус: темы из воронки, доехавшие до продукта. */
+      focusTitle: 'Seu foco: {areas}',
+      focusTitleShort: 'Seu foco',
+      focusIntro: 'As áreas que você escolheu no começo. Elas decidem o que aparece primeiro.',
+      focusNote: 'Nada é escondido: o foco muda a ordem, não o conteúdo. O explorador de trânsitos abre na primeira área escolhida — mudar para «Todos» é um toque.'
     }
   };
 var TR = {
@@ -5122,7 +5167,7 @@ var TR = {
         career: 'İş',
         growth: 'Gelişim',
         inner: 'İç dünya'
-      },
+      , self: 'Ben ve sınırlarım' },
       upcomingPhases: 'Yaklaşan evreler',
       signChange: 'Burç değişimi',
       hoursShort: 'sa',
@@ -5195,7 +5240,12 @@ var TR = {
       wheelMode: 'Çark modu',
       modeNatal: 'Yalnızca natal',
       modeTransit: 'Natal ve gökyüzü',
-      txTouches: 'Haritanızda neye dokunuyor'
+      txTouches: 'Haritanızda neye dokunuyor',
+      /* Фокус: темы из воронки, доехавшие до продукта. */
+      focusTitle: 'Odağınız: {areas}',
+      focusTitleShort: 'Odağınız',
+      focusIntro: 'Başlangıçta seçtiğiniz alanlar. Önce neyin görüneceğini onlar belirler.',
+      focusNote: 'Hiçbir şey gizlenmiyor: odak sırayı değiştirir, içeriği değil. Transit rehberi seçtiğiniz ilk alanda açılır — «Tümü»ne geçmek tek dokunuş.'
     }
   };
 
