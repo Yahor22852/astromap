@@ -284,7 +284,18 @@
       termHide();
     });
     window.addEventListener('resize', termHide);
-    window.addEventListener('scroll', termHide, true);
+    /* Раньше здесь тоже стоял termHide: любая прокрутка закрывала пояснение.
+       На десктопе это незаметно, на телефоне — ломает функцию целиком. Тап
+       по слову почти всегда сопровождается микропрокруткой (инерция пальца,
+       сворачивание адресной строки при первом касании), и подсказка гасла
+       в тот же кадр, в котором открылась. Теперь она едет за словом и
+       закрывается, только когда само слово уходит с экрана. */
+    window.addEventListener('scroll', function () {
+      if (!termOpen) { return; }
+      var r = termOpen.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) { termHide(); return; }
+      termPlace(termOpen);
+    }, true);
     return termPop;
   }
 
@@ -309,8 +320,15 @@
     btn.setAttribute('aria-describedby', 'termPop');
     termOpen = btn;
 
-    /* Позиционируем под словом и прижимаем к краям окна: у самой границы
-       экрана панель иначе уезжает за него. */
+    termPlace(btn);
+  }
+
+  /* Позиционируем под словом и прижимаем к краям окна: у самой границы
+     экрана панель иначе уезжает за него. Вынесено из termShow отдельно,
+     потому что то же самое нужно на каждой прокрутке. */
+  function termPlace(btn) {
+    var pop = termPop;
+    if (!pop || pop.hidden) { return; }
     var r = btn.getBoundingClientRect();
     var w = Math.min(300, window.innerWidth - 24);
     pop.style.width = w + 'px';
@@ -1051,6 +1069,21 @@
     if (skipAnim) {
       void ind.offsetWidth;
       ind.style.transition = '';
+    }
+    /* На телефоне лента вкладок шире экрана и прокручивается. Выбранная
+       вкладка при этом запросто оказывается за краем: обход на 320-414
+       находил «Общая» целиком слева за пределами окна — человек видел ленту,
+       в которой ни одна вкладка не подсвечена, и не понимал, что открыто.
+       Подкручиваем ленту так, чтобы выбранная была видна целиком, с запасом
+       в 12 пикселей, — и только если она действительно не видна, иначе
+       каждое переключение дёргало бы ленту без нужды. */
+    var pad = 12;
+    var left = btn.offsetLeft - pad;
+    var right = btn.offsetLeft + btn.offsetWidth + pad;
+    if (left < bar.scrollLeft) {
+      bar.scrollLeft = Math.max(0, left);
+    } else if (right > bar.scrollLeft + bar.clientWidth) {
+      bar.scrollLeft = right - bar.clientWidth;
     }
   }
   function positionHzIndicator(skipAnim) { positionSegIndicator('segbar', 'segbarInd', skipAnim); }
@@ -3413,18 +3446,35 @@
     (function () {
       var burger = el('burger'), menu = el('mnav');
       if (!burger || !menu) { return; }
+      /* Пока меню открыто, страница под ним не прокручивается. Без этого
+         на телефоне палец, промахнувшийся мимо пункта, уводил ленту разделов
+         вниз — меню оставалось висеть над уехавшим содержимым, и было
+         непонятно, что вообще произошло. */
       function close() {
         menu.hidden = true;
         burger.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('menu-open');
       }
-      burger.addEventListener('click', function () {
+      burger.addEventListener('click', function (ev) {
+        ev.stopPropagation();
         var open = burger.getAttribute('aria-expanded') === 'true';
         if (open) { close(); return; }
         menu.hidden = false;
         burger.setAttribute('aria-expanded', 'true');
+        document.body.classList.add('menu-open');
       });
       Array.prototype.slice.call(menu.querySelectorAll('.nav__i')).forEach(function (a) {
         a.addEventListener('click', close);
+      });
+      /* Тап мимо меню и Escape закрывают его. Раньше единственным способом
+         было попасть обратно в гамбургер — цель в 42 пикселя в углу экрана. */
+      document.addEventListener('click', function (ev) {
+        if (menu.hidden) { return; }
+        if (ev.target.closest && (ev.target.closest('#mnav') || ev.target.closest('#burger'))) { return; }
+        close();
+      });
+      document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape' && !menu.hidden) { close(); burger.focus(); }
       });
       window.addEventListener('hashchange', close);
     })();

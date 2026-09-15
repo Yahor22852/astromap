@@ -672,3 +672,45 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .rc__go:hover { border-color: var(--gold); }
 .rc__go:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .alt.hidden { display: none; }
+
+/* --- телефон --------------------------------------------------------------
+   Воронка изначально верстается от телефона, поэтому правок здесь мало —
+   ровно те, что нашёл обход на 320–414: переключатель языка высотой 24px
+   при минимуме в 44 и подпись поля 11-м кеглем. Ширина у переключателя
+   тоже мала, поэтому растёт и она: соседний пункт — пункт меню языков,
+   и промах открывает не то.
+
+   Верх шапки и бока считаются от безопасной зоны наравне с низом, где
+   инсет уже учитывался (.dock): на телефоне с вырезом в горизонтальной
+   ориентации «EN» уезжало под скругление. */
+.top {
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  padding: 0 calc(var(--pad) + env(safe-area-inset-right, 0px))
+           0 calc(var(--pad) + env(safe-area-inset-left, 0px));
+}
+@media (pointer: coarse) {
+  .lang__b {
+    min-width: 44px; min-height: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 5px 9px;
+  }
+  .langmenu__item { min-height: 44px; }
+  .field__lab { font-size: 12px; }
+
+  /* «Не знаю времени»: сам квадратик 20×20 и на десктопе, но там в него
+     целятся мышью. На телефоне целью становится вся строка с подписью —
+     это и так <label>, промах по ней просто ничего не делал. Квадратик
+     заодно подрастает: в 20 пикселей пальцем попадают через раз. */
+  .check { min-height: 44px; }
+  .check input { width: 24px; height: 24px; }
+
+  /* Вкладки превью продукта и ссылка на бесплатный разбор в recovery —
+     33 и 42 пикселя по замеру. */
+  .pv__tab { min-height: 44px; }
+  .rc__go { min-height: 44px; display: inline-flex; align-items: center; }
+  /* Кнопка «не нашёл свой город» и подтверждение ручного ввода — те же
+     цели, что и в продукте, и тот же минимум. */
+  .citypick__manualtoggle, .citypick__manualapply { min-height: 44px; }
+  .citypick__opt { min-height: 44px; display: flex; align-items: center; }
+  .chip, .tile, .rc__chip { min-height: 44px; }
+}

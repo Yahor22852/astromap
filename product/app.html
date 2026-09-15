@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- viewport-fit=cover отдаёт странице весь экран, включая зону под вырезом и
+     под домашней полосой; отступы от них берутся в CSS через env(safe-area-*)
+     — см. .topbar и .main в css/app.css. Без cover iOS сам держит страницу в
+     безопасной зоне, но в горизонтальной ориентации оставляет по бокам
+     чёрные поля, а фон продукта на них не распространяется. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AstroMap</title>
 <script>
 /* Язык выбирается до загрузки текстов: texts.js читает window.APP_LANG.

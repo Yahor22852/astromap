@@ -15,7 +15,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.shell { min-height: 100vh; }
+/* 100vh на телефоне считается по экрану БЕЗ адресной строки, поэтому низ
+   страницы уходит под неё, пока строка видна. 100dvh — по фактической
+   видимой высоте; объявление идёт вторым, и браузеры, которые единицу не
+   знают, остаются на 100vh. */
+.shell { min-height: 100vh; min-height: 100dvh; }
 
 /* --- декор: звёздное небо -------------------------------------------------
    Лёгкий слой мерцающих точек. Элементы создаются в app.html инлайн-скриптом
@@ -32,10 +36,18 @@ body {
    Раньше навигация была левым сайдбаром (см. историю файла). Теперь — по
    образцу референса: капсула зафиксирована сверху по центру, со скруглением
    и блюром; на узких экранах пункты уходят в выпадающее меню по гамбургеру. */
+/* Отступы шапки считаются от безопасной зоны, а не от края стекла: с
+   viewport-fit=cover (см. app.html) страница занимает экран целиком, и на
+   телефоне с вырезом верхние 18px оказались бы под ним, а в горизонтальной
+   ориентации левый край — под скруглением. env() на устройствах без выреза
+   даёт ноль, поэтому на десктопе ничего не меняется. */
 .topbar {
-  position: fixed; top: 18px; left: 0; right: 0; z-index: 100;
+  position: fixed; z-index: 100;
+  top: calc(18px + env(safe-area-inset-top, 0px));
+  left: 0; right: 0;
   display: flex; flex-direction: column; align-items: center;
-  padding: 0 16px; pointer-events: none;
+  padding: 0 calc(16px + env(safe-area-inset-right, 0px)) 0 calc(16px + env(safe-area-inset-left, 0px));
+  pointer-events: none;
 }
 .topbar__pill {
   pointer-events: auto;
@@ -106,9 +118,17 @@ h1 {
 @media (max-width: 900px) {
   .topbar__pill .nav { display: none; }
   .topbar__burger { display: flex; }
-  .topbar__pill { padding: 6px 6px 6px 16px; }
+  .topbar__pill { padding: 5px 6px 5px 14px; }
   .brand { font-size: 18px; padding-right: 10px; margin-right: 2px; }
-  .main { padding: 92px 16px 56px; }
+  /* Сверху — под шапку (она фиксированная и растёт вместе с безопасной
+     зоной), снизу — над домашней полосой, по бокам — от скруглений экрана
+     в горизонтальной ориентации. */
+  .main {
+    padding: calc(96px + env(safe-area-inset-top, 0px))
+             calc(16px + env(safe-area-inset-right, 0px))
+             calc(56px + env(safe-area-inset-bottom, 0px))
+             calc(16px + env(safe-area-inset-left, 0px));
+  }
   h1 { font-size: 32px; }
   .view { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .wheelbox { padding: 16px; }
@@ -344,7 +364,19 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   font-family: var(--serif); font-size: 25px; font-weight: 600;
 }
 .mchero__x { color: var(--ink-faint); font-size: 18px; }
-.mcsegbar { display: flex; margin: 0 auto 4px; max-width: 100%; justify-content: center; }
+/* justify-content: center у прокручиваемой ленты — ловушка, и она сработала:
+   когда вкладки не влезают, центрирование выталкивает лишнее на ОБЕ стороны,
+   а левый вылет достать нельзя, потому что scrollLeft не бывает отрицательным.
+   На телефоне это значило, что первые две категории («Общая» и «Любовь») не
+   открываются никаким жестом, а выбранная по умолчанию «Общая» ещё и не видна:
+   человек смотрел на ленту, где не подсвечено ничего.
+
+   Лечится не отменой центрирования, а автоотступами на псевдоэлементах: пока
+   лента влезает, они забирают свободное место и держат её по центру; как
+   только перестала — свободного места нет, отступы схлопываются в ноль, и
+   лента честно начинается слева. */
+.mcsegbar { display: flex; margin: 0 auto 4px; max-width: 100%; justify-content: flex-start; }
+.mcsegbar::before, .mcsegbar::after { content: ''; margin: auto; }
 .mccard { padding-top: 6px; }
 .mccard__text { text-align: center; }
 .mc-ai-tag {
@@ -362,6 +394,23 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   .signgrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .signtile__g { font-size: 24px; }
   .mchero__signs { font-size: 20px; gap: 10px; }
+}
+/* Шесть колонок на планшете, но не на телефоне: при 414px плитка выходит
+   57px, а «Sagittarius» 11-м кеглем занимает 55 и вылезает на соседнюю —
+   на 320px названия сливались в сплошную строку «SagittarCapricornAquarius».
+   Четыре колонки дают 66px уже на самом узком экране, и подпись помещается
+   целиком. Троеточие на случай самых длинных слов в немецком и турецком. */
+@media (max-width: 560px) {
+  .signgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .signtile { min-width: 0; padding: 10px 2px; }
+  .signtile__n { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+/* На самых узких экранах четырёх колонок уже мало: плитка выходит 67px, а
+   «Sagittarius» и «Capricorn» обрезаются в «Sagitta…». Три колонки дают 92px,
+   и все двенадцать названий читаются целиком — лишний ряд дешевле, чем
+   отгаданное по значку название. */
+@media (max-width: 360px) {
+  .signgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* --- нумерология ---------------------------------------------------------- */
@@ -425,6 +474,13 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   margin-top: 10px; padding: 14px; border: 1px solid var(--line);
   border-radius: 12px; display: grid; gap: 10px;
 }
+/* Тот же случай, что и у .langmenu выше: display:grid — авторское правило и
+   перебивает браузерное [hidden]{display:none}. Из-за этого блок ручного
+   ввода города в форме совместимости был виден ВСЕГДА, хотя JS ставит ему
+   hidden: под уже выбранным городом висели пустое «название места», часовой
+   пояс UTC+00:00 и кнопка «использовать», и было непонятно, что из двух
+   мест ввода считается. */
+.citypick__manualbox[hidden] { display: none; }
 .citypick__manualname {
   width: 100%; height: 40px; padding: 0 10px; box-sizing: border-box;
   background: transparent; color: var(--ink); border: 1px solid rgba(255,255,255,.16);
@@ -667,7 +723,13 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 .mp-cal__nav:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.22); color: var(--ink); }
 .mp-cal__nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.mp-cal__grid { margin-top: 22px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px 4px; }
+/* minmax(0, 1fr), а не 1fr: у `1fr` минимум равен min-content, а min-content
+   ячейки календаря — 46px (28px кружок фазы плюс собственный минимум
+   флекс-элемента). Семь таких колонок с отступами дают 334px, и при ширине
+   экрана 320 календарь растягивал горизонтально ВСЮ страницу: сдвигались
+   шапка, заголовок, каждая карточка под календарём, а последний столбец
+   уезжал за край. Ноль в минимуме разрешает колонкам сжаться до 34px. */
+.mp-cal__grid { margin-top: 22px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px 4px; }
 .mp-cal__wd {
   padding-bottom: 8px; text-align: center;
   font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
@@ -675,7 +737,7 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 }
 .mp-cal__cell {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  aspect-ratio: 1; border-radius: 16px; border: 0; background: transparent; cursor: pointer;
+  min-width: 0; aspect-ratio: 1; border-radius: 16px; border: 0; background: transparent; cursor: pointer;
   color: var(--ink-dim);
   transition: background .2s ease, box-shadow .25s ease;
 }
@@ -739,7 +801,11 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   .mp-hero { max-width: 100%; }
   .mp-title { font-size: 40px; margin-top: 12px; }
   .mp-moon { margin-top: 30px; }
-  .moonv-wrap--cal .moonv { width: 28px; height: 28px; }
+  /* Кружок фазы в ячейке календаря — не фиксированные 28px, а «не больше
+     28 и не шире ячейки»: на 320px колонка уже 34px, и жёсткий размер
+     вместе с отступами снова распирал бы сетку. */
+  .moonv-wrap--cal { max-width: 100%; }
+  .moonv-wrap--cal .moonv { width: min(28px, 100%); height: auto; aspect-ratio: 1; }
   .mp-zodiac { margin-top: 46px; }
   .mp-cal, .mp-sign, .mp-advice { max-width: 100%; }
   .mp-cal { padding: 22px 16px; margin-top: 40px; border-radius: 24px; }
@@ -763,8 +829,10 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
    license-verify.js. .shell и .gate оба [hidden] по умолчанию в HTML —
    ровно один из них снимает JS при старте (см. initAccessGate()). */
 .gate {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 24px;
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) calc(24px + env(safe-area-inset-right, 0px))
+           calc(24px + env(safe-area-inset-bottom, 0px)) calc(24px + env(safe-area-inset-left, 0px));
 }
 .gate__card {
   width: 100%; max-width: 380px; padding: 32px 28px;
@@ -1773,3 +1841,107 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   background: var(--surf-sel); border: 1px solid var(--accent);
   font-size: 11px; font-weight: 600; color: var(--ink);
 }
+
+/* --- телефон: цели для пальца, безопасные зоны, подсказки прокрутки --------
+
+   Всё ниже включается по `pointer: coarse` — это палец, а не мышь, независимо
+   от ширины окна. Ширина здесь плохой признак: планшет в 1024px тоже
+   управляется пальцем, а узкое окно браузера на десктопе — мышью, и раздувать
+   в нём кнопки незачем.
+
+   Порог 44×44 — минимум из Apple HIG; Material называет 48. Замер по всем
+   разделам на пяти ширинах (320–414) показал 17 классов управляющих
+   элементов ниже этой границы: самые мелкие — раскрывашка «как это
+   посчитано» в 20px и подчёркнутые термины в 26. Промах по такой цели
+   стоит человеку не только повтора: в списках и таблицах рядом стоят другие
+   кнопки, и палец попадает не туда, куда целился.
+
+   Приём везде один: растим padding и min-height, а не font-size. Размер
+   текста — это про читаемость и вёрстку, высота цели — про попадание;
+   смешивать их значит менять внешний вид продукта там, где просили лишь
+   сделать его нажимаемым. */
+@media (pointer: coarse) {
+  /* Шапка. Пилюля растёт на несколько пикселей — под неё выше поднят отступ
+     .main (96px вместо 92). */
+  .brand { display: inline-flex; align-items: center; min-height: 44px; }
+  .lang__b { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .gear { width: 44px; height: 44px; }
+  .topbar__burger { width: 44px; height: 44px; }
+
+  /* Панель даты, фильтры, переключатели режимов. */
+  .datebar__nav { width: 44px; height: 44px; font-size: 17px; }
+  .chip { padding: 12px 19px; min-height: 44px; }
+  .segbar__b { padding: 12px 18px; min-height: 44px; }
+  .chartmode__b { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+  .rx-pick__b { min-height: 44px; }
+  .foc__b { min-height: 44px; }
+  .signtile { min-height: 56px; }
+
+  /* Кнопки-действия внутри карточек. */
+  .act { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+  .btn, .btn--ghost, .prof__btn, .set__btn { min-height: 44px; }
+  .citypick__manualtoggle { padding: 11px 0; min-height: 44px; }
+  .citypick__manualapply { min-height: 44px; }
+  .tx-list__toggle { padding: 12px 0; min-height: 44px; }
+
+  /* Раскрывающиеся пояснения: <summary> по умолчанию высотой в строку. */
+  summary { min-height: 44px; display: flex; align-items: center; }
+
+  /* Подчёркнутый термин остаётся строчным — растянуть его до 44px значило бы
+     разорвать строку, в которой он стоит. Вместо этого увеличиваем площадь
+     невидимой накладкой: она перекрывает строку сверху и снизу, но не влияет
+     на поток и не мешает соседнему тексту, потому что не ловит события вне
+     самой кнопки. */
+  .term { position: relative; }
+  .term::after {
+    content: ''; position: absolute; left: 0; right: 0;
+    top: 50%; height: 44px; transform: translateY(-50%);
+  }
+  .term__i { width: 16px; height: 16px; font-size: 10px; }
+
+  /* Метки в 11px: на телефоне это нижняя граница читаемости, а в списках
+     ещё и сближает строки настолько, что палец попадает в соседнюю. */
+  .cn-main__l, .cn-focus__h, .cn-tile__l, .tl-day,
+  .tx-hero__badge, .tx-list__f, .chartchips__lab,
+  .signtile__n, .mp-next__l, .rx-tl__nowlabel, .rx-tl__tick,
+  .twin__ends, .rx-pick__r,
+  th, .mp-cal__wd { font-size: 12px; }
+
+  /* Две цели, промахнувшиеся мимо порога на пиксель-другой. */
+  .hzquick__b { padding-top: 11px; padding-bottom: 11px; min-height: 44px; }
+  .rx-date__b { min-height: 44px; }
+}
+
+/* Таблицы и ленты вкладок шире экрана и прокручиваются вбок — но на телефоне
+   об этом не говорит ничего: полосы прокрутки в мобильных браузерах нет,
+   столбцы просто кончаются, и человек считает, что видит всё.
+
+   Подсветка у края появляется, только когда прокручивать действительно есть
+   куда, и гаснет, когда докрутили до конца: два слоя с `background-attachment:
+   local` едут вместе с содержимым и закрывают собой два слоя со `scroll`,
+   приклеенных к краям контейнера. Разметку это не трогает.
+
+   Свечение светлое, а не тёмная тень: интерфейс почти чёрный, и чёрная тень
+   на нём не видна вовсе — первая версия этого правила была ровно такой и не
+   читалась на скриншоте. */
+.tw {
+  background-image:
+    linear-gradient(to right, var(--surf) 0, rgba(0, 0, 0, 0) 100%),
+    linear-gradient(to left,  var(--surf) 0, rgba(0, 0, 0, 0) 100%),
+    linear-gradient(to right, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 100%),
+    linear-gradient(to left,  rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 100%);
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-size: 30px 100%, 30px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+/* Ленте вкладок такая подсветка не досталась намеренно: это скруглённая
+   пилюля, и радиус в 999px срезает как раз те несколько пикселей у края,
+   где свечение ярче всего, — проверено на скриншоте, эффекта не видно. Зато
+   у неё есть свой честный признак: крайняя вкладка обрезается посреди слова,
+   и это читается как «есть продолжение». Чего не хватало — чтобы выбранная
+   вкладка не оказывалась за краем; это чинится в app.js прокруткой к ней. */
+
+/* Прокрутка страницы на время открытого мобильного меню. Класс ставит
+   app.js; на десктопе меню не существует, поэтому правило туда не попадает. */
+body.menu-open { overflow: hidden; }
