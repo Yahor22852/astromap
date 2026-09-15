@@ -19,6 +19,13 @@
     notNow: 'Nie teraz',
     computing: 'Liczę pozycje na moment Twoich urodzin…',
 
+    /* Короткие названия месяцев для трёх селектов даты. Полные формы
+       («października») не влезают в треть строки на 320px и обрезаются
+       посередине, поэтому везде сокращения. Раньше этот массив лежал в
+       flow.js с проверкой «en или pl» — с десятью языками так нельзя. */
+    months: ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze',
+             'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'],
+
     /* Имена для вспомогательных технологий: у role="progressbar",
        role="group" и role="radiogroup" нет видимого заголовка, а без имени
        скринридер объявляет их как безымянные «группа»/«индикатор». */
@@ -329,6 +336,9 @@
     notNow: 'Not now',
     computing: 'Calculating positions for the moment you were born…',
 
+    months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+
     a11y: {
       progress: 'Progress building your map',
       themes: 'Sections to choose from',
@@ -581,10 +591,18 @@
      ЯЗЫК ВОРОНКИ. Дефолт — английский. Значение приходит из бутстрапа
      в index.html (window.ASTROMAP_LANG), который читает выбор человека
      из localStorage. Здесь ничего править не нужно.
-     ------------------------------------------------------------------ */
-  var LANG = (global.ASTROMAP_LANG === 'pl') ? 'pl' : 'en';
 
-  global.COPY = LANG === 'en' ? EN : PL;
+     В этом файле лежат только английский и польский. Остальные восемь —
+     в js/lang/<код>.js, и страница подключает ровно один такой файл:
+     14 КБ на латинице, 21 на кириллице. Все десять языков в одном файле
+     дали бы около 350 КБ на каждой загрузке воронки, где первая отрисовка
+     решает, дойдёт ли человек до второго экрана. Язык, для которого файла
+     нет или который не догрузился, молча остаётся английским — воронка
+     работает, просто не на своём языке.
+     ------------------------------------------------------------------ */
+  var LANG = global.ASTROMAP_LANG || 'en';
+
   global.COPY_ALL = { pl: PL, en: EN };
+  global.COPY = global.COPY_ALL[LANG] || EN;
   global.LANG = LANG;
 })(typeof window !== 'undefined' ? window : globalThis);

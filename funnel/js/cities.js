@@ -147,11 +147,37 @@
     return out;
   }
 
+  /* Алиасы по началу строки, а не по полному совпадению.
+     Раньше здесь стояло ALIASES[n] — то есть подсказка по местному названию
+     появлялась, только когда человек дописывал его целиком. В поле, которое
+     подсказывает по мере набора, это значит «не работает»: поляк вводил
+     «Warsz» и получал «Город не найден», после чего уходил в ручной ввод —
+     а ручной ввод без координат лишает его асцендента, то есть самого
+     важного, ради чего этот экран существует. То же было с «Stambu»,
+     «Monachiu», «Moskv» и остальными шестьюдесятью с лишним названиями.
+     Индекс строим один раз при первом поиске. */
+  var ALIAS_KEYS = null;
+  function aliasTargets(n) {
+    if (!ALIAS_KEYS) {
+      ALIAS_KEYS = Object.keys(ALIASES).map(function (k) {
+        return [norm(k), norm(ALIASES[k])];
+      });
+    }
+    var out = null;
+    for (var i = 0; i < ALIAS_KEYS.length; i++) {
+      if (ALIAS_KEYS[i][0].indexOf(n) === 0) {
+        if (!out) { out = {}; }
+        out[ALIAS_KEYS[i][1]] = true;
+      }
+    }
+    return out;
+  }
+
   function search(q, limit) {
     limit = limit || 8;
     var n = norm(q).trim();
     if (n.length < 2) { return []; }
-    var alias = ALIASES[n] ? norm(ALIASES[n]) : null;
+    var alias = aliasTargets(n);
     var exact = [], head = [], word = [], mid = [];
     for (var i = 0; i < CITIES.length; i++) {
       var nm = norm(CITIES[i][0]);
@@ -159,7 +185,7 @@
          unshift'ем: тёзок бывает несколько (London в Британии и в Канаде),
          и unshift ставил бы первым последнего найденного, то есть меньший
          город. Список отсортирован по населению — push его сохраняет. */
-      if (alias && nm === alias) { exact.push(CITIES[i]); continue; }
+      if (alias && alias[nm]) { exact.push(CITIES[i]); continue; }
       if (nm.indexOf(n) === 0) { head.push(CITIES[i]); }
       else if (nm.indexOf(' ' + n) > 0 || nm.indexOf('-' + n) > 0) { word.push(CITIES[i]); }
       else if (nm.indexOf(n) > 0) { mid.push(CITIES[i]); }

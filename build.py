@@ -21,6 +21,15 @@ class Links(HTMLParser):
             target = (out if u.path.startswith('/') else self.page.parent) / unquote(u.path.lstrip('/'))
             assert target.exists(), f'Missing asset: {self.page}: {value}'
 
+# Языковые файлы воронки подключаются через document.write, поэтому парсер
+# ссылок ниже их не видит: в разметке этих src нет. Проверяем отдельно — иначе
+# опечатка в коде языка означала бы молчаливый откат на английский в проде.
+FUNNEL_LANGS = ['ru', 'uk', 'de', 'es', 'fr', 'it', 'pt', 'tr']
+for code in FUNNEL_LANGS:
+    for name in (f'{code}.js', f'{code}-reading.js'):
+        target = out / 'js' / 'lang' / name
+        assert target.exists(), f'Missing funnel locale: js/lang/{name}'
+
 for page in out.rglob('*.html'):
     parser = Links()
     parser.page = page

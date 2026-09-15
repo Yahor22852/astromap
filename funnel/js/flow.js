@@ -38,10 +38,12 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
   var reduced = window.matchMedia &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* Градусы: в польском десятичный разделитель — запятая. */
+  /* Градусы: десятичный разделитель — точка только в английском. Во всех
+     девяти остальных языках воронки (pl, ru, uk, de, es, fr, it, pt, tr)
+     это запятая, поэтому проверка идёт от английского, а не перечислением. */
   function deg(x) {
     var t = x.toFixed(1);
-    return (window.LANG === 'pl' ? t.replace('.', ',') : t) + '°';
+    return (window.LANG === 'en' ? t : t.replace('.', ',')) + '°';
   }
 
   /* --- состояние ---------------------------------------------------------- */
@@ -212,14 +214,10 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     }
     return out;
   }
-  /* Короткие формы: полные названия («października») не влезают в треть
-     строки на 320px и обрезаются посередине. */
-  var MONTHS = window.LANG === 'en'
-    ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    : ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze',
-       'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
-  var monthItems = MONTHS.map(function (t, i) { return { v: i + 1, t: t }; });
+  /* Короткие названия месяцев теперь приходят из текстов (C.months), а не
+     живут здесь: с десятью языками ветка «en или pl» превращалась бы в
+     десятиэтажный тернарник в коде вместо строки в словаре. */
+  var monthItems = C.months.map(function (t, i) { return { v: i + 1, t: t }; });
   var thisYear = new Date().getFullYear();
 
   fill(el('d1'), range(1, 31), C.s1.day);

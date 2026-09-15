@@ -94,6 +94,18 @@
 <script src="js/astro.js"></script>
 <script src="js/copy.js"></script>
 <script src="js/reading-copy.js"></script>
+<!-- То же, что в index.html, но двумя файлами: интерфейсные строки и тексты
+     разбора лежат раздельно, чтобы воронка не тянула 25 КБ разбора, который
+     ей не нужен. -->
+<script>
+(function () {
+  var l = window.ASTROMAP_LANG;
+  if (l && l !== 'en' && l !== 'pl') {
+    document.write('<script src="js/lang/' + l + '.js"><\/script>');
+    document.write('<script src="js/lang/' + l + '-reading.js"><\/script>');
+  }
+})();
+</script>
 <script src="js/reading.js"></script>
 </body>
 </html>

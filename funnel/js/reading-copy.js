@@ -284,5 +284,10 @@
     }
   };
 
-  global.READING = (global.LANG === 'en') ? EN : PL;
+  /* Как и в copy.js: здесь только en и pl, остальные восемь языков
+     приезжают файлом js/lang/<код>-reading.js, который подключается
+     после этого и дописывает себя в READING_ALL. Языка нет — остаётся
+     английский. */
+  global.READING_ALL = { pl: PL, en: EN };
+  global.READING = global.READING_ALL[global.LANG] || EN;
 })(typeof window !== 'undefined' ? window : globalThis);
