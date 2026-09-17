@@ -258,17 +258,11 @@
       <h1 class="h1" data-t="recovery.title"></h1>
       <p class="hint" data-t="recovery.sub"></p>
 
-      <!-- Возражение выбирается ПЕРВЫМ, и уже оно решает, что показать
-           ниже. Раньше экран отвечал абзацем на любой ответ и в любом
-           случае предлагал годовой план — то есть скидку тому, кто сказал
-           «просто смотрю». Теперь ответ по существу, а годовой план
-           показывается только тому, кого остановила цена. -->
-      <p class="eyebrow" data-t="recovery.surveyTitle"></p>
-      <div class="chips" id="chips" role="radiogroup" data-tlabel="a11y.reasons"></div>
-
-      <div class="rc" id="rcBody"></div>
-
-      <div class="alt hidden" id="altBox">
+      <!-- Опроса «что вас остановило» здесь больше нет: отказ от месячного
+           плана ведёт прямо к годовому, без промежуточного шага. Блок
+           годового плана поэтому и не скрыт — он единственное, что на этом
+           экране есть. -->
+      <div class="alt" id="altBox">
         <div class="alt__t" data-t="recovery.yearTitle"></div>
         <div class="alt__p" id="onePrice"></div>
         <p class="disc" id="oneDisc"></p>

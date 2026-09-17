@@ -184,15 +184,15 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       ghost.classList.remove('hidden');
     }
     if (id === 's7') {
-      /* Кнопка покупки годового плана появляется только когда человек
-         сказал, что дело в цене. В остальных случаях главное действие —
-         вернуться к обычному плану, и оно же стоит на кнопке: предлагать
-         годовой тому, кто «просто смотрит», значит давить. */
-      var priceCase = rcReason === 'price';
-      cta.textContent = priceCase ? C.recovery.yearCta : C.recovery.backToPlan;
+      /* Экран восстановления теперь один и тот же для всех: отказался от
+         месячного — видишь годовой. Главное действие — купить годовой,
+         второе — вернуться к месячному. Возврат оставлен намеренно: это не
+         промежуточный экран, а выход, без него человек, нажавший «не
+         сейчас» по ошибке, оказался бы заперт. */
+      cta.textContent = C.recovery.yearCta;
       cta.disabled = false;
-      ghost.textContent = priceCase ? C.recovery.backToPlan : C.notNow;
-      ghost.classList.toggle('hidden', !priceCase);
+      ghost.textContent = C.recovery.backToPlan;
+      ghost.classList.remove('hidden');
     }
   }
 
@@ -404,11 +404,28 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
      Поэтому любое изменение текста сбрасывает выбор, а кнопка «посчитать»
      снова гаснет. */
   (function bindCityPick() {
-    var input = el('city'), menu = el('cityMenu');
+    var input = el('city'), menu = el('cityMenu'), wrap = input.closest('.citypick');
     var results = [], active = -1;
 
+    /* ПОЧЕМУ ЭТОТ БЛОК ПЕРЕПИСАН.
+
+       Подсказки закрывались по blur поля с задержкой 120 мс, а выбор ловился
+       единственным обработчиком mousedown. На мыши это работает, на телефоне
+       разваливается: там первое касание сначала убирает экранную клавиатуру,
+       поле теряет фокус — и меню успевает закрыться и очиститься ДО того, как
+       палец «доедет» до строки. Замер это подтвердил: через 200 мс после
+       потери фокуса в меню ноль строк и hidden=true, то есть касание падало
+       в пустоту. Отсюда «иногда не выбирается» и «список пропадает под
+       пальцем».
+
+       Теперь закрытие по blur блокируется на время, пока указатель опущен
+       внутри меню: раз палец уже в списке, уход фокуса ничего не значит.
+       Таймера-гонки больше нет вовсе. */
+    var interacting = false;
+
     function close() {
-      menu.hidden = true; menu.innerHTML = '';
+      if (menu.hidden) { return; }
+      menu.hidden = true;
       input.setAttribute('aria-expanded', 'false');
       input.removeAttribute('aria-activedescendant');
       active = -1;
@@ -417,7 +434,15 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       var opts = all('#cityMenu .citypick__opt');
       opts.forEach(function (o, oi) { o.classList.toggle('on', oi === i); });
       active = i;
-      if (opts[i]) { input.setAttribute('aria-activedescendant', opts[i].id); }
+      if (!opts[i]) { input.removeAttribute('aria-activedescendant'); return; }
+      input.setAttribute('aria-activedescendant', opts[i].id);
+      /* Подсветка должна быть видна: строк до восьми, высота списка 264px,
+         то есть с шестой стрелка уводила выделение за пределы прокрутки. */
+      var o = opts[i], mt = menu.scrollTop, mh = menu.clientHeight;
+      if (o.offsetTop < mt) { menu.scrollTop = o.offsetTop; }
+      else if (o.offsetTop + o.offsetHeight > mt + mh) {
+        menu.scrollTop = o.offsetTop + o.offsetHeight - mh;
+      }
     }
     function choose(i) {
       var c = results[i];
@@ -436,32 +461,98 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
           return '<div class="citypick__opt" role="option" id="cityopt-' + i +
             '" data-i="' + i + '">' + FC.label(c) + '</div>';
         }).join('');
-        all('#cityMenu .citypick__opt').forEach(function (o) {
-          o.addEventListener('mousedown', function (ev) {
-            ev.preventDefault();          /* не терять фокус раньше выбора */
-            choose(+o.getAttribute('data-i'));
-          });
-        });
       }
       menu.hidden = false;
+      menu.scrollTop = 0;
+      active = -1;
       input.setAttribute('aria-expanded', 'true');
+      input.removeAttribute('aria-activedescendant');
     }
+
+    /* Открыть подсказки по текущему тексту. Нужно не только при наборе:
+       человек, вернувшийся в уже заполненное поле, раньше не видел ничего,
+       пока не начинал стирать и вводить заново. */
+    function openFor(text) {
+      if (FC.norm(text).trim().length < 2) { close(); return; }
+      results = FC.search(text, 8);
+      /* Выбранный город лежит в поле как «Warsaw, Poland» — с названием
+         страны, которого в поиске нет. Поэтому при возврате в заполненное
+         поле запрос по всей строке давал ноль и экран сообщал «город не
+         найден» под полем с корректно выбранным городом. Отсекаем хвост
+         после запятой: формат подписи один на все десять языков. */
+      if (!results.length && text.indexOf(',') > 0) {
+        results = FC.search(text.slice(0, text.indexOf(',')), 8);
+      }
+      render();
+    }
+
+    /* Обработчик один на всё меню, а не по штуке на строку: список
+       пересобирается на каждое нажатие клавиши, и привязка к конкретным
+       узлам означала бы, что после перерисовки слушатели висят на
+       выброшенных элементах. */
+    function optionAt(target) {
+      var o = target && target.closest ? target.closest('.citypick__opt') : null;
+      return (o && menu.contains(o)) ? +o.getAttribute('data-i') : -1;
+    }
+    /* На мыши этого достаточно, чтобы фокус вообще не уходил из поля. */
+    menu.addEventListener('mousedown', function (ev) { ev.preventDefault(); });
+    menu.addEventListener('pointerdown', function () { interacting = true; });
+    /* Снимаем флаг на уровне документа и в фазе перехвата: палец может
+       оторваться уже вне меню (прокрутка списка), и «зависший» флаг тогда
+       запретил бы закрытие навсегда. */
+    document.addEventListener('pointerup', function () { interacting = false; }, true);
+    document.addEventListener('pointercancel', function () { interacting = false; }, true);
+    menu.addEventListener('click', function (ev) {
+      var i = optionAt(ev.target);
+      if (i >= 0) { ev.preventDefault(); choose(i); }
+    });
 
     input.addEventListener('input', function () {
       S.city = null;
       el('cta').disabled = !timeReady();
-      results = FC.search(input.value, 8);
-      if (!results.length && FC.norm(input.value).trim().length < 2) { close(); return; }
-      render();
+      openFor(input.value);
     });
+    /* Возврат в поле снова показывает подсказки — и по нажатию, и по табу. */
+    input.addEventListener('focus', function () { openFor(input.value); });
+    input.addEventListener('click', function () { openFor(input.value); });
     input.addEventListener('keydown', function (ev) {
-      if (menu.hidden) { return; }
-      if (ev.key === 'ArrowDown') { ev.preventDefault(); setActive(Math.min(active + 1, results.length - 1)); }
-      else if (ev.key === 'ArrowUp') { ev.preventDefault(); setActive(Math.max(active - 1, 0)); }
-      else if (ev.key === 'Enter') { if (active >= 0) { ev.preventDefault(); choose(active); } }
-      else if (ev.key === 'Escape') { close(); }
+      if (menu.hidden) {
+        /* Стрелка вниз на закрытом списке открывает его — обычное поведение
+           комбобокса, раньше не работало. */
+        if (ev.key === 'ArrowDown') { ev.preventDefault(); openFor(input.value); }
+        return;
+      }
+      if (ev.key === 'ArrowDown') {
+        ev.preventDefault();
+        setActive(results.length ? (active + 1) % results.length : -1);
+      } else if (ev.key === 'ArrowUp') {
+        ev.preventDefault();
+        setActive(results.length ? (active <= 0 ? results.length - 1 : active - 1) : -1);
+      } else if (ev.key === 'Enter') {
+        /* preventDefault безусловный: пока список открыт, Enter принадлежит
+           ему, а не форме вокруг. Без выделенной строки берём первую —
+           раньше Enter просто не делал ничего. */
+        ev.preventDefault();
+        if (active >= 0) { choose(active); }
+        else if (results.length) { choose(0); }
+      } else if (ev.key === 'Escape') {
+        ev.preventDefault();
+        close();
+      }
     });
-    input.addEventListener('blur', function () { setTimeout(close, 120); });
+    input.addEventListener('blur', function () {
+      /* Палец уже в списке — уход фокуса ничего не значит. */
+      if (interacting) { return; }
+      close();
+    });
+    /* Нажатие мимо поля и мимо списка закрывает подсказки. Раньше это
+       держалось на одном blur, то есть на предположении, что фокус
+       обязательно куда-то уйдёт. */
+    document.addEventListener('pointerdown', function (ev) {
+      if (menu.hidden) { return; }
+      if (wrap && wrap.contains(ev.target)) { return; }
+      close();
+    });
 
     /* Города нет в списке. Тогда считаем всё, кроме асцендента: для него
        нужны координаты, а их человек ввести не может — и выдумывать их
@@ -1050,8 +1141,6 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
        смотрю      — честный выход: бесплатное чтение, карта сохранена
 
      Ни один путь не заперт: кнопка «назад к плану» остаётся на месте. */
-  var rcReason = null;
-
   function rcOpensHtml() {
     return '<ul class="rc__list">' + C.pw.opens.map(function (o) {
       return '<li><b>' + o.t + '</b>' + o.d + '</li>';
@@ -1077,42 +1166,20 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       C.recovery.readFree + '</a></div>';
   }
 
-  function rcRender() {
-    var box = el('rcBody');
-    if (!rcReason) { box.innerHTML = ''; el('altBox').classList.add('hidden'); return; }
-    var body = '<p class="rc__a">' + C.recovery.answers[rcReason] + '</p>';
-    if (rcReason === 'what') { body += rcOpensHtml(); }
-    if (rcReason === 'trust') { body += rcProofHtml(); }
-    if (rcReason === 'look') { body += rcLookHtml(); }
-    box.innerHTML = body;
-    el('altBox').classList.toggle('hidden', rcReason !== 'price');
-    dock('s7');
-  }
+  /* Экран восстановления: годовой план и ничего кроме.
 
+     Раньше здесь стоял опрос «что вас остановило», и от ответа зависело,
+     что показать: цена — годовой план, остальное — абзац по существу. Между
+     отказом от месячного и годовым предложением был, таким образом, лишний
+     шаг. По требованию он убран целиком: отказ ведёт прямо к годовому.
+
+     rcOpensHtml/rcProofHtml/rcLookHtml остались на месте — они собирают
+     содержимое из тех же данных и понадобятся, если опрос решат вернуть;
+     ни один из них сейчас не вызывается. */
   function buildRecovery() {
     el('onePrice').textContent = C.billing.yearPrice + ' ' + C.billing.yearPeriod;
     el('oneDisc').textContent = C.billing.yearDisclaimer;
     el('legalYear').innerHTML = legalHtml(C.recovery.yearCta);
-    rcRender();
-
-    if (el('chips').children.length) { return; }
-    C.recovery.survey.forEach(function (s) {
-      var b = document.createElement('button');
-      b.className = 'chip';
-      b.type = 'button';
-      b.setAttribute('role', 'radio');
-      b.setAttribute('aria-checked', 'false');
-      b.textContent = s.t;
-      b.addEventListener('click', function () {
-        all('.chip').forEach(function (c) { c.setAttribute('aria-checked', 'false'); });
-        b.setAttribute('aria-checked', 'true');
-        rcReason = s.k;
-        rcRender();
-        document.dispatchEvent(new CustomEvent('funnel:answer',
-          { detail: { step: 's7', reason: s.k } }));
-      });
-      el('chips').appendChild(b);
-    });
   }
 
   /* --- навигация --------------------------------------------------------- */
@@ -1139,9 +1206,6 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       return;
     }
     if (S.screen === 's7') {
-      /* Годовой план покупается только из ценового сценария; в остальных
-         случаях эта же кнопка возвращает к обычному плану. */
-      if (rcReason !== 'price') { go('s6'); return; }
       if (CHECKOUT_URL_YEAR) { window.location.href = CHECKOUT_URL_YEAR; }
       else { noCheckout('CHECKOUT_URL_YEAR'); }
     }
@@ -1149,7 +1213,17 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
 
   el('ghost').addEventListener('click', function () {
     if (S.screen === 's4') { S.syn = null; buildSummary(); pvStart(); go('s5'); return; }
-    if (S.screen === 's6') { buildRecovery(); go('s7'); return; }
+    if (S.screen === 's6') {
+      /* Отказ от месячного плана ведёт прямо к годовому. Событие оставлено
+         здесь, потому что раньше отказ отслеживался ответом в опросе, а
+         опроса больше нет: без этой строки переход s6 → s7 не виден
+         аналитике вовсе. */
+      document.dispatchEvent(new CustomEvent('funnel:decline',
+        { detail: { from: 's6', to: 's7', plan: 'monthly' } }));
+      buildRecovery();
+      go('s7');
+      return;
+    }
     if (S.screen === 's7') { go('s6'); return; }
   });
 
