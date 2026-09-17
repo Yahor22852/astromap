@@ -426,6 +426,7 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
     function close() {
       if (menu.hidden) { return; }
       menu.hidden = true;
+      menu.style.maxHeight = '';
       input.setAttribute('aria-expanded', 'false');
       input.removeAttribute('aria-activedescendant');
       active = -1;
@@ -467,6 +468,39 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       active = -1;
       input.setAttribute('aria-expanded', 'true');
       input.removeAttribute('aria-activedescendant');
+      fitMenu();
+    }
+
+    /* Подсказки лежат абсолютом, то есть в высоту страницы не входят: сколько
+       бы строк в них ни было, прокрутить к ним нельзя — прокручивать нечего.
+       Пока над доком есть место, это незаметно; с открытой клавиатурой
+       (замер: окно 360px вместо 780) места не остаётся, и список упирается в
+       док. Порядок действий тот же, что у человека: сначала подвинуть экран,
+       чтобы поле поднялось, и только если и после этого не помещается —
+       ограничить высоту списка, чтобы он прокручивался внутри себя.
+
+       Граница — низ окна, а не верх дока: подсказки теперь рисуются ПОВЕРХ
+       дока (см. .scr в flow.css), и перекрыть кнопку на время выбора — это
+       нормально, а вот уехать за сгиб нельзя. Нижний предел в 132px — три
+       строки: список, в котором видно меньше, бесполезен. */
+    function fitMenu() {
+      if (menu.hidden) { return; }
+      var gap = function () {
+        var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+        return vh - menu.getBoundingClientRect().top - 10;
+      };
+      menu.style.maxHeight = '';
+      /* Именно нарисованная высота, а не scrollHeight: у списка есть штатный
+         потолок в 264px из CSS, и растягивать его сверх этого мы не хотим. */
+      var need = menu.getBoundingClientRect().height;
+
+      if (gap() < need) {
+        var room = Math.max(0, document.documentElement.scrollHeight - window.innerHeight - window.scrollY);
+        var by = Math.min(need - gap(), room);
+        if (by > 0) { window.scrollBy(0, by); }
+      }
+      var avail = gap();
+      if (avail < need) { menu.style.maxHeight = Math.max(132, avail) + 'px'; }
     }
 
     /* Открыть подсказки по текущему тексту. Нужно не только при наборе:
@@ -545,6 +579,15 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
       if (interacting) { return; }
       close();
     });
+
+    /* Экранная клавиатура приходит и уходит уже после того, как список
+       открыт: на телефоне это событие resize (а где есть visualViewport —
+       ещё и его собственный resize). Без пересчёта список, помещавшийся
+       секунду назад, оказывается под доком. */
+    window.addEventListener('resize', fitMenu);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', fitMenu);
+    }
     /* Нажатие мимо поля и мимо списка закрывает подсказки. Раньше это
        держалось на одном blur, то есть на предположении, что фокус
        обязательно куда-то уйдёт. */

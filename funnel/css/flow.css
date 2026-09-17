@@ -134,8 +134,39 @@ body {
 /* --- экран --------------------------------------------------------------- */
 /* Запас под док: на recovery в нём две кнопки, и при 108px нижний текст
    уходил под них. */
-.scr { display: none; position: relative; z-index: 1; padding-bottom: 152px; }
-.scr.is-active { display: block; animation: fade .32s ease both; }
+/* ПОЧЕМУ У ЭКРАНА НЕТ z-index.
+
+   Был `z-index: 1`. Этого хватало, чтобы перекрыть декоративный слой звёзд
+   (.sky, z-index 0), но попутно экран становился контекстом наложения — и всё
+   внутри него оказывалось запертым на уровне 1. В том числе подсказки городов:
+   у .citypick честно стоит z-index 5, но пятёрка считается ВНУТРИ экрана, а
+   сам экран для дока (z-index 3) остаётся единицей. Замер: на 320x568 нижние
+   7px строки «Barysaw, Belarus» закрашены доком, elementFromPoint в этой
+   точке возвращает .dock, на 360x640 — .cta. Это и есть «результат обрезан».
+
+   Без z-index экран остаётся позиционированным, но контекста не создаёт:
+   звёзды он по-прежнему перекрывает (они идут раньше в разметке и лежат на
+   том же уровне), а z-index 5 подсказок теперь сравнивается с тройкой дока
+   напрямую. Обычное содержимое экрана при этом по-прежнему уходит ПОД док —
+   так и задумано.
+
+   env(safe-area-inset-bottom) — чтобы на телефонах с домашней полосой низ
+   последнего экрана не упирался в неё. */
+.scr {
+  display: none; position: relative;
+  padding-bottom: calc(152px + env(safe-area-inset-bottom, 0px));
+}
+/* `backwards`, а не `both`. Анимация двигает transform, а элемент с
+   анимацией, которая продолжает действовать, остаётся контекстом наложения —
+   при `both` она действует всегда, и экран запирал внутри себя подсказки
+   городов даже спустя минуту после появления (проверено: у section#s3
+   computed transform не none, elementFromPoint на строке списка возвращал
+   .dock). При `backwards` анимация перестаёт действовать, как только
+   отыграла, и элемент снова обычный.
+
+   Картинка не меняется: конечный кадр — opacity: 1 и transform: none, то
+   есть ровно то, что у экрана и так в стилях, удерживать его незачем. */
+.scr.is-active { display: block; animation: fade .32s ease backwards; }
 @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 .eyebrow {
@@ -290,8 +321,23 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 /* --- плитки тем ---------------------------------------------------------- */
 .tiles { margin-top: 20px; }
+/* Заголовок и описание внутри плитки — два <span>, то есть строчные боксы.
+   Вертикальные margin к строчным боксам не применяются вовсе, поэтому
+   `margin-top: 3px` у описания ничего не делал, и оба текста шли одним
+   потоком: «Love and relationshipsWho fits you, and why». Это ломалось не
+   только на телефоне — на 768 замер показывал то же самое, просто на широком
+   экране склейка не так бросается в глаза.
+
+   Колонка во flex вместо display: block — заголовок и описание становятся
+   блоками с настоящим промежутком между ними, независимо от длины перевода.
+   Именно колонка, а не строка с переносом: у описания свой кегль и свой цвет,
+   оно задумано подписью под заголовком (отсюда и исходные 3px), а не вторым
+   столбцом. gap гарантирует промежуток даже там, где текст переносится. */
 .tile {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
   width: 100%;
   text-align: left;
   padding: 16px 18px;
@@ -304,8 +350,11 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   transition: border-color .2s ease, background .2s ease, transform .2s ease;
 }
 .tile + .tile { margin-top: 10px; }
-.tile__t { font-size: 17px; font-weight: 600; }
-.tile__d { margin-top: 3px; font-size: 13px; color: var(--ink-dim); }
+/* min-width: 0 — чтобы длинный перевод переносился внутри колонки, а не
+   распирал плитку и не уезжал за её правый край. Высота плитки при этом
+   растёт: фиксированной высоты у неё нет и не должно быть. */
+.tile__t { min-width: 0; font-size: 17px; font-weight: 600; line-height: 1.25; }
+.tile__d { min-width: 0; font-size: 13px; line-height: 1.35; color: var(--ink-dim); }
 .tile:hover { border-color: var(--card-line-2); background: rgba(255,255,255,.07); }
 .tile[aria-checked="true"] { border-color: var(--gold-line); background: var(--gold-soft); }
 .tile[aria-checked="true"]:hover { background: var(--gold-soft); }

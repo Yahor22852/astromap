@@ -163,12 +163,15 @@
       </svg>
       <span class="tab__l" data-tabl="today"></span>
     </a>
-    <a class="tab" href="#chart" data-tab="chart">
+    <!-- Совместимость стоит второй по просьбе владельца продукта: по его
+         оценке это самая востребованная функция, и она не должна лежать на
+         один тап глубже. Натальная карта уехала во вкладку «Ещё» — см. TABS
+         в js/app.js, там же единственное место, где задана группировка. -->
+    <a class="tab" href="#match" data-tab="match">
       <svg class="tab__i" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>
-        <path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>
+        <circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2"/>
       </svg>
-      <span class="tab__l" data-tabl="chart"></span>
+      <span class="tab__l" data-tabl="match"></span>
     </a>
     <a class="tab" href="#horoscope" data-tab="sky">
       <svg class="tab__i" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -177,7 +180,7 @@
       </svg>
       <span class="tab__l" data-tabl="sky"></span>
     </a>
-    <a class="tab" href="#match" data-tab="more">
+    <a class="tab" href="#chart" data-tab="more">
       <svg class="tab__i" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <circle cx="6.5" cy="6.5" r="1.8"/><circle cx="17.5" cy="6.5" r="1.8"/>
         <circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/>

@@ -885,9 +885,20 @@
     var savedIds = loadSaved().map(function (x) { return x.id; });
     var chips = TL.RANGES.map(function (d) {
       return '<button type="button" class="chip' + (tlRange === d ? ' on' : '') +
+        '" aria-pressed="' + (tlRange === d ? 'true' : 'false') +
         '" data-tlrange="' + d + '">' + T.sec['range' + d] + '</button>';
     }).join('');
 
+    return '<section class="tl"><div class="tl__head"><h3 class="tl__t">' + T.sec.upcoming + '</h3>' +
+      '<div class="chartchips tl__ranges">' + chips + '</div></div>' +
+      /* Список вынесен в отдельный контейнер, чтобы смена диапазона меняла
+         только его. Раньше перерисовывался весь блок вместе с кнопками: та
+         кнопка, по которой человек только что нажал, на время пересчёта
+         исчезала из DOM и возвращалась уже другим узлом. */
+      '<div class="tl__body" id="tlBody">' + tlBodyHtml(now, events, savedIds) + '</div></section>';
+  }
+
+  function tlBodyHtml(now, events, savedIds) {
     var body = '';
     if (!events.length) {
       body = '<p class="pmuted">' + T.sec.nothingSoon + '</p>';
@@ -904,9 +915,7 @@
         return head + tlRowHtml(n, savedIds);
       }).join('') + '</ul>';
     }
-
-    return '<section class="tl"><div class="tl__head"><h3 class="tl__t">' + T.sec.upcoming + '</h3>' +
-      '<div class="chartchips tl__ranges">' + chips + '</div></div>' + body + '</section>';
+    return body;
   }
 
   function rerenderTimeline() {
@@ -914,6 +923,73 @@
     if (!host) { return; }
     host.innerHTML = tlSavedHtml(new Date()) + tlHtml(new Date());
     bindToday();
+  }
+
+  /* --- выбор диапазона в «Ближайшем» ---------------------------------------
+     ЧТО БЫЛО ИЗМЕРЕНО. От тапа до появления подсветки на нажатой кнопке:
+     120мс для «30 дней» и 130мс для «90» на десктопном процессоре — и ровно
+     столько же до обновления списка. Цифры совпадают не случайно: подсветка
+     и список приезжали одной и той же перерисовкой, то есть визуальный отклик
+     ждал, пока досчитается TL.events. На процессоре телефона это втрое-впятеро
+     дольше, плюс 200мс на transition у .chip и до 300мс, которые браузер
+     держит тап при touch-action: auto. Складывается в «кнопка не нажимается».
+
+     ЧТО ТЕПЕРЬ. Три вещи разведены по времени:
+       1) подсветка переставляется здесь же, синхронно, без перерисовки —
+          браузер рисует её ближайшим кадром;
+       2) пересчёт уходит за два кадра, то есть заведомо после того, как
+          нажатие отрисовалось;
+       3) быстрые переключения 7 → 30 → 90 → 7 не копятся: у каждого выбора
+          свой номер, и досчитывается только последний.
+     Ничего искусственного не добавлено — ни таймеров, ни заглушек: сам расчёт
+     остался прежним, изменился только порядок. */
+  var tlSeq = 0;
+
+  function pickRange(d) {
+    if (!d || d === tlRange) { return; }
+    tlRange = d;
+
+    var view = el('view');
+    if (view) {
+      Array.prototype.slice.call(view.querySelectorAll('[data-tlrange]')).forEach(function (o) {
+        var on = +o.getAttribute('data-tlrange') === d;
+        o.classList.toggle('on', on);
+        o.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+
+    var mySeq = ++tlSeq;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        if (mySeq !== tlSeq) { return; }  /* уже нажали другой диапазон */
+        var host = el('tlBody');
+        if (!host) { rerenderTimeline(); return; }
+        var now = new Date();
+        var events = TL.events(natal, Moon, now, tlRange).map(tlNorm);
+        host.innerHTML = tlBodyHtml(now, events, loadSaved().map(function (x) { return x.id; }));
+        bindTlBody(host);
+      });
+    });
+  }
+
+  /* Обработчики только внутри списка: кнопки диапазонов живут выше по дереву
+     и пересоздания не переживают — навешивать их заново нельзя, иначе после
+     каждого переключения на них будет висеть лишний обработчик. */
+  function bindTlBody(host) {
+    Array.prototype.slice.call(host.querySelectorAll('[data-cngo]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        location.hash = '#' + b.getAttribute('data-cngo');
+      });
+    });
+    Array.prototype.slice.call(host.querySelectorAll('[data-tlsave]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-tlsave');
+        var pool = TL.events(natal, Moon, new Date(), tlRange).map(tlNorm).concat(loadSaved());
+        var found = null;
+        pool.forEach(function (n) { if (n.id === id && !found) { found = n; } });
+        if (found) { toggleSaved(found); rerenderTimeline(); }
+      });
+    });
   }
 
   function bindToday() {
@@ -925,13 +1001,7 @@
       });
     });
     Array.prototype.slice.call(view.querySelectorAll('[data-tlrange]')).forEach(function (b) {
-      b.addEventListener('click', function () {
-        tlRange = +b.getAttribute('data-tlrange');
-        /* 90 дней считаются около 190 мс, 30 — около 90: на глаз это
-           заметная пауза, за которую ничего не происходит. */
-        if (tlRange >= 30) { withBusy(el('cnFeed'), rerenderTimeline); }
-        else { rerenderTimeline(); }
-      });
+      b.addEventListener('click', function () { pickRange(+b.getAttribute('data-tlrange')); });
     });
     /* Звёздочка ищет событие среди показанных сейчас и среди уже
        сохранённых: убрать отметку должно быть можно и из списка
@@ -3237,9 +3307,9 @@
      них дотянуться пальцем. */
   var TABS = [
     { key: 'today',   views: ['today'] },
-    { key: 'chart',   views: ['chart'] },
+    { key: 'match',   views: ['match'] },
     { key: 'sky',     views: ['horoscope', 'moon', 'retro'] },
-    { key: 'more',    views: ['match', 'numbers'] },
+    { key: 'more',    views: ['chart', 'numbers'] },
     { key: 'profile', views: ['profile', 'settings'] }
   ];
 
@@ -3259,10 +3329,17 @@
 
   /* Подписи вкладок ставятся один раз при старте и переставляются при смене
      языка — тем же способом, что и остальной интерфейс. */
+  /* Подпись вкладки берётся из T.ui.tab, если там для неё есть короткий
+     вариант, и только потом из общего T.ui.nav. Нужно это ровно для одного
+     пункта: «Совместимость» в семи языках из десяти шире ячейки нижней
+     панели (замер на 320px: ru 80px, pt 79, es 74 при ячейке в 60) и
+     обрезалась бы многоточием — на самой важной вкладке это недопустимо.
+     В самом разделе и в капсуле на десктопе название остаётся полным. */
   function fillTabLabels() {
+    var short = T.ui.tab || {};
     Array.prototype.slice.call(document.querySelectorAll('[data-tabl]')).forEach(function (s) {
       var k = s.getAttribute('data-tabl');
-      s.textContent = T.ui.nav[k] || k;
+      s.textContent = short[k] || T.ui.nav[k] || k;
     });
   }
 
