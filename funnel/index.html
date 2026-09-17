@@ -233,16 +233,24 @@
            к этому моменту уже видел продукт в превью, и цена продолжает
            начатое, а не открывает новую сделку. -->
       <p class="pw__me" id="pwMe"></p>
-      <div class="mapbox mapbox--pw" id="pwMap"></div>
-      <div class="pw__moves" id="pwMoves"></div>
-      <div class="inc" id="inc"></div>
 
+      <!-- Цена стоит сразу под строкой про фокус, а не в конце экрана: до
+           переноса она лежала после карты, блока «небо движется» и списка
+           «что открывается», то есть ниже сгиба на любом телефоне, и её
+           видели только те, кто долистал. Условия подписки (planDisc) едут
+           вместе с ценой — это один блок, и разносить их нельзя.
+           Строка согласия остаётся внизу, рядом с кнопкой, на которую
+           ссылается. -->
       <div class="plan">
         <div class="plan__t" data-t="paywall.planTitle"></div>
         <div class="plan__p" id="planPrice"></div>
         <div class="plan__after" id="planAfter"></div>
         <p class="disc" id="planDisc"></p>
       </div>
+
+      <div class="mapbox mapbox--pw" id="pwMap"></div>
+      <div class="pw__moves" id="pwMoves"></div>
+      <div class="inc" id="inc"></div>
 
       <!-- Соцдоказательства здесь нет намеренно: цифр пользователей у продукта
            пока не существует. Когда появятся реальные — вставлять сюда,
