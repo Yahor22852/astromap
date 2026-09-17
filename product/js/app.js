@@ -1903,6 +1903,53 @@
       }).join('') + '</div>';
   }
 
+  /* --- подсказка при первом входе ------------------------------------------
+     Одна фраза, один раз, на одном экране. Нажатие по точке на колесе —
+     единственное неочевидное действие в продукте: колесо выглядит картинкой,
+     и без подсказки половина функциональности карты остаётся ненайденной.
+
+     Показывается до первого осознанного действия и больше никогда: флаг
+     ложится в localStorage и при выборе точки, и при нажатии на крестик. Ни
+     карусели, ни шагов, ни затемнения экрана — подсказка ничего не
+     перекрывает и ничему не мешает. На десктопе не показывается вовсе: там
+     курсор меняется на указатель при наведении, и это уже ответ. */
+  var HINT_KEY = 'astromap.hints';
+
+  function hintSeen(name) {
+    try {
+      var h = JSON.parse(localStorage.getItem(HINT_KEY) || '{}');
+      return !!h[name];
+    } catch (e) { return true; }   /* нет доступа к хранилищу — не навязываемся */
+  }
+  function hintDismiss(name) {
+    try {
+      var h = JSON.parse(localStorage.getItem(HINT_KEY) || '{}');
+      h[name] = 1;
+      localStorage.setItem(HINT_KEY, JSON.stringify(h));
+    } catch (e) { /* игнор */ }
+    var node = document.querySelector('.hint[data-hint="' + name + '"]');
+    if (!node) { return; }
+    /* Снимаем и пометку на блоке колеса, иначе колесо останется ужатым на
+       высоту подсказки, которой уже нет. */
+    var box = node.closest('.wheelbox--hint');
+    if (box) { box.classList.remove('wheelbox--hint'); }
+    node.remove();
+  }
+  function hintHtml(name, text) {
+    if (hintSeen(name)) { return ''; }
+    return '<div class="hint" data-hint="' + name + '" role="status">' +
+      '<span class="hint__t">' + esc(text) + '</span>' +
+      '<button type="button" class="hint__x" data-hintx="' + name + '" aria-label="' +
+        esc(T.ui.hintHide) + '">✕</button></div>';
+  }
+
+  /* Подсказка живёт внутри блока колеса, между самим колесом и лентой чипов:
+     там она указывает ровно на то, о чём говорит, и не сдвигает ничего
+     важного. */
+  function hintChart() {
+    return hintHtml('chartTap', T.ui.hintChart);
+  }
+
   function chartBodyHtml() {
     var pts = chartPts();
     var date = Clock.get();
@@ -1919,10 +1966,19 @@
     if (selIsTx && !chartTx) { chartSel = pts[0].name; selIsTx = false; }
     if (!chartSel || (!selIsTx && !chartFind(pts, chartSel))) { chartSel = pts[0].name; selIsTx = false; }
 
+    /* Подсказка занимает высоту внутри блока колеса, а высота колеса на
+       телефоне посчитана от остатка экрана: без пометки блок стал бы на
+       полсотни пикселей выше, и верхушка шторки — тот самый признак, что
+       ниже есть содержимое, — уехала бы за сгиб ровно в тот единственный
+       заход, когда человек видит подсказку. Класс позволяет CSS вычесть её
+       высоту из колеса, и расклад остаётся прежним. */
+    var hint = hintChart();
+
     return (chartTx ? dateBarHtml() : '') + chartModeHtml() +
       '<div class="chart-pane">' +
-        '<div class="wheelbox">' +
+        '<div class="wheelbox' + (hint ? ' wheelbox--hint' : '') + '">' +
           W.render(natal, 620, chartSel, { transits: txPts, txAspects: txAsp }) +
+          hint +
           chartChipsHtml(pts) +
           (txPts ? chartTxChipsHtml(txPts) : '') + '</div>' +
         (selIsTx ? chartTxInspectorHtml(txPts, txAsp) : chartInspectorHtml(pts)) +
@@ -2017,10 +2073,23 @@
     var body = el('chartBody');
     if (!body) { return; }
     function select(name) {
-      if (!name || name === chartSel) { return; }
+      if (!name) { return; }
+      /* Любой осознанный тап по точке — уже ответ на вопрос, который задаёт
+         подсказка, поэтому гасим её до проверки «а не та же ли это точка»:
+         повторный тап по выбранной планете тоже означает, что человек понял,
+         как это работает. */
+      hintDismiss('chartTap');
+      if (name === chartSel) { return; }
       chartSel = name;
       rerenderChart();
     }
+    /* Крестик закрывает подсказку, ничего не перерисовывая: hintDismiss сам
+       убирает узел из DOM и ставит флаг, чтобы она не вернулась. */
+    Array.prototype.slice.call(body.querySelectorAll('[data-hintx]')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        hintDismiss(b.getAttribute('data-hintx'));
+      });
+    });
     Array.prototype.slice.call(body.querySelectorAll('[data-point]')).forEach(function (node) {
       node.addEventListener('click', function () { select(node.getAttribute('data-point')); });
     });
@@ -3340,6 +3409,11 @@
     view.classList.toggle('view--cn', h === 'today');
     /* Карта: колесо и инспектор в два столбца, таблицы под ними. */
     view.classList.toggle('view--chart', h === 'chart');
+    /* Класс на .main, а не на .view: заголовок раздела — сосед .view, а не
+       его потомок, и скрыть его правилом изнутри нельзя. На телефоне на
+       экране карты он прячется (см. .main--chart в app.css). */
+    var mainEl = document.querySelector('.main');
+    if (mainEl) { mainEl.classList.toggle('main--chart', h === 'chart'); }
     view.classList.toggle('view--num', h === 'numbers' && !!S.profile);
     /* Профиль и настройки — одна колонка: страница про одного человека и
        служебный экран, а не сетка равноправных модулей. */
