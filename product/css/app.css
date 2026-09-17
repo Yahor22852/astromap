@@ -1945,3 +1945,149 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 /* Прокрутка страницы на время открытого мобильного меню. Класс ставит
    app.js; на десктопе меню не существует, поэтому правило туда не попадает. */
 body.menu-open { overflow: hidden; }
+
+/* ===========================================================================
+   НИЖНЯЯ НАВИГАЦИЯ И ПОДНАВИГАЦИЯ — ТЕЛЕФОН И ПЛАНШЕТ
+   ===========================================================================
+
+   Всё в этом блоке живёт внутри @media (max-width: 900px) — той же границы,
+   на которой раньше появлялся гамбургер. Выше неё не применяется ничего:
+   десктопная капсула с девятью разделами остаётся ровно такой, какой была.
+
+   Почему вообще: на телефоне навигация была одна — гамбургер с девятью
+   пунктами. Замер показал, что без открытия меню человек не видит, в каком
+   разделе находится, вообще: подсветка активного пункта есть только внутри
+   раскрытого списка. Плюс пять управляющих элементов в шапке, из которых
+   четыре — навигационные.
+
+   Девять разделов сведены в пять вкладок по смыслу:
+     Сегодня — today
+     Карта   — chart
+     Небо    — horoscope, moon, retro   (что делает небо и когда)
+     Ещё     — match, numbers           (два отдельных калькулятора)
+     Профиль — profile, settings
+   Внутри групп из нескольких разделов переключение идёт .subnav — лентой
+   под шапкой. Ни один раздел не потерян и ни одного нового не появилось. */
+
+@media (max-width: 900px) {
+
+  /* Гамбургер и выпадающее меню больше не нужны: их работу делает панель
+     снизу, а два способа навигации на одном экране — это вопрос «а эти
+     пункты те же самые?». */
+  .topbar__burger, .mnav { display: none !important; }
+
+  /* Шапка сокращается до названия и языка. Разделы ушли вниз, настройки —
+     во вкладку «Профиль», поэтому шестерёнка отсюда убирается: дублировать
+     то, что уже есть в навигации, значит заставлять выбирать между двумя
+     одинаковыми дверями. Язык остаётся здесь — это единственное место, где
+     его можно сменить, и во вкладках ему делать нечего. */
+  .gear { display: none; }
+  .topbar__pill { justify-content: space-between; }
+
+  /* Панель вкладок. Высота 56px плюс безопасная зона под домашнюю полосу.
+     Фон непрозрачный с размытием — под панелью проходит контент, и
+     полупрозрачная подложка без блюра давала бы кашу из текста под
+     подписями. */
+  .tabbar {
+    position: fixed; z-index: 90;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    /* Почти непрозрачно, а не «стекло»: на скриншоте сквозь панель при .86
+       читался текст статьи под подписями вкладок, и полоса выглядела не
+       элементом управления, а мутным пятном поверх контента. Размытие
+       оставлено — оно сглаживает то, что проезжает под самой кромкой. */
+    background: rgba(9, 7, 11, .97);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--line);
+  }
+  /* Короткая растушёвка над панелью: строка текста не обрывается о её край
+     резко, а уходит в фон — тот же приём, что у дока воронки. */
+  .tabbar::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: 20px;
+    background: linear-gradient(to top, rgba(6, 2, 12, .9), rgba(6, 2, 12, 0));
+    pointer-events: none;
+  }
+  .tab {
+    flex: 1 1 0; min-width: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; height: 56px; padding: 0 2px;
+    color: var(--ink-faint); text-decoration: none;
+    /* Без этого iOS ждёт второго касания для зума и глотает первое. */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: color .18s ease;
+  }
+  .tab__i { width: 23px; height: 23px; flex: none; fill: none; stroke: currentColor;
+            stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  /* Подпись в одну строку: «Aujourd'hui» и «Tema natale» длиннее ячейки на
+     320px, и перенос ломал бы высоту всей панели. Троеточие честнее. */
+  /* Подпись в одну строку и с кеглем, зависящим от ширины экрана. Замер на
+     десяти языках при 320px: «Aujourd'hui» (63px) и «Tema natale» (64px) не
+     влезают в ячейку 60px даже одиннадцатым кеглем, то есть на французском и
+     итальянском две вкладки из пяти показывали бы троеточие. clamp сжимает
+     подпись до 10px на самых узких и возвращает 11px уже к 375px — без
+     отдельного media-запроса и без правки переводов. Троеточие оставлено
+     страховкой на случай языка, который добавят позже. */
+  .tab__l {
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-family: var(--sans); font-size: clamp(10px, 3.05vw, 11px);
+    font-weight: 600; letter-spacing: .01em;
+  }
+  .tab.on { color: var(--accent); }
+  /* Активное состояние не только цветом: короткая черта сверху читается и
+     при дальтонизме, и на выцветшем экране под солнцем. */
+  .tab.on::before {
+    content: ''; position: absolute; top: 0; width: 26px; height: 2px;
+    border-radius: 0 0 2px 2px; background: var(--accent);
+  }
+  .tab { position: relative; }
+  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; border-radius: 10px; }
+
+  /* Контент не должен заканчиваться под панелью. 56px панели + запас +
+     безопасная зона; прежние 56px нижнего отступа при этом поглощаются. */
+  .main {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Поднавигация внутри группы. Та же лента, что у периодов гороскопа, но
+     на всю ширину и без индикатора: пунктов два-три, и подсветки достаточно.
+     Липкая — уезжает вместе с контентом, но возвращается при прокрутке
+     вверх, чтобы не занимать место на длинных страницах постоянно. */
+  .subnav {
+    display: flex; margin: 0 0 14px; padding: 4px;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--line); border-radius: 999px;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .subnav::-webkit-scrollbar { display: none; }
+  .subnav[hidden] { display: none; }
+  .subnav__i {
+    /* 44px, как у всех целей нажатия: замер показал 40, и в ленте из трёх
+       пунктов промах по соседнему уводит в другой раздел. */
+    flex: 1 1 auto; min-height: 44px; padding: 10px 14px; white-space: nowrap;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 0; border-radius: 999px; background: transparent;
+    color: var(--ink-dim); text-decoration: none;
+    font-family: var(--sans); font-size: 14px; font-weight: 600;
+    touch-action: manipulation;
+  }
+  .subnav__i.on { background: var(--nav-on); color: var(--ink); }
+  .subnav__i:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+}
+
+/* Панели вкладок не существует нигде, кроме мобильной ветки: на десктопе
+   разметка остаётся в DOM, но не показывается. */
+@media (min-width: 901px) {
+  .tabbar, .subnav { display: none !important; }
+}
+
+/* Строки ленты событий на «Сегодня»: замер дал 41px у строки и 38x41 у
+   звёздочки сохранения. Звёздочка стоит вплотную к строке, и промах по ней
+   открывает событие вместо того, чтобы его сохранить. */
+@media (pointer: coarse) {
+  .tl-row__b { min-height: 44px; }
+  .tl-save { min-width: 44px; min-height: 44px; }
+}

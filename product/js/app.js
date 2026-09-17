@@ -3157,6 +3157,71 @@
   var ORDER = ['today', 'horoscope', 'chart', 'match', 'numbers', 'moon', 'retro', 'profile',
                'settings'];
 
+  /* --- мобильная навигация -------------------------------------------------
+     Девять разделов сведены в пять вкладок нижней панели. Это единственное
+     место, где задана группировка: и подсветка активной вкладки, и лента
+     поднавигации внутри группы читают отсюда, поэтому разойтись они не
+     могут. Порядок разделов внутри группы — порядок в ленте.
+
+     Ни один раздел не спрятан и ни одного нового не добавлено: те же девять
+     адресов, те же хеши, те же глубокие ссылки. Меняется только то, как до
+     них дотянуться пальцем. */
+  var TABS = [
+    { key: 'today',   views: ['today'] },
+    { key: 'chart',   views: ['chart'] },
+    { key: 'sky',     views: ['horoscope', 'moon', 'retro'] },
+    { key: 'more',    views: ['match', 'numbers'] },
+    { key: 'profile', views: ['profile', 'settings'] }
+  ];
+
+  function tabOf(view) {
+    for (var i = 0; i < TABS.length; i++) {
+      if (TABS[i].views.indexOf(view) >= 0) { return TABS[i]; }
+    }
+    return null;
+  }
+
+  /* Заголовок раздела для ленты поднавигации. У настроек своего пункта в
+     T.ui.nav нет — это служебный экран, его название лежит в T.set.title. */
+  function viewLabel(view) {
+    if (view === 'settings') { return T.set.title; }
+    return T.ui.nav[view] || view;
+  }
+
+  /* Подписи вкладок ставятся один раз при старте и переставляются при смене
+     языка — тем же способом, что и остальной интерфейс. */
+  function fillTabLabels() {
+    Array.prototype.slice.call(document.querySelectorAll('[data-tabl]')).forEach(function (s) {
+      var k = s.getAttribute('data-tabl');
+      s.textContent = T.ui.nav[k] || k;
+    });
+  }
+
+  /* Подсветка активной вкладки и сборка ленты внутри группы. Вызывается из
+     route() на каждом переходе, в том числе при переходе по ссылке из
+     карточки — поэтому вкладка всегда соответствует тому, что на экране,
+     а не тому, по чему last нажали. */
+  function syncTabs(view) {
+    var active = tabOf(view);
+    Array.prototype.slice.call(document.querySelectorAll('.tab')).forEach(function (a) {
+      var on = active && a.getAttribute('data-tab') === active.key;
+      a.classList.toggle('on', !!on);
+      a.setAttribute('aria-current', on ? 'page' : 'false');
+    });
+
+    var sub = el('subnav');
+    if (!sub) { return; }
+    /* Лента нужна только там, где внутри вкладки есть выбор. На «Сегодня» и
+       «Карте» её нет вовсе — пустая полоса занимала бы высоту и обещала
+       переключение, которого нет. */
+    if (!active || active.views.length < 2) { sub.hidden = true; sub.innerHTML = ''; return; }
+    sub.innerHTML = active.views.map(function (v) {
+      return '<a class="subnav__i' + (v === view ? ' on' : '') + '" href="#' + v + '"' +
+        (v === view ? ' aria-current="page"' : '') + '>' + esc(viewLabel(v)) + '</a>';
+    }).join('');
+    sub.hidden = false;
+  }
+
   /* --- адрес раздела с состоянием ------------------------------------------
      Хеш теперь не только имя раздела, но и то, что в нём выбрано:
 
@@ -3245,6 +3310,10 @@
       gear.classList.toggle('on', h === 'settings');
       gear.setAttribute('aria-current', h === 'settings' ? 'page' : 'false');
     }
+    /* Нижняя панель и лента внутри группы. На десктопе оба элемента скрыты
+       стилями, поэтому вызов безвреден и ветвления по ширине здесь нет:
+       раскладку решает CSS, а не JS. */
+    syncTabs(h);
     /* У Cosmic Now своя шапка с приветствием и датой, поэтому общий
        заголовок раздела на нём лишний — два заголовка подряд читаются как
        недоделка. Без профиля экран показывает обычные карточки, и заголовок
@@ -3408,6 +3477,7 @@
     recalc();
 
     applyStaticTexts();
+    fillTabLabels();
     el('disc').textContent = T.ui.disclaimer;
 
     /* Переключатель языка: кнопка с текущим кодом раскрывает список всех
