@@ -33,7 +33,7 @@
    старая версия воркера (без lang в ответе) перестаёт портить перевод сама
    собой, ещё до обновления. */
 
-var ALLOWED_ORIGIN = 'https://yahor22852.github.io';
+var ALLOWED_ORIGIN = 'https://astromap.me';
 var MODEL = 'openai/gpt-oss-120b';
 
 /* Языки продукта. Название языка подставляется в промпт словами: код вроде

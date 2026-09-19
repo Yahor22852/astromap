@@ -28,7 +28,7 @@
    Gumroad Ping docs: subscription_ended шлётся «at the time the subscription
    has officially ended, not... at the time cancellation is requested»). */
 
-var ALLOWED_ORIGIN = 'https://yahor22852.github.io';
+var ALLOWED_ORIGIN = 'https://astromap.me';
 var GUMROAD_VERIFY_URL = 'https://api.gumroad.com/v2/licenses/verify';
 
 function corsHeaders() {
