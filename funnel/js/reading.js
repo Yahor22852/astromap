@@ -17,7 +17,7 @@
 */
 /* Куда ведёт кнопка в конце чтения. В собранном сайте продукт лежит в
    /product/, в репозитории — на уровень выше. */
-var PRODUCT_URL = 'product/app.html';
+var PRODUCT_URL = 'product/';
 
 (function () {
   'use strict';

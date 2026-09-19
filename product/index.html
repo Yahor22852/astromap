@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- viewport-fit=cover отдаёт странице весь экран, включая зону под вырезом и
+     под домашней полосой; отступы от них берутся в CSS через env(safe-area-*)
+     — см. .topbar и .main в css/app.css. Без cover iOS сам держит страницу в
+     безопасной зоне, но в горизонтальной ориентации оставляет по бокам
+     чёрные поля, а фон продукта на них не распространяется. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AstroMap</title>
+<script>
+/* Язык выбирается до загрузки текстов: texts.js читает window.APP_LANG.
+   SUPPORTED — держать в паре с ключами T_ALL в texts.js и с пунктами
+   меню #langMenu ниже. Явный выбор пользователя хранится в localStorage
+   (ключ astromap.lang, общий с воронкой) и переживает обновления;
+   при первом визите, пока такого выбора ещё нет, один раз подставляем
+   язык браузера (navigator.languages) — это не геолокация (той нужно
+   разрешение и часто внешний сервис, которого у статичного сайта нет),
+   а стандартный для веба сигнал предпочтения языка. */
+(function () {
+  var SUPPORTED = ['en', 'pl', 'ru', 'uk', 'de', 'es', 'fr', 'it', 'pt', 'tr'];
+  var l = null;
+  try { l = localStorage.getItem('astromap.lang'); } catch (e) {}
+  if (!l) {
+    var cands = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
+    for (var i = 0; i < cands.length && !l; i++) {
+      var code = String(cands[i]).slice(0, 2).toLowerCase();
+      if (SUPPORTED.indexOf(code) >= 0) { l = code; }
+    }
+  }
+  if (!l || SUPPORTED.indexOf(l) < 0) { l = 'en'; }
+  window.APP_LANG = l;
+  document.documentElement.lang = l;
+})();
+</script>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<div class="stars" id="stars" aria-hidden="true"></div>
+<script>
+/* Звёздный фон: 44 точки со случайной позицией/длительностью мерцания.
+   Инлайн, а не в app.js — чисто декоративный слой, не часть логики приложения. */
+(function () {
+  var host = document.getElementById('stars');
+  var n = 44, html = '';
+  for (var i = 0; i < n; i++) {
+    var top = (Math.random() * 100).toFixed(2);
+    var left = (Math.random() * 100).toFixed(2);
+    var size = (1 + Math.random() * 1.6).toFixed(1);
+    var dur = (2.4 + Math.random() * 3.2).toFixed(1);
+    var delay = (Math.random() * 4).toFixed(1);
+    html += '<i style="top:' + top + '%;left:' + left + '%;width:' + size + 'px;height:' + size +
+      'px;animation-duration:' + dur + 's;animation-delay:-' + delay + 's;"></i>';
+  }
+  host.innerHTML = html;
+})();
+</script>
+
+<div class="gate" id="gate" hidden>
+  <form class="gate__card" id="gateForm" novalidate>
+    <h1 class="gate__title" data-t="ui.gateTitle"></h1>
+    <p class="gate__sub" data-t="ui.gateSubtitle"></p>
+    <label class="gate__field">
+      <span data-t="ui.gateEmail"></span>
+      <input type="email" name="gateEmail" id="gateEmail" autocomplete="email" required>
+    </label>
+    <label class="gate__field">
+      <span data-t="ui.gateLicense"></span>
+      <input type="text" name="gateLicense" id="gateLicense" autocomplete="off" spellcheck="false" required>
+      <small class="gate__hint" data-t="ui.gateLicenseHint"></small>
+    </label>
+    <button class="gate__submit" id="gateSubmit" type="submit" data-t="ui.gateSubmit"></button>
+    <p class="gate__status" id="gateStatus" role="status" aria-live="polite" hidden></p>
+    <a class="gate__buy" id="gateBuy" href="#" data-t="ui.gateBuy" hidden></a>
+  </form>
+</div>
+
+<div class="shell" id="shell" hidden>
+  <header class="topbar">
+    <div class="topbar__pill">
+      <a class="brand" href="#today">AstroMap</a>
+      <nav class="nav">
+        <a class="nav__i" href="#today"    data-t="ui.nav.today"></a>
+        <a class="nav__i" href="#horoscope" data-t="ui.nav.horoscope"></a>
+        <a class="nav__i" href="#chart"    data-t="ui.nav.chart"></a>
+        <a class="nav__i" href="#match"    data-t="ui.nav.match"></a>
+        <a class="nav__i" href="#numbers"  data-t="ui.nav.numbers"></a>
+        <a class="nav__i" href="#moon"     data-t="ui.nav.moon"></a>
+        <a class="nav__i" href="#retro"    data-t="ui.nav.retro"></a>
+        <a class="nav__i" href="#profile"  data-t="ui.nav.profile"></a>
+      </nav>
+      <div class="lang" role="group" aria-label="Language">
+        <button class="lang__b lang__toggle" id="langToggle" type="button"
+          aria-haspopup="listbox" aria-expanded="false" aria-controls="langMenu">EN</button>
+        <div class="langmenu" id="langMenu" role="listbox" hidden>
+          <button class="langmenu__item" type="button" data-lang="en" role="option">English</button>
+          <button class="langmenu__item" type="button" data-lang="pl" role="option">Polski</button>
+          <button class="langmenu__item" type="button" data-lang="ru" role="option">Русский</button>
+          <button class="langmenu__item" type="button" data-lang="uk" role="option">Українська</button>
+          <button class="langmenu__item" type="button" data-lang="de" role="option">Deutsch</button>
+          <button class="langmenu__item" type="button" data-lang="es" role="option">Español</button>
+          <button class="langmenu__item" type="button" data-lang="fr" role="option">Français</button>
+          <button class="langmenu__item" type="button" data-lang="it" role="option">Italiano</button>
+          <button class="langmenu__item" type="button" data-lang="pt" role="option">Português</button>
+          <button class="langmenu__item" type="button" data-lang="tr" role="option">Türkçe</button>
+        </div>
+      </div>
+      <!-- Настройки — не раздел астрологии, поэтому не в .nav, а шестерёнкой
+           рядом с языком: главная навигация остаётся про продукт. Подпись и
+           имя для скринридера подставляет app.js (T.set.nav). -->
+      <a class="gear" id="gear" href="#settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/>
+          <path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L14.9 3h-3.8l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 1.7 1l.4 2.6h3.8l.4-2.6a7.6 7.6 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6Z"/>
+        </svg>
+      </a>
+      <button class="topbar__burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mnav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="mnav" id="mnav" hidden>
+      <a class="nav__i" href="#today"    data-t="ui.nav.today"></a>
+      <a class="nav__i" href="#horoscope" data-t="ui.nav.horoscope"></a>
+      <a class="nav__i" href="#chart"    data-t="ui.nav.chart"></a>
+      <a class="nav__i" href="#match"    data-t="ui.nav.match"></a>
+      <a class="nav__i" href="#numbers"  data-t="ui.nav.numbers"></a>
+      <a class="nav__i" href="#moon"     data-t="ui.nav.moon"></a>
+      <a class="nav__i" href="#retro"    data-t="ui.nav.retro"></a>
+      <a class="nav__i" href="#profile"  data-t="ui.nav.profile"></a>
+      <!-- В бургер-меню шестерёнка не помещается отдельным элементом
+           управления, поэтому настройки идут обычным последним пунктом. -->
+      <a class="nav__i" href="#settings" data-t="set.nav"></a>
+    </nav>
+  </header>
+
+  <main class="main">
+    <!-- Переключатель внутри группы: заполняется в app.js только когда в
+         текущей вкладке больше одного раздела (Небо, Ещё, Профиль). На
+         десктопе скрыт — там все девять разделов и так в капсуле сверху. -->
+    <nav class="subnav" id="subnav" hidden></nav>
+    <div class="head"><h1 id="title"></h1></div>
+    <div class="view" id="view"></div>
+    <p class="disc" id="disc"></p>
+  </main>
+
+  <!-- НИЖНЯЯ НАВИГАЦИЯ — только телефон и планшет (≤900px, там же, где
+       раньше появлялся бургер). Девять разделов сгруппированы в пять
+       вкладок: девять пунктов, спрятанных за гамбургером, не давали ответа
+       на вопрос «где я сейчас» вообще — подсветка активного пункта была
+       видна только тому, кто откроет меню.
+
+       Подписи берутся из тех же T.ui.nav, что и десктопное меню; две новые
+       («Небо», «Ещё») добавлены во все десять языков. Иконки — контурные,
+       в одну линию, как шестерёнка в шапке. -->
+  <nav class="tabbar" id="tabbar" aria-label="AstroMap">
+    <a class="tab" href="#today" data-tab="today">
+      <svg class="tab__i" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4.2"/>
+        <path d="M12 2.6v2.4M12 19v2.4M2.6 12h2.4M19 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M18.7 5.3L17 7M7 17l-1.7 1.7"/>
+      </svg>
+      <span class="tab__l" data-tabl="today"></span>
+    </a>
+    <!-- Совместимость стоит второй по просьбе владельца продукта: по его
+         оценке это самая востребованная функция, и она не должна лежать на
+         один тап глубже. Натальная карта уехала во вкладку «Ещё» — см. TABS
+         в js/app.js, там же единственное место, где задана группировка. -->
+    <a class="tab" href="#match" data-tab="match">
+      <svg class="tab__i" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2"/>
+      </svg>
+      <span class="tab__l" data-tabl="match"></span>
+    </a>
+    <a class="tab" href="#horoscope" data-tab="sky">
+      <svg class="tab__i" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <ellipse cx="12" cy="12" rx="9.2" ry="4.4" transform="rotate(-24 12 12)"/>
+        <circle cx="12" cy="12" r="2.6"/>
+      </svg>
+      <span class="tab__l" data-tabl="sky"></span>
+    </a>
+    <a class="tab" href="#chart" data-tab="more">
+      <svg class="tab__i" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="6.5" cy="6.5" r="1.8"/><circle cx="17.5" cy="6.5" r="1.8"/>
+        <circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/>
+      </svg>
+      <span class="tab__l" data-tabl="more"></span>
+    </a>
+    <a class="tab" href="#profile" data-tab="profile">
+      <svg class="tab__i" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="8.2" r="3.6"/>
+        <path d="M4.8 20c.9-3.7 3.7-5.6 7.2-5.6s6.3 1.9 7.2 5.6"/>
+      </svg>
+      <span class="tab__l" data-tabl="profile"></span>
+    </a>
+  </nav>
+</div>
+
+<script src="vendor/astronomy.browser.min.js"></script>
+<script src="js/cities.js"></script>
+<script src="js/clock.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/numerology.js"></script>
+<script src="js/texts.js"></script>
+<script src="js/wheel.js"></script>
+<script src="js/moon.js"></script>
+<script src="js/retro.js"></script>
+<script src="js/transits.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
