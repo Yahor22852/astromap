@@ -21,8 +21,8 @@
      настройки: LICENSE_API — обязателен (без него разблокировать нечем),
      GATE_CHECKOUT_URL — необязателен, просто прячет ссылку «ещё нет
      доступа», если её некуда вести. */
-  var LICENSE_API = ''; /* TODO: URL воркера license-verify.js, напр. https://astromap-license-verify.<você>.workers.dev */
-  var GATE_CHECKOUT_URL = ''; /* TODO: ссылка на продукт/чекаут Gumroad */
+  var LICENSE_API = 'https://astromap-license-verify.egorrut3030.workers.dev';
+  var GATE_CHECKOUT_URL = 'https://rubyalex5.gumroad.com/l/astromap?wanted=true';
   /* Управление подпиской для тех, у кого доступ уже есть (раздел #settings).
      Это НЕ чекаут: у Gumroad это отдельный адрес, где отменяют и меняют
      карту. Пока пусто, кнопки нет, а вместо неё строка о том, где искать
