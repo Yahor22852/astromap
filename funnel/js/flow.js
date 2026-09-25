@@ -13,13 +13,13 @@
    ссылается согласие при списании денег, обязаны существовать и
    открываться — пока URL не заданы, названия выводятся текстом без ссылки,
    а в консоль идёт предупреждение. */
-var CHECKOUT_URL = 'https://rubyalex5.gumroad.com/l/astromap?monthly=true&wanted=true';
+var CHECKOUT_URL = 'https://astromap.gumroad.com/l/astromap?monthly=true&wanted=true';
                                   /* подписка: месячный план, $9.99/мес.
                                      ?wanted=true открывает чекаут сразу, минуя
                                      страницу товара — человек уже принял решение
                                      на пейволле, второй экран с той же ценой
                                      только отдаёт его обратно в раздумья. */
-var CHECKOUT_URL_YEAR = 'https://rubyalex5.gumroad.com/l/astromap?yearly=true&wanted=true';
+var CHECKOUT_URL_YEAR = 'https://astromap.gumroad.com/l/astromap?yearly=true&wanted=true';
                                   /* годовой план, $29.99/год с автопродлением.
                                      Это НЕ отдельный товар, а вариант списания
                                      того же membership-товара (тир Full access):
