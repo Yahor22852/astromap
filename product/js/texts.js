@@ -106,6 +106,9 @@
       gateSubmit: 'Odblokuj',
       gateChecking: 'Sprawdzamy dostęp…',
       gateBuy: 'Nie masz jeszcze dostępu? Kup tutaj',
+      legalTerms: 'Warunki korzystania',
+      legalPrivacy: 'Polityka prywatności',
+      legalTitle: 'Dokumenty i pomoc',
       gateErrorInvalid: 'Nie udało się dopasować tego e-maila i klucza. Sprawdź oba pola i spróbuj ponownie.',
       gateErrorInactive: 'Ta subskrypcja nie jest teraz aktywna (zakończona, anulowana lub zwrócona).',
       gateErrorNetwork: 'Nie udało się połączyć z serwerem dostępu. Sprawdź połączenie i spróbuj ponownie.'
@@ -642,6 +645,9 @@
       gateSubmit: 'Unlock',
       gateChecking: 'Checking access…',
       gateBuy: 'Don’t have access yet? Get it here',
+      legalTerms: 'Terms of Use',
+      legalPrivacy: 'Privacy Policy',
+      legalTitle: 'Documents and support',
       gateErrorInvalid: 'We couldn’t match that email and license key. Double-check both and try again.',
       gateErrorInactive: 'This subscription isn’t active right now (ended, cancelled, or refunded).',
       gateErrorNetwork: 'Couldn’t reach the access server. Check your connection and try again.'
@@ -1176,6 +1182,9 @@ var RU = {
       gateSubmit: 'Разблокировать',
       gateChecking: 'Проверяем доступ…',
       gateBuy: 'Ещё нет доступа? Оформить здесь',
+      legalTerms: 'Условия использования',
+      legalPrivacy: 'Политика конфиденциальности',
+      legalTitle: 'Документы и поддержка',
       gateErrorInvalid: 'Не удалось найти совпадение по этому email и ключу. Проверьте оба поля и попробуйте снова.',
       gateErrorInactive: 'Эта подписка сейчас не активна (закончилась, отменена или возвращена).',
       gateErrorNetwork: 'Не удалось связаться с сервером проверки доступа. Проверьте соединение и попробуйте снова.'
@@ -1702,6 +1711,9 @@ var UK = {
       gateSubmit: 'Розблокувати',
       gateChecking: 'Перевіряємо доступ…',
       gateBuy: 'Ще немає доступу? Оформити тут',
+      legalTerms: 'Умови використання',
+      legalPrivacy: 'Політика конфіденційності',
+      legalTitle: 'Документи та підтримка',
       gateErrorInvalid: 'Не вдалося знайти збіг за цим email і ключем. Перевірте обидва поля і спробуйте ще раз.',
       gateErrorInactive: 'Ця підписка зараз не активна (закінчилась, скасована або повернена).',
       gateErrorNetwork: 'Не вдалося з’язатися із сервером перевірки доступу. Перевірте з’єднання і спробуйте ще раз.'
@@ -2228,6 +2240,9 @@ var DE = {
       gateSubmit: 'Freischalten',
       gateChecking: 'Zugang wird geprüft…',
       gateBuy: 'Noch keinen Zugang? Hier bekommen',
+      legalTerms: 'Nutzungsbedingungen',
+      legalPrivacy: 'Datenschutzerklärung',
+      legalTitle: 'Dokumente und Support',
       gateErrorInvalid: 'Diese E-Mail und dieser Lizenzschlüssel passen nicht zusammen. Beides prüfen und erneut versuchen.',
       gateErrorInactive: 'Dieses Abo ist gerade nicht aktiv (beendet, gekündigt oder erstattet).',
       gateErrorNetwork: 'Der Zugangsserver war nicht erreichbar. Verbindung prüfen und erneut versuchen.'
@@ -2754,6 +2769,9 @@ var ES = {
       gateSubmit: 'Desbloquear',
       gateChecking: 'Comprobando acceso…',
       gateBuy: '¿Aún no tienes acceso? Consíguelo aquí',
+      legalTerms: 'Términos de uso',
+      legalPrivacy: 'Política de privacidad',
+      legalTitle: 'Documentos y soporte',
       gateErrorInvalid: 'No hemos podido validar ese email y esa clave juntos. Revisa ambos campos e inténtalo de nuevo.',
       gateErrorInactive: 'Esta suscripción no está activa ahora mismo (finalizada, cancelada o reembolsada).',
       gateErrorNetwork: 'No se pudo contactar con el servidor de acceso. Revisa tu conexión e inténtalo de nuevo.'
@@ -3280,6 +3298,9 @@ var FR = {
       gateSubmit: 'Débloquer',
       gateChecking: 'Vérification de l’accès…',
       gateBuy: 'Pas encore accès ? Se procurer ici',
+      legalTerms: 'Conditions d’utilisation',
+      legalPrivacy: 'Politique de confidentialité',
+      legalTitle: 'Documents et assistance',
       gateErrorInvalid: 'Impossible de faire correspondre cet email et cette clé. Vérifiez les deux champs et réessayez.',
       gateErrorInactive: 'Cet abonnement n’est pas actif actuellement (terminé, annulé ou remboursé).',
       gateErrorNetwork: 'Impossible de joindre le serveur d’accès. Vérifiez votre connexion et réessayez.'
@@ -3806,6 +3827,9 @@ var IT = {
       gateSubmit: 'Sblocca',
       gateChecking: 'Verifica dell’accesso…',
       gateBuy: 'Non hai ancora accesso? Ottienilo qui',
+      legalTerms: 'Termini di utilizzo',
+      legalPrivacy: 'Informativa sulla privacy',
+      legalTitle: 'Documenti e assistenza',
       gateErrorInvalid: 'Non siamo riusciti ad abbinare questa email e questa chiave. Controlla entrambi i campi e riprova.',
       gateErrorInactive: 'Questo abbonamento non è attivo al momento (terminato, annullato o rimborsato).',
       gateErrorNetwork: 'Impossibile contattare il server di accesso. Controlla la connessione e riprova.'
@@ -4332,6 +4356,9 @@ var PT = {
       gateSubmit: 'Desbloquear',
       gateChecking: 'Verificando acesso…',
       gateBuy: 'Ainda não tem acesso? Obtenha aqui',
+      legalTerms: 'Termos de uso',
+      legalPrivacy: 'Política de privacidade',
+      legalTitle: 'Documentos e suporte',
       gateErrorInvalid: 'Não conseguimos combinar esse email com essa chave. Confira os dois campos e tente novamente.',
       gateErrorInactive: 'Esta assinatura não está ativa no momento (encerrada, cancelada ou reembolsada).',
       gateErrorNetwork: 'Não foi possível contatar o servidor de acesso. Verifique sua conexão e tente novamente.'
@@ -4858,6 +4885,9 @@ var TR = {
       gateSubmit: 'Kilidi aç',
       gateChecking: 'Erişim kontrol ediliyor…',
       gateBuy: 'Henüz erişiminiz yok mu? Buradan edinin',
+      legalTerms: 'Kullanım Koşulları',
+      legalPrivacy: 'Gizlilik Politikası',
+      legalTitle: 'Belgeler ve destek',
       gateErrorInvalid: 'Bu e-posta ile anahtar eşleşmedi. Her iki alanı da kontrol edip tekrar deneyin.',
       gateErrorInactive: 'Bu abonelik şu anda aktif değil (sona erdi, iptal edildi veya iade edildi).',
       gateErrorNetwork: 'Erişim sunucusuna ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.'

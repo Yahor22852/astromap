@@ -415,7 +415,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .plan__after { margin-top: 2px; font-size: 14px; color: var(--ink-dim); }
 .disc { margin-top: 14px; font-size: var(--t-legal); line-height: 16px; color: var(--ink-faint); }
 .legal { margin-top: 12px; font-size: var(--t-legal); line-height: 16px; color: var(--ink-faint); text-align: center; }
-.legal a { color: var(--ink-dim); }
+.legal a, .disc a { color: var(--ink-dim); }
 
 /* --- recovery ------------------------------------------------------------ */
 .blur { position: relative; margin-top: 18px; }

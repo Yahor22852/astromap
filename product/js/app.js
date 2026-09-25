@@ -28,6 +28,12 @@
      карту. Пока пусто, кнопки нет, а вместо неё строка о том, где искать
      ссылку, — мёртвая кнопка «управлять подпиской» хуже её отсутствия. */
   var MANAGE_URL = ''; /* TODO: ссылка на управление подпиской Gumroad */
+  /* Юридические документы и адрес поддержки. Ссылки стоят на гейте (человек
+     вводит ключ до того, как увидит продукт) и в настройках. Те же адреса
+     лежат в funnel/js/flow.js — меняешь здесь, меняй и там. */
+  var TERMS_URL = 'https://docs.google.com/document/d/1GuEKF2tU3MG_ZUZqJnA7B27-OxGCoWB95aGkWyI8u9I/edit?usp=sharing';
+  var PRIVACY_URL = 'https://docs.google.com/document/d/1J_HDyOfxye2w8JvKNG8ytiDkBXFHsuDFKQYHbj4ALh0/edit?usp=sharing';
+  var SUPPORT_EMAIL = 'hello@astromap.me';
   var ACCESS_KEY = 'astromap.access';
   var ACCESS_REVALIDATE_MS = 24 * 3600 * 1000; /* не чаще раза в сутки дёргаем воркер повторно на уже открытой сессии */
   /* Обход гейта для разработки: открыть product/?dev=<DEV_WORD> один раз —
@@ -3219,6 +3225,13 @@
       blocks.push(card(T.set.accessTitle, '<p class="empty">' + T.set.noAccess + '</p>'));
     }
 
+    blocks.push(card(T.ui.legalTitle,
+      '<div class="acts">' +
+        '<a class="act" href="' + TERMS_URL + '" target="_blank" rel="noopener">' + T.ui.legalTerms + '</a>' +
+        '<a class="act" href="' + PRIVACY_URL + '" target="_blank" rel="noopener">' + T.ui.legalPrivacy + '</a>' +
+        '<a class="act" href="mailto:' + SUPPORT_EMAIL + '">' + SUPPORT_EMAIL + '</a>' +
+      '</div>'));
+
     return blocks.join('');
   };
 
@@ -3755,6 +3768,12 @@
     if (gate) { gate.hidden = false; }
     if (message) { setGateStatus(message, true); }
   }
+  function legalLinksHtml() {
+    var ext = ' target="_blank" rel="noopener"';
+    return '<a href="' + TERMS_URL + '"' + ext + '>' + T.ui.legalTerms + '</a>' +
+      ' · <a href="' + PRIVACY_URL + '"' + ext + '>' + T.ui.legalPrivacy + '</a>' +
+      ' · <a href="mailto:' + SUPPORT_EMAIL + '">' + SUPPORT_EMAIL + '</a>';
+  }
   function bindGate() {
     var form = el('gateForm');
     if (!form) { return; }
@@ -3763,6 +3782,8 @@
       if (GATE_CHECKOUT_URL) { buyLink.href = GATE_CHECKOUT_URL; buyLink.hidden = false; }
       else { buyLink.hidden = true; }
     }
+    var legal = el('gateLegal');
+    if (legal) { legal.innerHTML = legalLinksHtml(); }
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
       var email = form.gateEmail.value.trim();

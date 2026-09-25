@@ -31,8 +31,14 @@ var CHECKOUT_URL_YEAR = 'https://astromap.gumroad.com/l/astromap?yearly=true&wan
                                      за оба плана сразу. Один товар в корзине
                                      лежит одной позицией, и повторный заход
                                      лишь переключает её периодичность. */
-var TERMS_URL = '';               /* Условия подписки */
-var PRIVACY_URL = '';             /* Политика конфиденциальности */
+var TERMS_URL = 'https://docs.google.com/document/d/1GuEKF2tU3MG_ZUZqJnA7B27-OxGCoWB95aGkWyI8u9I/edit?usp=sharing';
+                                  /* Terms of Use (Google Docs) */
+var PRIVACY_URL = 'https://docs.google.com/document/d/1J_HDyOfxye2w8JvKNG8ytiDkBXFHsuDFKQYHbj4ALh0/edit?usp=sharing';
+                                  /* Privacy Policy (Google Docs) */
+var SUPPORT_EMAIL = 'hello@astromap.me';
+                                  /* Те же три значения лежат в начале
+                                     product/js/app.js — меняешь здесь,
+                                     меняй и там. */
 
 (function () {
   'use strict';
@@ -1157,7 +1163,7 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
 
     el('planPrice').textContent = C.billing.priceLine;
     el('planAfter').textContent = C.billing.renewLine;
-    el('planDisc').textContent = C.billing.disclaimer;
+    el('planDisc').innerHTML = discHtml(C.billing.disclaimer);
 
     el('legal').innerHTML = legalHtml(C.paywall.cta);
   }
@@ -1171,6 +1177,22 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
      размещено». Ссылка на несуществующий документ хуже, чем его отсутствие:
      человек жмёт, ничего не происходит, а согласие формально уже дано —
      поэтому пока URL пуст, выводим название текстом, без <a>. */
+  /* Дисклеймер подписки кончается ссылкой «see our {terms}»: название
+     документа в тексте становится ссылкой, а под ним — адрес поддержки. */
+  function discHtml(text) {
+    var esc = function (t) {
+      return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    };
+    var html = esc(text).replace('{terms}', TERMS_URL
+      ? '<a href="' + TERMS_URL + '" target="_blank" rel="noopener">' + esc(C.paywall.terms) + '</a>'
+      : esc(C.paywall.terms));
+    if (SUPPORT_EMAIL) {
+      html += ' ' + esc(C.billing.support).replace('{email}',
+        '<a href="mailto:' + SUPPORT_EMAIL + '">' + SUPPORT_EMAIL + '</a>');
+    }
+    return html;
+  }
+
   function legalHtml(ctaLabel) {
     var docLink = function (url, label) {
       return url ? '<a href="' + url + '" target="_blank" rel="noopener">' + label + '</a>' : label;
@@ -1237,7 +1259,7 @@ var PRIVACY_URL = '';             /* Политика конфиденциаль
      ни один из них сейчас не вызывается. */
   function buildRecovery() {
     el('onePrice').textContent = C.billing.yearPrice + ' ' + C.billing.yearPeriod;
-    el('oneDisc').textContent = C.billing.yearDisclaimer;
+    el('oneDisc').innerHTML = discHtml(C.billing.yearDisclaimer);
     el('legalYear').innerHTML = legalHtml(C.recovery.yearCta);
   }
 

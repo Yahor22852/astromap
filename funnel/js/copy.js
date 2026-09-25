@@ -219,7 +219,7 @@
          первое, что разбирают в спорах по автопродлению. */
       legal: 'Klikając „{cta}”, akceptujesz {terms} i {privacy}.',
       privacyInline: 'Politykę prywatności',
-      terms: 'Warunki subskrypcji',
+      terms: 'Warunki korzystania',
       privacy: 'Polityka prywatności'
     },
 
@@ -264,14 +264,15 @@
       /* Все обязательные элементы на месте: цена, период, автопродление,
          дедлайн отмены, способ отмены. Вводного периода в этой модели нет,
          поэтому и формулировки про его окончание нет. */
-      disclaimer: 'Subskrypcja kosztuje 39,99 zł miesięcznie plus VAT według stawki Twojego kraju, pokazany w całości przed płatnością, i odnawia się automatycznie co miesiąc, o ile nie anulujesz jej co najmniej 24 godziny przed końcem bieżącego okresu rozliczeniowego. Anulujesz w każdej chwili w ustawieniach konta — zobacz Warunki subskrypcji.',
+      disclaimer: 'Subskrypcja kosztuje 39,99 zł miesięcznie plus VAT według stawki Twojego kraju, pokazany w całości przed płatnością, i odnawia się automatycznie co miesiąc, o ile nie anulujesz jej co najmniej 24 godziny przed końcem bieżącego okresu rozliczeniowego. Anulujesz w każdej chwili w ustawieniach konta — zobacz {terms}.',
       /* Годовой план на recovery-экране. Скидка считается из цен, которые
          человек видит на экране: 119,99 / (39,99 x 12 = 479,88) = 25%,
          то есть 75% экономии. Меняешь любую из двух цен — пересчитай процент
          в yearTitle и в answers.price, иначе на экране будет неверная цифра. */
       yearPrice: '119,99 zł + VAT',
       yearPeriod: 'rocznie',
-      yearDisclaimer: 'Plan roczny kosztuje 119,99 zł plus VAT według stawki Twojego kraju, pokazany w całości przed płatnością, i odnawia się automatycznie co rok, o ile nie anulujesz go co najmniej 24 godziny przed końcem bieżącego okresu. Przy planie miesięcznym rok kosztuje 479,88 zł bez VAT. Anulujesz w każdej chwili w ustawieniach konta \u2014 zobacz Warunki subskrypcji.'
+      yearDisclaimer: 'Plan roczny kosztuje 119,99 zł plus VAT według stawki Twojego kraju, pokazany w całości przed płatnością, i odnawia się automatycznie co rok, o ile nie anulujesz go co najmniej 24 godziny przed końcem bieżącego okresu. Przy planie miesięcznym rok kosztuje 479,88 zł bez VAT. Anulujesz w każdej chwili w ustawieniach konta \u2014 zobacz {terms}.',
+      support: 'Pytania o płatności: {email}.'
     },
 
     moonPhase: ['Nów', 'Przybywający sierp', 'Pierwsza kwadra', 'Przybywający garb',
@@ -500,7 +501,7 @@
       checkoutOff: 'Payments are not connected yet. Your details are saved — come back in a moment.',
       legal: 'By clicking “{cta}” you accept the {terms} and the {privacy}.',
       privacyInline: 'Privacy Policy',
-      terms: 'Subscription Terms',
+      terms: 'Terms of Use',
       privacy: 'Privacy Policy'
     },
 
@@ -534,10 +535,11 @@
          These billing strings are shared by the eight other locales. */
       priceLine: '$9.99 + VAT',
       renewLine: 'per month, renews automatically',
-      disclaimer: 'The subscription is $9.99 per month plus VAT at your local rate, shown in full before you pay, and renews automatically each month unless you cancel at least 24 hours before the end of the current billing period. Cancel anytime in your account settings — see our Subscription Terms.',
+      disclaimer: 'The subscription is $9.99 per month plus VAT at your local rate, shown in full before you pay, and renews automatically each month unless you cancel at least 24 hours before the end of the current billing period. Cancel anytime in your account settings — see our {terms}.',
       yearPrice: '$29.99 + VAT',
       yearPeriod: 'per year',
-      yearDisclaimer: 'The annual plan is $29.99 plus VAT at your local rate, shown in full before you pay, and renews automatically every year unless you cancel at least 24 hours before the end of the current period. Paying monthly, a year costs $119.88 before VAT. Cancel anytime in your account settings \u2014 see our Subscription Terms.'
+      yearDisclaimer: 'The annual plan is $29.99 plus VAT at your local rate, shown in full before you pay, and renews automatically every year unless you cancel at least 24 hours before the end of the current period. Paying monthly, a year costs $119.88 before VAT. Cancel anytime in your account settings \u2014 see our {terms}.',
+      support: 'Questions about billing: {email}.'
     },
 
     moonPhase: ['New Moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous',
