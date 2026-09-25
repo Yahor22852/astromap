@@ -8,9 +8,25 @@
    Pages → создать воркер (или новую версию этого же) → Edit code → вставить
    этот файл целиком → Deploy). Настроить в Settings → Variables на воркере:
 
-     GUMROAD_PRODUCT_ID   — id продукта (блок с лицензионными ключами на
-                            Content-вкладке продукта в Gumroad показывает его
-                            же; либо поле "id" в ответе GET /v2/products)
+     GUMROAD_PRODUCT_ID   — id продукта. Планов два — месячный и годовой, и
+                            в Gumroad это ДВА РАЗНЫХ ТОВАРА, а не варианты
+                            одного, поэтому id здесь тоже два, через запятую:
+
+                              qLndV2lFwurLl79UmoyYvA==,St67olO1UeR0aAiRSBakxw==
+
+                            Порядок значения не имеет. Ключ проверяется по
+                            каждому id по очереди, доступ открывает первое
+                            совпадение. Один id тоже работает — тогда это
+                            просто список из одного элемента.
+
+                            Где взять: блок с лицензионными ключами на
+                            странице товара в Gumroad показывает его же; либо
+                            поле "id" в ответе GET /v2/products.
+
+                            ЗАБЫТЬ ДОБАВИТЬ СЮДА НОВЫЙ ТОВАР — это тихая
+                            поломка: человек платит, получает ключ, и гейт
+                            говорит ему «не найдено». Заводишь план — правишь
+                            эту переменную в тот же заход.
 
    Меняется только если сменится домен продукта — ALLOWED_ORIGIN ниже.
 
@@ -63,35 +79,55 @@ async function handle(request, env) {
     return json({ ok: false, reason: 'missing_fields' }, 400);
   }
 
-  var productId = env && env.GUMROAD_PRODUCT_ID;
-  if (!productId) {
+  var productIds = String((env && env.GUMROAD_PRODUCT_ID) || '')
+    .split(',')
+    .map(function (x) { return x.trim(); })
+    .filter(function (x) { return x.length > 0; });
+  if (!productIds.length) {
     return json({ ok: false, reason: 'not_configured' }, 500);
   }
 
-  var form = new URLSearchParams();
-  form.set('product_id', productId);
-  form.set('license_key', licenseKey);
-  form.set('increment_uses_count', 'false'); /* ре-проверки при каждом заходе не должны тратить лимит использований лицензии */
+  /* Ключ принадлежит ровно одному товару, а товаров у нас два — месячный и
+     годовой. Какому именно, снаружи не видно: в ключе этого не записано, а
+     спрашивать человека, что он покупал, значит перекладывать на него нашу
+     бухгалтерию. Поэтому спрашиваем Gumroad по каждому id, пока не совпадёт.
 
-  var upstream;
-  try {
-    upstream = await fetch(GUMROAD_VERIFY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: form.toString()
-    });
-  } catch (e) {
-    return json({ ok: false, reason: 'upstream_error' }, 502);
+     Запросы идут ПОСЛЕДОВАТЕЛЬНО, а не параллельно: совпадение почти всегда
+     находится на первом id, и второй запрос тогда не нужен вовсе. */
+  var purchase = null;
+  for (var i = 0; i < productIds.length; i++) {
+    var form = new URLSearchParams();
+    form.set('product_id', productIds[i]);
+    form.set('license_key', licenseKey);
+    form.set('increment_uses_count', 'false'); /* ре-проверки при каждом заходе не должны тратить лимит использований лицензии */
+
+    var upstream;
+    try {
+      upstream = await fetch(GUMROAD_VERIFY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: form.toString()
+      });
+    } catch (e) {
+      return json({ ok: false, reason: 'upstream_error' }, 502);
+    }
+
+    var data;
+    try { data = await upstream.json(); } catch (e) { return json({ ok: false, reason: 'upstream_error' }, 502); }
+
+    /* success:false здесь значит «не этот товар», а не «плохой ключ»: у
+       Gumroad нет способа спросить «чей это ключ», есть только «принадлежит
+       ли он вот этому товару». Поэтому идём к следующему id молча, и
+       'not_found' отдаём, только когда кончились все. */
+    if (data && data.success === true && data.purchase) {
+      purchase = data.purchase;
+      break;
+    }
   }
 
-  var data;
-  try { data = await upstream.json(); } catch (e) { return json({ ok: false, reason: 'upstream_error' }, 502); }
-
-  if (!data || data.success !== true || !data.purchase) {
+  if (!purchase) {
     return json({ ok: true, active: false, reason: 'not_found' });
   }
-
-  var purchase = data.purchase;
 
   if (purchase.email && String(purchase.email).trim().toLowerCase() !== email.toLowerCase()) {
     return json({ ok: true, active: false, reason: 'email_mismatch' });
