@@ -179,7 +179,7 @@
       s1Q: 'Zaten erişimin var mı?',
       s1Link: 'Giriş yap',
       keyTitle: 'Erişim anahtarın e-postayla gelir',
-      keyText: 'Ödemeden hemen sonra Gumroad, satın alırken girdiğin adrese bir lisans anahtarı gönderir. Bu e-posta ve anahtarla her cihazdan giriş yaparsın.',
+      keyText: 'Ödemeden hemen sonra Gumroad, satın alırken girdiğin adrese bir lisans anahtarı gönderir. Onu bir kez girip bir şifre oluşturursun — sonra her cihazdan e-posta ve şifreyle giriş yaparsın.',
       paidQ: 'Anahtarın var mı?',
       paidLink: 'Buraya gir'
     },

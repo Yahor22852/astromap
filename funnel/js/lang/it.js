@@ -174,7 +174,7 @@
       s1Q: 'Hai già l’accesso?',
       s1Link: 'Accedi',
       keyTitle: 'La chiave di accesso arriva via email',
-      keyText: 'Subito dopo il pagamento, Gumroad invia una chiave di licenza all’indirizzo inserito all’acquisto. Accedi con quell’email e la chiave, su qualsiasi dispositivo.',
+      keyText: 'Subito dopo il pagamento, Gumroad invia una chiave di licenza all’indirizzo inserito all’acquisto. La inserisci una volta e crei una password: poi accedi con email e password su qualsiasi dispositivo.',
       paidQ: 'Hai già una chiave?',
       paidLink: 'Inseriscila qui'
     },

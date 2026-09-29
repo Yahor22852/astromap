@@ -1028,6 +1028,25 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 .gate__legal a:hover { color: var(--accent); }
 .gate[hidden] { display: none; }
 
+/* Режимы формы. Ключ и подсказка к новому паролю — только при активации и
+   сбросе; ссылки «первый раз?» и «забыли пароль?» — только при входе. */
+.gate[data-mode="login"] .gate__only-key { display: none; }
+.gate:not([data-mode="login"]) .gate__only-login { display: none; }
+/* При входе по паролю блок «ключ у вас в почте» не нужен: ключ уже введён
+   когда-то раньше. Форма остаётся одна, по центру. */
+.gate[data-mode="login"] .gate__mail { display: none; }
+.gate[data-mode="login"] .gate__wrap { grid-template-columns: minmax(0, 1fr); max-width: 420px; }
+.gate__field input[type="password"], .gate__field input#gatePassword { padding-right: 84px; }
+.gate__switch { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 14px; }
+.gate__link {
+  border: 0; background: none; cursor: pointer;
+  min-height: 36px; padding: 6px 8px;
+  font-family: var(--sans); font-size: 13px; color: var(--ink-dim);
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.gate__link:hover { color: var(--accent); }
+.gate__link--main { color: var(--ink); font-weight: 600; font-size: 14px; }
+
 @media (max-width: 760px) {
   .gate { align-items: flex-start; padding-left: calc(16px + env(safe-area-inset-left, 0px));
           padding-right: calc(16px + env(safe-area-inset-right, 0px)); }

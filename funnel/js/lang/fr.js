@@ -174,7 +174,7 @@
       s1Q: 'Déjà un accès ?',
       s1Link: 'Se connecter',
       keyTitle: 'Ta clé d’accès arrive par email',
-      keyText: 'Juste après le paiement, Gumroad envoie une clé de licence à l’adresse saisie lors de l’achat. Tu te connectes avec cet email et la clé, sur tous tes appareils.',
+      keyText: 'Juste après le paiement, Gumroad envoie une clé de licence à l’adresse saisie lors de l’achat. Tu la saisis une fois et tu crées un mot de passe — ensuite, tu te connectes avec ton email et ton mot de passe sur tous tes appareils.',
       paidQ: 'Déjà une clé ?',
       paidLink: 'La saisir ici'
     },

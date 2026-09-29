@@ -3268,10 +3268,11 @@
         if (!a) { return; }
         check.disabled = true;
         setSetStatus(T.ui.gateChecking, false);
-        verifyAccess(a.email, a.licenseKey).then(function (res) {
+        recheckAccess(a).then(function (r) {
+          var res = r.res;
           check.disabled = false;
-          if (res && res.ok && res.active) {
-            saveAccess({ email: a.email, licenseKey: a.licenseKey, verifiedAt: Date.now() });
+          if (r.access) {
+            saveAccess(r.access);
             route();
             setSetStatus(T.set.checkOk, false);
           } else if (res && res.ok && res.active === false) {
@@ -3749,12 +3750,36 @@
   /* Живой запрос к воркеру при каждой (ре)проверке — никакого состояния
      подписки нигде не кэшируется на сервере, поэтому отменённая/просроченная
      подписка отражается сразу на следующей проверке, без вебхуков. */
-  function verifyAccess(email, licenseKey) {
+  function api(body) {
     return fetch(LICENSE_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, licenseKey: licenseKey })
+      body: JSON.stringify(body)
     }).then(function (r) { return r.json(); });
+  }
+  /* Старая проверка «почта + ключ» без аккаунта. Нужна двум случаям:
+     браузерам, где вошли до появления паролей (у них в доступе нет token),
+     и запасному пути, пока в воркере не настроено хранилище аккаунтов. */
+  function verifyAccess(email, licenseKey) {
+    return api({ email: email, licenseKey: licenseKey });
+  }
+  /* Перепроверка уже открытого доступа: по токену сессии, если он есть,
+     иначе по ключу. Ответ приводится к одному виду: res + новый объект
+     доступа, который надо сохранить при active. */
+  function recheckAccess(a) {
+    var req = a.token ? api({ action: 'session', token: a.token }) : verifyAccess(a.email, a.licenseKey);
+    return req.then(function (res) {
+      return { res: res, access: res && res.active ? accessFrom(res, a) : null };
+    });
+  }
+  function accessFrom(res, prev) {
+    prev = prev || {};
+    return {
+      email: res.email || prev.email,
+      licenseKey: res.licenseKey || prev.licenseKey,
+      token: res.token || prev.token || null,
+      verifiedAt: Date.now()
+    };
   }
   function gateErrorText(reason) {
     if (reason === 'subscription_ended' || reason === 'refunded' || reason === 'disputed') {
@@ -3762,6 +3787,12 @@
     }
     if (reason === 'email_mismatch') { return T.ui.gateErrorEmail; }
     if (reason === 'not_found') { return T.ui.gateErrorKey; }
+    if (reason === 'no_account') { return T.ui.gateErrorNoAccount; }
+    if (reason === 'bad_password') { return T.ui.gateErrorPassword; }
+    if (reason === 'too_many') { return T.ui.gateErrorTooMany; }
+    if (reason === 'weak_password') { return T.ui.gateErrorShort; }
+    if (reason === 'bad_session') { return T.ui.gateErrorSession; }
+    if (reason === 'not_configured') { return T.ui.gateErrorNotReady; }
     return T.ui.gateErrorInvalid;
   }
   /* Ключ часто копируют с хвостом — пробелом, переносом, а то и целым
@@ -3804,6 +3835,29 @@
     var buy = el('gateBuy');
     if (buy && GATE_CHECKOUT_URL) { buy.hidden = !!paid; }
   }
+  /* Режим формы: login (почта + пароль), activate (почта + ключ + новый
+     пароль, первый вход) и reset (то же, «забыли пароль»). Видимость полей и
+     ссылок — в CSS по data-mode, здесь тексты и autocomplete: менеджеру
+     паролей важно отличать вход от создания нового пароля. */
+  var gateFormMode = 'login';
+  function setFormMode(mode) {
+    gateFormMode = mode;
+    var gate = el('gate');
+    if (gate) { gate.setAttribute('data-mode', mode); }
+    var titles = {
+      login: [T.ui.gateLoginTitle, T.ui.gateLoginSub, T.ui.gateLoginSubmit],
+      activate: [T.ui.gateActivateTitle, T.ui.gateActivateSub, T.ui.gateActivateSubmit],
+      reset: [T.ui.gateResetTitle, T.ui.gateResetSub, T.ui.gateResetSubmit]
+    }[mode];
+    el('gateTitle').textContent = titles[0];
+    el('gateSub').textContent = titles[1];
+    el('gateSubmit').textContent = titles[2];
+    el('gatePasswordLabel').textContent = mode === 'login' ? T.ui.gatePassword : T.ui.gateNewPassword;
+    var pw = el('gatePassword');
+    pw.setAttribute('autocomplete', mode === 'login' ? 'current-password' : 'new-password');
+    pw.value = '';
+    setGateStatus('', false);
+  }
   function setGateStatus(text, isError) {
     var st = el('gateStatus');
     if (!st) { return; }
@@ -3811,14 +3865,24 @@
     st.hidden = false; st.textContent = text;
     st.classList.toggle('gate__status--error', !!isError);
   }
+  /* startApp вешает обработчики на всё приложение, и второй вызов (выход →
+     повторный вход без перезагрузки) навесил бы их дважды. */
+  var appStarted = false;
+  function enterApp() {
+    showShell();
+    if (appStarted) { route(); return; }
+    appStarted = true;
+    startApp();
+  }
   function showShell() {
     var gate = el('gate'), shell = el('shell');
     if (gate) { gate.hidden = true; }
     if (shell) { shell.hidden = false; }
   }
-  function showGateOnly(message, paid) {
+  function showGateOnly(message, paid, mode) {
     var gate = el('gate'), shell = el('shell');
     setGateMode(paid);
+    setFormMode(mode || (paid ? 'activate' : 'login'));
     var emailInput = el('gateEmail');
     if (emailInput && !emailInput.value) {
       try { emailInput.value = localStorage.getItem(EMAIL_KEY) || ''; } catch (e) {}
@@ -3864,32 +3928,90 @@
         }).catch(function () { keyInput.focus(); });
       });
     }
+    var pwInput = form.gatePassword;
+    var showPw = el('gateShowPw');
+    function syncShowPw() {
+      var shown = pwInput.type === 'text';
+      showPw.textContent = shown ? T.ui.gateHidePassword : T.ui.gateShowPassword;
+      showPw.setAttribute('aria-pressed', shown ? 'true' : 'false');
+    }
+    showPw.addEventListener('click', function () {
+      pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
+      syncShowPw();
+      pwInput.focus();
+    });
+    syncShowPw();
+
+    el('gateToActivate').addEventListener('click', function () { setFormMode('activate'); form.gateLicense.focus(); });
+    el('gateForgot').addEventListener('click', function () { setFormMode('reset'); form.gateLicense.focus(); });
+    el('gateToLogin').addEventListener('click', function () { setFormMode('login'); pwInput.focus(); });
+
+    function granted(access) {
+      saveAccess(access);
+      try {
+        localStorage.setItem(EMAIL_KEY, access.email);
+        localStorage.removeItem(CHECKOUT_MARK_KEY);
+      } catch (e) {}
+      pwInput.value = '';
+      form.gateLicense.value = '';
+      setGateStatus('', false);
+      enterApp();
+    }
+
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
+      var mode = gateFormMode;
       var email = form.gateEmail.value.trim();
+      var password = pwInput.value;
       var licenseKey = normalizeKey(form.gateLicense.value);
       form.gateLicense.value = licenseKey;
       if (!email) { form.gateEmail.focus(); return; }
-      if (!licenseKey) { form.gateLicense.focus(); return; }
+      if (mode !== 'login' && !licenseKey) { form.gateLicense.focus(); return; }
+      if (!password) { pwInput.focus(); return; }
+      if (mode !== 'login' && password.length < 8) {
+        setGateStatus(T.ui.gateErrorShort, true); pwInput.focus(); return;
+      }
+
       var submitBtn = el('gateSubmit');
-      if (submitBtn) { submitBtn.disabled = true; }
+      submitBtn.disabled = true;
       setGateStatus(T.ui.gateChecking, false);
-      verifyAccess(email, licenseKey).then(function (res) {
-        if (submitBtn) { submitBtn.disabled = false; }
-        if (res && res.ok && res.active) {
-          saveAccess({ email: email, licenseKey: licenseKey, verifiedAt: Date.now() });
-          try {
-            localStorage.setItem(EMAIL_KEY, email);
-            localStorage.removeItem(CHECKOUT_MARK_KEY);
-          } catch (e) {}
-          setGateStatus('', false);
-          showShell();
-          startApp();
-        } else {
-          setGateStatus(gateErrorText(res && res.reason), true);
+      var done = function () { submitBtn.disabled = false; };
+
+      var req = mode === 'login'
+        ? api({ action: 'login', email: email, password: password })
+        : api({ action: 'activate', email: email, licenseKey: licenseKey, password: password });
+
+      req.then(function (res) {
+        if (res && res.ok && res.active) { done(); granted(accessFrom(res)); return; }
+        var reason = res && res.reason;
+
+        /* Хранилище аккаунтов в воркере ещё не настроено. Активацию не
+           роняем: ключ проверяется старым путём, и человек входит как раньше.
+           Пароль просто не сохраняется — при следующем входе его попросят
+           создать уже по-настоящему. */
+        if (reason === 'not_configured' && mode !== 'login') {
+          return verifyAccess(email, licenseKey).then(function (old) {
+            done();
+            if (old && old.ok && old.active) {
+              granted({ email: old.email || email, licenseKey: licenseKey, token: null, verifiedAt: Date.now() });
+            } else {
+              setGateStatus(gateErrorText(old && old.reason), true);
+            }
+          });
         }
+        done();
+        /* Аккаунта ещё нет (или пароли не включены) — это не ошибка
+           человека: он просто первый раз. Переводим в активацию, почту
+           оставляем. */
+        if (mode === 'login' && (reason === 'no_account' || reason === 'not_configured')) {
+          setFormMode('activate');
+          setGateStatus(gateErrorText(reason), true);
+          form.gateLicense.focus();
+          return;
+        }
+        setGateStatus(gateErrorText(reason), true);
       }).catch(function () {
-        if (submitBtn) { submitBtn.disabled = false; }
+        done();
         setGateStatus(T.ui.gateErrorNetwork, true);
       });
     });
@@ -3899,12 +4021,12 @@
      обратно на #gate. Сетевую ошибку игнорируем: не отбираем уже открытый
      доступ из-за обрыва связи, следующий заход попробует снова. */
   function revalidateInBackground(access) {
-    verifyAccess(access.email, access.licenseKey).then(function (res) {
-      if (res && res.ok && res.active) {
-        saveAccess({ email: access.email, licenseKey: access.licenseKey, verifiedAt: Date.now() });
-      } else if (res && res.ok && res.active === false) {
+    recheckAccess(access).then(function (r) {
+      if (r.access) {
+        saveAccess(r.access);
+      } else if (r.res && r.res.ok && r.res.active === false) {
         clearAccess();
-        showGateOnly(gateErrorText(res.reason));
+        showGateOnly(gateErrorText(r.res.reason));
       }
     }).catch(function () { /* оффлайн/сеть — молчим, ничего не меняем */ });
   }
@@ -3931,8 +4053,7 @@
   function initAccessGate() {
     applyStaticTexts();
     if (devBypassActive()) {
-      showShell();
-      startApp();
+      enterApp();
       return;
     }
     /* ГЕЙТ БЕЗ ВОРКЕРА НЕ ЗАЩИЩАЕТ, А ЛОМАЕТ. Пока LICENSE_API пуст,
@@ -3950,8 +4071,7 @@
     if (!LICENSE_API) {
       console.warn('astromap: LICENSE_API не задан в js/app.js — гейт выключен, ' +
         'продукт открыт всем. Впишите URL воркера license-verify.js, и гейт включится сам.');
-      showShell();
-      startApp();
+      enterApp();
       return;
     }
     bindGate();
@@ -3965,8 +4085,7 @@
         localStorage.removeItem(CHECKOUT_MARK_KEY);
         localStorage.setItem(EMAIL_KEY, access.email);
       } catch (e) {}
-      showShell();
-      startApp();
+      enterApp();
       if (Date.now() - (access.verifiedAt || 0) > ACCESS_REVALIDATE_MS) {
         revalidateInBackground(access);
       }

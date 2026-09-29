@@ -212,7 +212,7 @@
       s1Q: 'Masz już dostęp?',
       s1Link: 'Zaloguj się',
       keyTitle: 'Klucz dostępu przyjdzie e-mailem',
-      keyText: 'Zaraz po płatności Gumroad wyśle klucz licencyjny na adres podany przy zakupie. Logujesz się tym e-mailem i kluczem — na każdym urządzeniu.',
+      keyText: 'Zaraz po płatności Gumroad wyśle klucz licencyjny na adres podany przy zakupie. Wpisujesz go raz i tworzysz hasło — potem logujesz się e-mailem i hasłem na każdym urządzeniu.',
       paidQ: 'Masz już klucz?',
       paidLink: 'Wpisz go tutaj'
     },
@@ -510,7 +510,7 @@
       s1Q: 'Already have access?',
       s1Link: 'Log in',
       keyTitle: 'Your access key comes by email',
-      keyText: 'Right after payment, Gumroad emails a license key to the address you enter at checkout. You log in with that email and key — on any device.',
+      keyText: 'Right after payment, Gumroad emails a license key to the address you enter at checkout. Enter it once and create a password — after that you log in with your email and password on any device.',
       paidQ: 'Already have a key?',
       paidLink: 'Enter it here'
     },

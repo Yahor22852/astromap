@@ -174,7 +174,7 @@
       s1Q: 'Schon Zugang?',
       s1Link: 'Anmelden',
       keyTitle: 'Dein Zugangsschlüssel kommt per E-Mail',
-      keyText: 'Direkt nach der Zahlung schickt Gumroad einen Lizenzschlüssel an die Adresse, die du beim Kauf angibst. Mit dieser E-Mail und dem Schlüssel meldest du dich an — auf jedem Gerät.',
+      keyText: 'Direkt nach der Zahlung schickt Gumroad einen Lizenzschlüssel an die Adresse, die du beim Kauf angibst. Du gibst ihn einmal ein und legst ein Passwort fest — danach meldest du dich auf jedem Gerät mit E-Mail und Passwort an.',
       paidQ: 'Schon einen Schlüssel?',
       paidLink: 'Hier eingeben'
     },
