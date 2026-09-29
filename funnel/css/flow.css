@@ -828,3 +828,29 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   .citypick__opt { min-height: 44px; display: flex; align-items: center; }
   .chip, .tile, .rc__chip { min-height: 44px; }
 }
+
+/* --- ключ доступа приходит на почту (пейволл, экран годового плана) ------
+   Крупный блок, а не сноска: после оплаты человек уходит с Gumroad и должен
+   заранее знать, что искать — письмо с лицензионным ключом. */
+.keynote {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-top: 14px; padding: 16px 18px;
+  border: 1.5px dashed var(--gold-line);
+  border-radius: var(--radius);
+  background: rgba(232, 197, 127, 0.07);
+  text-align: left;
+}
+.keynote__ic { flex: none; width: 40px; height: 34px; margin-top: 2px; color: var(--gold); }
+.keynote__t { font-family: var(--serif); font-size: 21px; line-height: 24px; font-weight: 700; color: var(--ink); }
+.keynote__d { margin-top: 6px; font-size: 14px; line-height: 20px; color: var(--ink-dim); }
+
+/* «Уже есть доступ? Войти» — первый экран, пейволл, годовой план. */
+.signin {
+  margin-top: 22px; text-align: center;
+  font-size: 14px; line-height: 20px; color: var(--ink-dim);
+}
+.signin a {
+  display: inline-block; padding: 12px 4px; margin: -12px 0;  /* цель нажатия ~44px без сдвига строки */
+  color: var(--gold); font-weight: 600;
+  text-decoration: underline; text-underline-offset: 3px;
+}

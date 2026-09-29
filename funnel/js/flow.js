@@ -110,6 +110,18 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     } catch (e) { /* приватный режим — просто без сохранения */ }
   }
 
+  /* Отметка «ушёл на оплату». По ней следующий заход на astromap.me ведёт
+     не в квиз, а на гейт продукта в режиме «ключ пришёл на почту» (см.
+     скрипт в <head> index.html и paidModeRequested() в product/js/app.js).
+     Гейт стирает отметку после успешного входа. sessionStorage — метка этой
+     вкладки: возврат «Назад» с чекаута на гейт не уводит. */
+  function markCheckout(plan) {
+    try {
+      localStorage.setItem('astromap.checkout', JSON.stringify({ plan: plan, at: Date.now() }));
+      sessionStorage.setItem('astromap.checkoutTab', '1');
+    } catch (e) { /* приватный режим — без отметки, гейт просто в обычном режиме */ }
+  }
+
   /* Оплата не подключена: пользователю — фраза на языке воронки,
      разработчику — точное имя константы в консоли. Отладочный текст на
      экране покупателя недопустим, тем более на третьем языке. */
@@ -1282,12 +1294,12 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     if (S.screen === 's4') { buildSummary(); pvStart(); go('s5'); return; }
     if (S.screen === 's5') { buildPaywall(); go('s6'); return; }
     if (S.screen === 's6') {
-      if (CHECKOUT_URL) { window.location.href = CHECKOUT_URL; }
+      if (CHECKOUT_URL) { markCheckout('monthly'); window.location.href = CHECKOUT_URL; }
       else { noCheckout('CHECKOUT_URL'); }
       return;
     }
     if (S.screen === 's7') {
-      if (CHECKOUT_URL_YEAR) { window.location.href = CHECKOUT_URL_YEAR; }
+      if (CHECKOUT_URL_YEAR) { markCheckout('yearly'); window.location.href = CHECKOUT_URL_YEAR; }
       else { noCheckout('CHECKOUT_URL_YEAR'); }
     }
   });

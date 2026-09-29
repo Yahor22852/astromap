@@ -173,6 +173,17 @@
       movesNote: 'Her bölüm, seçtiğin tarihe göre yeniden hesaplanıyor. Abonelik tam da bunun için: doğum haritan değişmiyor, üstündeki gök her gün değişiyor.'
     },
 
+    /* Вход и ключ доступа: ссылка «уже есть доступ» на первом экране и
+       блок «ключ придёт на почту» на пейволле и экране годового плана. */
+    access: {
+      s1Q: 'Zaten erişimin var mı?',
+      s1Link: 'Giriş yap',
+      keyTitle: 'Erişim anahtarın e-postayla gelir',
+      keyText: 'Ödemeden hemen sonra Gumroad, satın alırken girdiğin adrese bir lisans anahtarı gönderir. Bu e-posta ve anahtarla her cihazdan giriş yaparsın.',
+      paidQ: 'Anahtarın var mı?',
+      paidLink: 'Buraya gir'
+    },
+
     paywall: {
       eyebrow: 'AstroMap App',
       title: 'Haritan hazır',

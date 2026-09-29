@@ -168,6 +168,17 @@
       movesNote: 'Cada seção se recalcula para a data que você escolher. É para isso que serve a assinatura: seu mapa natal não muda, o céu sobre ele muda todo dia.'
     },
 
+    /* Вход и ключ доступа: ссылка «уже есть доступ» на первом экране и
+       блок «ключ придёт на почту» на пейволле и экране годового плана. */
+    access: {
+      s1Q: 'Já tem acesso?',
+      s1Link: 'Entrar',
+      keyTitle: 'Sua chave de acesso chega por email',
+      keyText: 'Logo após o pagamento, o Gumroad envia uma chave de licença para o endereço informado na compra. O acesso é com esse email e a chave, em qualquer dispositivo.',
+      paidQ: 'Já tem uma chave?',
+      paidLink: 'Inserir aqui'
+    },
+
     paywall: {
       eyebrow: 'AstroMap App',
       title: 'Seu mapa está pronto',

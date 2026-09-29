@@ -840,11 +840,125 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   padding: calc(24px + env(safe-area-inset-top, 0px)) calc(24px + env(safe-area-inset-right, 0px))
            calc(24px + env(safe-area-inset-bottom, 0px)) calc(24px + env(safe-area-inset-left, 0px));
 }
-.gate__card {
-  width: 100%; max-width: 380px; padding: 32px 28px;
+/* Две колонки на десктопе (почта слева, форма справа), одна на телефоне.
+   Порядок на телефоне зависит от режима: пришёл с оплаты — сначала «где
+   ключ», вернулся — сначала форма (он и так знает, что вводить). */
+.gate__wrap {
+  width: 100%; max-width: 880px;
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 20px; align-items: start;
+}
+.gate__card, .gate__mail {
+  padding: 32px 28px;
   background: var(--surf); border: 1px solid var(--line); border-radius: 20px;
   box-shadow: 0 24px 60px -24px rgba(0,0,0,.6);
 }
+.gate__card { align-self: center; }
+
+/* --- блок «ключ у вас в почте» --- */
+.gate__mail {
+  position: relative; overflow: hidden;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(155,138,248,.22), transparent 70%),
+    var(--surf);
+  border-color: rgba(155,138,248,.35);
+  text-align: center;
+}
+.gate__badge {
+  display: none;
+  margin: 0 auto 14px; width: max-content; max-width: 100%;
+  padding: 5px 12px; border-radius: 999px;
+  background: rgba(111,233,194,.14); color: var(--mint);
+  font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+}
+.gate--paid .gate__badge { display: block; }
+.gate__env {
+  display: block; width: 112px; height: auto; margin: 0 auto 14px;
+  filter: drop-shadow(0 10px 24px rgba(155,138,248,.45));
+  animation: gateEnv 3.2s ease-in-out infinite;
+}
+@keyframes gateEnv { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@media (prefers-reduced-motion: reduce) { .gate__env { animation: none; } }
+.gate__mailTitle {
+  font-family: var(--serif); font-size: 32px; line-height: 1.12; font-weight: 600;
+  color: var(--ink); margin: 0 0 10px;
+}
+.gate__mailSub { font-size: 14px; line-height: 1.55; color: var(--ink-dim); margin: 0 0 18px; }
+
+/* Макет письма Gumroad — стилизованный, не скриншот. */
+.gate__letter {
+  text-align: left;
+  background: #F6F4FB; color: #1A1035;
+  border-radius: 14px; padding: 14px 14px 12px;
+  box-shadow: 0 14px 32px -14px rgba(0,0,0,.7);
+  transform: rotate(-1.2deg);
+  margin: 0 4px 18px;
+}
+.gate__letterHead { display: flex; align-items: center; gap: 10px; }
+.gate__letterAva {
+  flex: none; width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: #FF90E8; color: #000; font-weight: 700; font-size: 14px;
+}
+.gate__letterMeta { display: flex; flex-direction: column; min-width: 0; font-size: 12px; line-height: 1.35; }
+.gate__letterMeta b { font-size: 13px; }
+.gate__letterMeta span { color: #5B5470; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gate__letterLines { margin: 12px 0 10px; }
+.gate__letterLines i { display: block; height: 7px; border-radius: 4px; background: #DEDAEA; }
+.gate__letterLines i + i { margin-top: 6px; width: 70%; }
+.gate__letterKey {
+  border: 2px dashed #9B8AF8; border-radius: 10px;
+  background: rgba(155,138,248,.12);
+  padding: 8px 10px;
+}
+.gate__letterKey span { display: block; font-size: 11px; font-weight: 700; color: #5B4BD0; text-transform: uppercase; letter-spacing: .06em; }
+.gate__letterKey code {
+  display: block; margin-top: 2px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* 35 знаков ключа должны влезть целиком и на 320px: обрезанный ключ в
+     макете выглядит как «ключ не полностью», ровно то, что мы просим не делать. */
+  font-size: clamp(9px, 2.8vw, 12px); letter-spacing: -.02em; font-weight: 600; color: #1A1035;
+  white-space: nowrap;
+}
+
+.gate__steps {
+  list-style: none; counter-reset: gs; text-align: left;
+  margin: 0 0 16px; padding: 0;
+}
+.gate__steps li {
+  counter-increment: gs; position: relative;
+  padding: 0 0 0 38px; min-height: 26px;
+  font-size: 14px; line-height: 1.45; color: var(--ink);
+}
+.gate__steps li + li { margin-top: 10px; }
+.gate__steps li::before {
+  content: counter(gs);
+  position: absolute; left: 0; top: -1px;
+  width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+  color: var(--on-accent); font-size: 13px; font-weight: 700;
+}
+.gate__inbox {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 8px; margin: 0 0 12px;
+  font-size: 13px; color: var(--ink-dim);
+}
+.gate__inbox > span { width: 100%; }
+.gate__inbox a {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px;
+  border: 1px solid var(--line); border-radius: 999px;
+  color: var(--ink); text-decoration: none; font-size: 13px; font-weight: 500;
+  background: rgba(255,255,255,.04);
+  transition: border-color .2s ease, background .2s ease;
+}
+.gate__inbox a:hover { border-color: var(--accent); background: rgba(155,138,248,.12); }
+.gate__spam, .gate__lost { margin: 0; font-size: 12px; line-height: 1.55; color: var(--ink-faint); }
+.gate__lost { margin-top: 6px; }
+.gate__lost a { color: var(--ink-dim); text-decoration: underline; text-underline-offset: 2px; }
+.gate__lost a:hover { color: var(--accent); }
+
+/* --- форма --- */
 .gate__title {
   font-family: var(--serif); font-size: 26px; font-weight: 600;
   color: var(--ink); margin: 0 0 8px;
@@ -853,7 +967,7 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   font-size: 14px; line-height: 1.5; color: var(--ink-dim); margin: 0 0 22px;
 }
 .gate__field { display: block; margin-bottom: 16px; }
-.gate__field span {
+.gate__field > span:first-child {
   display: block; font-size: 13px; color: var(--ink-dim); margin-bottom: 4px;
 }
 .gate__field input {
@@ -864,6 +978,22 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   transition: border-color .2s ease;
 }
 .gate__field input:focus { outline: none; border-color: var(--accent); }
+/* Ключ сверяют посимвольно с письмом — моноширинный, как в настройках. */
+.gate__keywrap { position: relative; display: block; }
+.gate__field input.gate__key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px; letter-spacing: .02em;
+}
+.gate__field input.gate__key::placeholder { color: var(--ink-faint); }
+.gate__keywrap:has(.gate__paste:not([hidden])) input.gate__key { padding-right: 84px; }
+.gate__paste {
+  position: absolute; right: 5px; top: 5px; height: 34px; padding: 0 12px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: rgba(155,138,248,.14); color: var(--ink);
+  font-family: var(--sans); font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.gate__paste:hover { border-color: var(--accent); }
+.gate__paste[hidden] { display: none; }
 .gate__hint { display: block; font-size: 12px; color: var(--ink-faint); margin-top: 6px; }
 .gate__submit {
   width: 100%; height: var(--h-btn); border: 0; border-radius: var(--r-btn);
@@ -884,10 +1014,11 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   font-size: 13px; color: var(--ink-faint); text-decoration: underline;
   text-underline-offset: 2px;
 }
+.gate__buy + .gate__buy { margin-top: 10px; }
 .gate__buy:hover { color: var(--accent); }
-/* display:block выше перебивает атрибут [hidden], поэтому ссылку «ещё нет
-   доступа» приходится гасить явно — без этого она видна и тогда, когда
-   GATE_CHECKOUT_URL не задан и вести ей некуда. */
+/* display:block выше перебивает атрибут [hidden], поэтому ссылки гейта
+   приходится гасить явно — без этого они видны и тогда, когда вести им
+   некуда. */
 .gate__buy[hidden] { display: none; }
 .gate__legal {
   margin: 14px 0 0; text-align: center; font-size: 12px; line-height: 1.6;
@@ -896,6 +1027,18 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
 .gate__legal a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .gate__legal a:hover { color: var(--accent); }
 .gate[hidden] { display: none; }
+
+@media (max-width: 760px) {
+  .gate { align-items: flex-start; padding-left: calc(16px + env(safe-area-inset-left, 0px));
+          padding-right: calc(16px + env(safe-area-inset-right, 0px)); }
+  .gate__wrap { grid-template-columns: minmax(0, 1fr); gap: 14px; max-width: 460px; margin: 0 auto; }
+  .gate__card, .gate__mail { padding: 26px 20px; }
+  /* Вернулся — форма сверху; пришёл с оплаты — почта сверху. */
+  .gate__card { order: -1; }
+  .gate--paid .gate__card { order: 0; }
+  .gate__mailTitle { font-size: 28px; }
+  .gate__env { width: 96px; }
+}
 
 /* --- Ретрограды: проводник по циклам --------------------------------------
    Раздел выходит из общей двухколоночной сетки .view: сводка и шкала цикла

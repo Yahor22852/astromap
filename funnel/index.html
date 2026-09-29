@@ -5,6 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AstroMap App</title>
 <script>
+/* Воронка и продукт живут на одном адресе (astromap.me и astromap.me/product/),
+   но человек, который уже купил, не должен снова проходить квиз и пейволл.
+   Поэтому до отрисовки чего-либо:
+
+   - доступ подтверждён (astromap.access, его пишет гейт продукта) → сразу в
+     продукт;
+   - доступа нет, но за последние трое суток человек ушёл на оплату
+     (astromap.checkout, пишет flow.js перед переходом на Gumroad) → на гейт
+     продукта в режиме «ключ пришёл на почту». Там же есть ссылка обратно на
+     оплату — на случай, если он её не завершил.
+
+   Один домен здесь не случайность: localStorage общий только в пределах
+   одного origin, а продукт забирает из него данные квиза (astromap.funnel).
+   Вынести продукт на поддомен значит потерять этот стык.
+
+   ?funnel в адресе отключает переадресацию — чтобы можно было посмотреть
+   воронку с браузера, где продукт уже открыт. */
+(function () {
+  try {
+    if (/[?&]funnel(=|&|$)/.test(location.search)) { return; }
+    var a = JSON.parse(localStorage.getItem('astromap.access') || 'null');
+    if (a && a.email && a.licenseKey) { location.replace('product/'); return; }
+    /* Та же вкладка, из которой уходили на оплату (sessionStorage живёт до
+       закрытия вкладки), — это почти всегда «Назад» с чекаута Gumroad без
+       оплаты. Его не отправляем на гейт с «ключ летит на почту». */
+    if (sessionStorage.getItem('astromap.checkoutTab')) { return; }
+    var co = JSON.parse(localStorage.getItem('astromap.checkout') || 'null');
+    if (co && co.at && Date.now() - co.at < 72 * 3600 * 1000) { location.replace('product/?paid=1'); }
+  } catch (e) { /* приватный режим — просто показываем воронку */ }
+})();
+</script>
+<script>
 /* Язык выбирается до загрузки текстов: copy.js читает window.ASTROMAP_LANG.
    SUPPORTED держать в паре с ключами в copy.js и reading-copy.js и с пунктами
    меню #langMenu ниже. Ключ общий с продуктом — astromap.lang, поэтому язык,
@@ -111,6 +143,9 @@
         <div class="res__meta" id="s1el"></div>
         <p class="mapnote" id="s1mapnote"></p>
       </div>
+      <!-- Вход для тех, кто уже купил, но открыл сайт на новом устройстве
+           или после очистки браузера: переадресация в <head> их не видит. -->
+      <p class="signin"><span data-t="access.s1Q"></span> <a href="product/" data-t="access.s1Link"></a></p>
     </section>
 
     <!-- ===================================================== 2. темы -->
@@ -248,6 +283,21 @@
         <p class="disc" id="planDisc"></p>
       </div>
 
+      <!-- Ключ приходит на почту — говорим это ДО оплаты, крупно, а не
+           мелким шрифтом: иначе после Gumroad человек не знает, что искать. -->
+      <div class="keynote">
+        <svg class="keynote__ic" viewBox="0 0 48 40" aria-hidden="true">
+          <rect x="2" y="8" width="44" height="30" rx="6" fill="none" stroke="currentColor" stroke-width="2.4"/>
+          <path d="M3.5 10.5 24 25l20.5-14.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+          <circle cx="36" cy="8" r="6.5" fill="#0B0D22" stroke="currentColor" stroke-width="2.4"/>
+          <path d="M36 5v6M33 8h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="keynote__t" data-t="access.keyTitle"></div>
+          <p class="keynote__d" data-t="access.keyText"></p>
+        </div>
+      </div>
+
       <div class="mapbox mapbox--pw" id="pwMap"></div>
       <div class="pw__moves" id="pwMoves"></div>
       <div class="inc" id="inc"></div>
@@ -258,6 +308,7 @@
 
       <p class="legal" id="legal"></p>
       <p class="legal checkout-note hidden" id="checkoutNote"></p>
+      <p class="signin"><span data-t="access.paidQ"></span> <a href="product/" data-t="access.paidLink"></a></p>
     </section>
 
     <!-- ===================================================== 7. recovery -->
@@ -279,6 +330,22 @@
         <p class="legal" id="legalYear"></p>
         <p class="legal checkout-note hidden" id="checkoutNoteYear"></p>
       </div>
+
+      <!-- Ключ приходит на почту — говорим это ДО оплаты, крупно, а не
+           мелким шрифтом: иначе после Gumroad человек не знает, что искать. -->
+      <div class="keynote">
+        <svg class="keynote__ic" viewBox="0 0 48 40" aria-hidden="true">
+          <rect x="2" y="8" width="44" height="30" rx="6" fill="none" stroke="currentColor" stroke-width="2.4"/>
+          <path d="M3.5 10.5 24 25l20.5-14.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+          <circle cx="36" cy="8" r="6.5" fill="#0B0D22" stroke="currentColor" stroke-width="2.4"/>
+          <path d="M36 5v6M33 8h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="keynote__t" data-t="access.keyTitle"></div>
+          <p class="keynote__d" data-t="access.keyText"></p>
+        </div>
+      </div>
+      <p class="signin"><span data-t="access.paidQ"></span> <a href="product/" data-t="access.paidLink"></a></p>
     </section>
 
   </main>

@@ -168,6 +168,17 @@
       movesNote: 'Chaque section se recalcule pour la date de ton choix. C’est à ça que sert l’abonnement : ta carte de naissance ne change pas, le ciel au-dessus change tous les jours.'
     },
 
+    /* Вход и ключ доступа: ссылка «уже есть доступ» на первом экране и
+       блок «ключ придёт на почту» на пейволле и экране годового плана. */
+    access: {
+      s1Q: 'Déjà un accès ?',
+      s1Link: 'Se connecter',
+      keyTitle: 'Ta clé d’accès arrive par email',
+      keyText: 'Juste après le paiement, Gumroad envoie une clé de licence à l’adresse saisie lors de l’achat. Tu te connectes avec cet email et la clé, sur tous tes appareils.',
+      paidQ: 'Déjà une clé ?',
+      paidLink: 'La saisir ici'
+    },
+
     paywall: {
       eyebrow: 'AstroMap App',
       title: 'Ta carte est prête',

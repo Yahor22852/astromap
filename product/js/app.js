@@ -36,6 +36,18 @@
   var SUPPORT_EMAIL = 'hello@astromap.me';
   var ACCESS_KEY = 'astromap.access';
   var ACCESS_REVALIDATE_MS = 24 * 3600 * 1000; /* не чаще раза в сутки дёргаем воркер повторно на уже открытой сессии */
+  /* Режим «только что оплатил». Воронка перед уходом на Gumroad кладёт в
+     CHECKOUT_MARK_KEY отметку { plan, at } (см. funnel/js/flow.js); ссылка
+     из контента товара Gumroad ведёт на /product/?paid=1. В обоих случаях
+     гейт первым и крупно показывает, что ключ пришёл на почту, — у человека
+     его ещё нет в руках. Окно в трое суток: дольше отметка ничего не значит. */
+  var CHECKOUT_MARK_KEY = 'astromap.checkout';
+  var PAID_WINDOW_MS = 72 * 3600 * 1000;
+  /* Почта последнего входа — только чтобы подставить её в форму после выхода
+     или окончания подписки. Ключ здесь не хранится. */
+  var EMAIL_KEY = 'astromap.email';
+  /* Формат ключа Gumroad: четыре блока по восемь шестнадцатеричных знаков. */
+  var KEY_RE = /[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}/i;
   /* Обход гейта для разработки: открыть product/?dev=<DEV_WORD> один раз —
      флаг ляжет в localStorage, параметр из адреса уберётся, и дальше продукт
      открывается по обычной ссылке на этом браузере. Снять: ?dev=off.
@@ -3748,7 +3760,49 @@
     if (reason === 'subscription_ended' || reason === 'refunded' || reason === 'disputed') {
       return T.ui.gateErrorInactive;
     }
+    if (reason === 'email_mismatch') { return T.ui.gateErrorEmail; }
+    if (reason === 'not_found') { return T.ui.gateErrorKey; }
     return T.ui.gateErrorInvalid;
+  }
+  /* Ключ часто копируют с хвостом — пробелом, переносом, а то и целым
+     абзацем письма. Если в тексте есть что-то похожее на ключ, берём ровно
+     его; иначе просто чистим пробелы. Регистр у Gumroad не важен, но в
+     письме ключ заглавными — так его и сверять глазами. */
+  function normalizeKey(raw) {
+    var s = String(raw || '');
+    var m = s.match(KEY_RE);
+    return m ? m[0].toUpperCase() : s.replace(/\s+/g, '');
+  }
+  function paidModeRequested() {
+    var paid = false;
+    try {
+      var u = new URL(window.location.href);
+      if (u.searchParams.has('paid')) {
+        paid = true;
+        u.searchParams.delete('paid');
+        window.history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+      }
+    } catch (e) {}
+    if (paid) { return true; }
+    try {
+      var mark = JSON.parse(localStorage.getItem(CHECKOUT_MARK_KEY) || 'null');
+      return !!(mark && mark.at && Date.now() - mark.at < PAID_WINDOW_MS);
+    } catch (e) { return false; }
+  }
+  function setGateMode(paid) {
+    var gate = el('gate');
+    if (gate) { gate.classList.toggle('gate--paid', !!paid); }
+    var t = el('gateMailTitle');
+    if (t) { t.textContent = paid ? T.ui.gateMailTitlePaid : T.ui.gateMailTitle; }
+    var notPaid = el('gateNotPaid');
+    if (notPaid) {
+      if (paid && GATE_CHECKOUT_URL) { notPaid.href = GATE_CHECKOUT_URL; notPaid.hidden = false; }
+      else { notPaid.hidden = true; }
+    }
+    /* «Ещё нет доступа? Купить» рядом с «не завершили оплату?» — две ссылки
+       на один и тот же чекаут. В режиме оплаты оставляем одну. */
+    var buy = el('gateBuy');
+    if (buy && GATE_CHECKOUT_URL) { buy.hidden = !!paid; }
   }
   function setGateStatus(text, isError) {
     var st = el('gateStatus');
@@ -3762,8 +3816,13 @@
     if (gate) { gate.hidden = true; }
     if (shell) { shell.hidden = false; }
   }
-  function showGateOnly(message) {
+  function showGateOnly(message, paid) {
     var gate = el('gate'), shell = el('shell');
+    setGateMode(paid);
+    var emailInput = el('gateEmail');
+    if (emailInput && !emailInput.value) {
+      try { emailInput.value = localStorage.getItem(EMAIL_KEY) || ''; } catch (e) {}
+    }
     if (shell) { shell.hidden = true; }
     if (gate) { gate.hidden = false; }
     if (message) { setGateStatus(message, true); }
@@ -3784,11 +3843,34 @@
     }
     var legal = el('gateLegal');
     if (legal) { legal.innerHTML = legalLinksHtml(); }
+    var keyInput = form.gateLicense;
+    keyInput.addEventListener('paste', function (ev) {
+      var text = ev.clipboardData && ev.clipboardData.getData('text');
+      if (!text) { return; }
+      ev.preventDefault();
+      keyInput.value = normalizeKey(text);
+    });
+    keyInput.addEventListener('blur', function () { keyInput.value = normalizeKey(keyInput.value); });
+    /* Кнопка «Вставить» — для телефона, где долгое нажатие в поле неудобно.
+       clipboard.readText есть только в защищённом контексте и не везде;
+       нет API — нет кнопки. */
+    var pasteBtn = el('gatePaste');
+    if (pasteBtn && navigator.clipboard && navigator.clipboard.readText) {
+      pasteBtn.hidden = false;
+      pasteBtn.addEventListener('click', function () {
+        navigator.clipboard.readText().then(function (text) {
+          if (text) { keyInput.value = normalizeKey(text); }
+          keyInput.focus();
+        }).catch(function () { keyInput.focus(); });
+      });
+    }
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
       var email = form.gateEmail.value.trim();
-      var licenseKey = form.gateLicense.value.trim();
-      if (!email || !licenseKey) { return; }
+      var licenseKey = normalizeKey(form.gateLicense.value);
+      form.gateLicense.value = licenseKey;
+      if (!email) { form.gateEmail.focus(); return; }
+      if (!licenseKey) { form.gateLicense.focus(); return; }
       var submitBtn = el('gateSubmit');
       if (submitBtn) { submitBtn.disabled = true; }
       setGateStatus(T.ui.gateChecking, false);
@@ -3796,6 +3878,10 @@
         if (submitBtn) { submitBtn.disabled = false; }
         if (res && res.ok && res.active) {
           saveAccess({ email: email, licenseKey: licenseKey, verifiedAt: Date.now() });
+          try {
+            localStorage.setItem(EMAIL_KEY, email);
+            localStorage.removeItem(CHECKOUT_MARK_KEY);
+          } catch (e) {}
           setGateStatus('', false);
           showShell();
           startApp();
@@ -3871,13 +3957,21 @@
     bindGate();
     var access = loadAccess();
     if (access && access.email && access.licenseKey) {
+      /* Доступ уже есть — ?paid из адреса просто убираем, отметка чекаута
+         больше не нужна. Почту запоминаем для формы на случай выхода: у тех,
+         кто вошёл до появления EMAIL_KEY, её там ещё нет. */
+      paidModeRequested();
+      try {
+        localStorage.removeItem(CHECKOUT_MARK_KEY);
+        localStorage.setItem(EMAIL_KEY, access.email);
+      } catch (e) {}
       showShell();
       startApp();
       if (Date.now() - (access.verifiedAt || 0) > ACCESS_REVALIDATE_MS) {
         revalidateInBackground(access);
       }
     } else {
-      showGateOnly();
+      showGateOnly('', paidModeRequested());
     }
   }
 

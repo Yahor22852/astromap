@@ -206,6 +206,17 @@
     },
 
     /* ------------------------------------------------ пейволл */
+    /* Вход и ключ доступа: ссылка «уже есть доступ» на первом экране и
+       блок «ключ придёт на почту» на пейволле и экране годового плана. */
+    access: {
+      s1Q: 'Masz już dostęp?',
+      s1Link: 'Zaloguj się',
+      keyTitle: 'Klucz dostępu przyjdzie e-mailem',
+      keyText: 'Zaraz po płatności Gumroad wyśle klucz licencyjny na adres podany przy zakupie. Logujesz się tym e-mailem i kluczem — na każdym urządzeniu.',
+      paidQ: 'Masz już klucz?',
+      paidLink: 'Wpisz go tutaj'
+    },
+
     paywall: {
       eyebrow: 'AstroMap App',
       title: 'Twoja mapa jest gotowa',
@@ -491,6 +502,17 @@
       movesMoon: 'until the Moon enters {s}',
       movesRetro: 'planets moving backwards',
       movesNote: 'Every section recalculates for any date you choose. That is what the subscription is for: your birth chart does not change, the sky over it changes daily.'
+    },
+
+    /* Вход и ключ доступа: ссылка «уже есть доступ» на первом экране и
+       блок «ключ придёт на почту» на пейволле и экране годового плана. */
+    access: {
+      s1Q: 'Already have access?',
+      s1Link: 'Log in',
+      keyTitle: 'Your access key comes by email',
+      keyText: 'Right after payment, Gumroad emails a license key to the address you enter at checkout. You log in with that email and key — on any device.',
+      paidQ: 'Already have a key?',
+      paidLink: 'Enter it here'
     },
 
     paywall: {

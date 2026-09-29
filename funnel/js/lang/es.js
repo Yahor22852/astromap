@@ -170,6 +170,17 @@
       movesNote: 'Cada sección se recalcula para la fecha que elijas. Para eso es la suscripción: tu carta natal no cambia, el cielo sobre ella cambia todos los días.'
     },
 
+    /* Вход и ключ доступа: ссылка «уже есть доступ» на первом экране и
+       блок «ключ придёт на почту» на пейволле и экране годового плана. */
+    access: {
+      s1Q: '¿Ya tienes acceso?',
+      s1Link: 'Iniciar sesión',
+      keyTitle: 'Tu clave de acceso llega por email',
+      keyText: 'Justo después del pago, Gumroad envía una clave de licencia a la dirección que pongas al comprar. Entras con ese email y la clave, en cualquier dispositivo.',
+      paidQ: '¿Ya tienes una clave?',
+      paidLink: 'Introdúcela aquí'
+    },
+
     paywall: {
       eyebrow: 'AstroMap App',
       title: 'Tu mapa está listo',
