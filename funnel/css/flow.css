@@ -519,10 +519,17 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .langmenu[hidden], .citypick__menu[hidden], .citypick__manualbox[hidden] { display: none; }
 .langmenu {
   position: absolute; top: 100%; right: 0; margin-top: 8px; z-index: 30;
-  min-width: 164px; max-height: 300px; overflow-y: auto;
+  min-width: 164px; max-height: min(480px, calc(100vh - 120px)); overflow-y: auto;
+  overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
   padding: 6px; display: flex; flex-direction: column;
-  background: var(--card); border: 1px solid var(--card-line);
-  border-radius: var(--radius-sm); box-shadow: 0 18px 40px -18px rgba(0,0,0,.7);
+  /* Непрозрачный фон. Был голый --card (4.5% белого): меню просвечивало, и
+     «Українська» ложилась прямо на поле «Month». backdrop-filter тут не
+     спасает — меню сидит внутри .top__pill, у которой свой blur, а вложенный
+     backdrop-filter Safari не рисует. Поэтому тот же оттенок карточки, но
+     поверх сплошного --bg-0. */
+  background: linear-gradient(var(--card), var(--card)), var(--bg-0);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm); box-shadow: 0 24px 48px -12px rgba(0,0,0,.85);
 }
 .langmenu__item {
   padding: 9px 12px; border: 0; border-radius: 8px; cursor: pointer;
