@@ -448,6 +448,21 @@ td { font-size: 15px; border-bottom: 1px solid var(--line-2); }
   transition: border-color .2s ease;
 }
 .f select { font-family: var(--sans); font-size: 17px; }
+/* День · месяц · год. Месяц шире: «Сентябрь», «Settembre» в узкой колонке
+   обрезались бы. */
+.f__date {
+  display: grid; gap: 10px;
+  grid-template-columns: minmax(84px, .95fr) minmax(0, 1.35fr) minmax(78px, .9fr);
+}
+/* 20px, а не 25px, как у остальных полей: иначе «Giorno» и «Сентябрь» не
+   влезали и обрезались до «Де…». Минимумы колонок посчитаны по самой длинной
+   подписи из десяти языков плюс стрелка списка. */
+.f__date select { min-width: 0; text-overflow: ellipsis; font-family: var(--serif); font-size: 20px; }
+@media (max-width: 360px) {
+  .f__date { gap: 8px; grid-template-columns: minmax(72px, .95fr) minmax(0, 1.35fr) minmax(68px, .9fr); }
+  .f__date select { font-size: 18px; }
+}
+.f__date select.is-empty { color: var(--ink-dim); }
 .f input:focus, .f select:focus { outline: none; border-bottom-color: var(--accent); }
 
 /* --- поиск города (профиль/партнёр) ---------------------------------------

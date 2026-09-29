@@ -492,9 +492,16 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (!results.length) {
         menu.innerHTML = '<div class="citypick__empty">' + C.s3.cityNoMatch + '</div>';
       } else {
+        /* Город и страна раздельно: название слева, страна приглушённо
+           справа. Одной строкой «Mostoles, Spain» длинные названия
+           переносились как попало, и столбик выглядел рваным. */
         menu.innerHTML = results.map(function (c, i) {
+          var lab = FC.label(c), cut = lab.indexOf(', ');
+          var name = cut > 0 ? lab.slice(0, cut) : lab;
+          var land = cut > 0 ? lab.slice(cut + 2) : '';
           return '<div class="citypick__opt" role="option" id="cityopt-' + i +
-            '" data-i="' + i + '">' + FC.label(c) + '</div>';
+            '" data-i="' + i + '"><span class="citypick__name">' + name + '</span>' +
+            (land ? '<span class="citypick__land">' + land + '</span>' : '') + '</div>';
         }).join('');
       }
       menu.hidden = false;

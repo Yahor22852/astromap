@@ -181,10 +181,15 @@
       <div class="fields fields--stack">
         <div class="field field--wide citypick">
           <label class="field__lab" for="city" data-t="s3.city"></label>
-          <input type="text" id="city" class="citypick__input" autocomplete="off"
-            role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="cityMenu">
+          <!-- Поле и подсказки в отдельной обёртке: меню отсчитывается от её
+               низа, то есть висит прямо под полем, а не под ссылкой ручного
+               ввода, как было, когда якорем служил весь .citypick. -->
+          <div class="citypick__box">
+            <input type="text" id="city" class="citypick__input" autocomplete="off"
+              role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="cityMenu">
+            <div class="citypick__menu" id="cityMenu" role="listbox" hidden></div>
+          </div>
           <input type="hidden" id="cityJson" value="">
-          <div class="citypick__menu" id="cityMenu" role="listbox" hidden></div>
           <button type="button" class="citypick__manualtoggle" id="cityManual"></button>
           <div class="citypick__manualbox" id="cityManualBox" hidden>
             <input type="text" id="cityManualName" autocomplete="off">

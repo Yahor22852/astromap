@@ -2863,6 +2863,52 @@
     return out.join('');
   }
 
+  /* Дата рождения — три списка, а не <input type="date">. Нативное поле
+     подписывает себя языком браузера, а не приложения: у человека с русским
+     Chrome в английском интерфейсе стояло «дд.мм.гггг», и поменять это из
+     страницы нельзя — атрибут lang браузеры для этого поля не учитывают.
+     Названия месяцев берём из Intl на языке интерфейса, как в календаре Луны. */
+  function dateField(p) {
+    var opt = function (v, label, sel) {
+      return '<option value="' + v + '"' + (v === sel ? ' selected' : '') + '>' + label + '</option>';
+    };
+    var days = '<option value="">' + esc(T.ui.dateDay) + '</option>';
+    for (var d = 1; d <= 31; d++) { days += opt(d, d, p.d); }
+    var fmt = new Intl.DateTimeFormat(moonLocale(), { month: 'long' });
+    var months = '<option value="">' + esc(T.ui.dateMonth) + '</option>';
+    for (var m = 1; m <= 12; m++) {
+      var name = fmt.format(new Date(2000, m - 1, 1));
+      months += opt(m, esc(name.charAt(0).toUpperCase() + name.slice(1)), p.m);
+    }
+    var years = '<option value="">' + esc(T.ui.dateYear) + '</option>';
+    for (var y = new Date().getFullYear(); y >= 1900; y--) { years += opt(y, y, p.y); }
+    return '<div class="f" role="group" aria-label="' + esc(T.ui.date) + '"><span>' + T.ui.date + '</span>' +
+      '<div class="f__date">' +
+        '<select name="dd" aria-label="' + esc(T.ui.dateDay) + '">' + days + '</select>' +
+        '<select name="dm" aria-label="' + esc(T.ui.dateMonth) + '">' + months + '</select>' +
+        '<select name="dy" aria-label="' + esc(T.ui.dateYear) + '">' + years + '</select>' +
+      '</div></div>';
+  }
+  /* 31 февраля выбрать нельзя: лишние дни месяца выключаются, а уже
+     выбранный несуществующий день сбрасывается на последний. */
+  function bindDateField(f) {
+    if (!f.dd) { return; }
+    var sync = function () {
+      var m = +f.dm.value, y = +f.dy.value || 2000;   /* без года считаем по високосному */
+      var max = m ? new Date(y, m, 0).getDate() : 31;
+      Array.prototype.slice.call(f.dd.options).forEach(function (o) {
+        if (o.value) { o.disabled = +o.value > max; }
+      });
+      if (+f.dd.value > max) { f.dd.value = String(max); }
+      /* Невыбранный список выглядит как подсказка, а не как значение. */
+      [f.dd, f.dm, f.dy].forEach(function (s) { s.classList.toggle('is-empty', !s.value); });
+    };
+    f.dd.addEventListener('change', sync);
+    f.dm.addEventListener('change', sync);
+    f.dy.addEventListener('change', sync);
+    sync();
+  }
+
   function personForm(kind, p) {
     p = p || {};
     var curCity = p.city || null;
@@ -2890,10 +2936,7 @@
     return '<form class="form" data-kind="' + kind + '">' +
       '<label class="f"><span>' + T.ui.partnerName + '</span>' +
         '<input name="name" value="' + esc(p.name || '') + '" autocomplete="off"></label>' +
-      '<label class="f"><span>' + T.ui.date + '</span>' +
-        '<input name="date" type="date" value="' + (p.y ?
-          p.y + '-' + (p.m < 10 ? '0' : '') + p.m + '-' + (p.d < 10 ? '0' : '') + p.d : '') +
-        '"></label>' +
+      dateField(p) +
       '<label class="f"><span>' + T.ui.time + '</span>' +
         '<input name="time" type="time" value="' + (p.timeKnown ?
           ((p.h < 10 ? '0' : '') + p.h + ':' + (p.min < 10 ? '0' : '') + p.min) : '') +
@@ -3544,12 +3587,14 @@
   function bind() {
     var f = document.querySelector('.form');
     if (f) {
+      bindDateField(f);
       f.addEventListener('submit', function (ev) {
         ev.preventDefault();
         var kind = f.dataset.kind;
-        var dv = f.date.value, tv = f.time.value;
-        if (!dv) { return; }
-        var dp = dv.split('-').map(Number);
+        var tv = f.time.value;
+        var dp = [+f.dy.value, +f.dm.value, +f.dd.value];
+        var miss = [f.dd, f.dm, f.dy].filter(function (s) { return !s.value; })[0];
+        if (miss) { miss.focus(); return; }
         var tp = tv ? tv.split(':').map(Number) : null;
         var obj = {
           name: f.name.value.trim(),
