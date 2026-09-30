@@ -1,6 +1,6 @@
 /* Español — строки интерфейса воронки.
    Структура повторяет английский объект в js/copy.js ключ в ключ.
-   Биллинг и юридические строки сюда не переводятся — см. ниже. */
+   Биллинг и юридические строки переведены, суммы — как в английском, см. ниже. */
 (function (global) {
   'use strict';
 
@@ -263,18 +263,29 @@
     ]
   };
 
-  /* Цена, условия списания и согласие с документами остаются английскими
-     намеренно: это не текст интерфейса, а обязательства перед человеком,
-     и машинный перевод суммы, срока отмены или ссылки на условия —
-     это то, что разбирают в спорах по автопродлению. Их пишет юрист под
-     каждый рынок, вместе с валютой. */
-  C.billing = EN.billing;
-  C.paywall.legal = EN.paywall.legal;
-  C.paywall.terms = EN.paywall.terms;
-  C.paywall.privacy = EN.paywall.privacy;
-  C.paywall.privacyInline = EN.paywall.privacyInline;
-  C.recovery.yearTitle = EN.recovery.yearTitle;
-  C.recovery.answers.price = EN.recovery.answers.price;
+  /* Цена, условия списания и согласие с документами — переведены.
+     Суммы и валюта те же, что в английском и на чекауте Gumroad ($9.99 в
+     месяц, $29.99 в год, плюс налог по ставке страны): меняется только язык,
+     не цифры. Каждое утверждение английского текста сохранено — цена,
+     период, автопродление, срок отмены (24 часа), способ отмены, ссылка на
+     условия. Меняешь цену в copy.js — поменяй её и здесь, во всех строках. */
+  C.billing = {
+    price: '$9.99',
+    period: 'al mes',
+    priceLine: '$9.99 + IVA',
+    renewLine: 'al mes, se renueva automáticamente',
+    disclaimer: 'La suscripción cuesta $9.99 al mes más el IVA de tu país, que verás completo antes de pagar, y se renueva automáticamente cada mes salvo que la canceles al menos 24 horas antes del fin del periodo de facturación en curso. Puedes cancelarla cuando quieras en los ajustes de tu cuenta: consulta los {terms}.',
+    yearPrice: '$29.99 + IVA',
+    yearPeriod: 'al año',
+    yearDisclaimer: 'El plan anual cuesta $29.99 más el IVA de tu país, que verás completo antes de pagar, y se renueva automáticamente cada año salvo que lo canceles al menos 24 horas antes del fin del periodo en curso. Pagando mes a mes, un año cuesta $119.88 sin IVA. Puedes cancelarlo cuando quieras en los ajustes de tu cuenta: consulta los {terms}.',
+    support: 'Dudas sobre pagos: {email}.'
+  };
+  C.paywall.legal = 'Al pulsar «{cta}», aceptas los {terms} y la {privacy}.';
+  C.paywall.terms = 'Términos de uso';
+  C.paywall.privacy = 'Política de privacidad';
+  C.paywall.privacyInline = 'Política de privacidad';
+  C.recovery.yearTitle = 'Plan anual: un 75 % más barato';
+  C.recovery.answers.price = 'El plan anual cuesta $29.99 en lugar de los $119.88 que suma un año pagando mes a mes. Son $2.50 al mes.';
 
   global.COPY_ALL.es = C;
   if (global.LANG === 'es') { global.COPY = C; }

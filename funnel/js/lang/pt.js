@@ -1,6 +1,6 @@
 /* Português — строки интерфейса воронки.
    Структура повторяет английский объект в js/copy.js ключ в ключ.
-   Биллинг и юридические строки сюда не переводятся — см. ниже. */
+   Биллинг и юридические строки переведены, суммы — как в английском, см. ниже. */
 (function (global) {
   'use strict';
 
@@ -261,18 +261,29 @@
     ]
   };
 
-  /* Цена, условия списания и согласие с документами остаются английскими
-     намеренно: это не текст интерфейса, а обязательства перед человеком,
-     и машинный перевод суммы, срока отмены или ссылки на условия — это то,
-     что разбирают в спорах по автопродлению. Их пишет юрист под каждый
-     рынок, вместе с валютой. */
-  C.billing = EN.billing;
-  C.paywall.legal = EN.paywall.legal;
-  C.paywall.terms = EN.paywall.terms;
-  C.paywall.privacy = EN.paywall.privacy;
-  C.paywall.privacyInline = EN.paywall.privacyInline;
-  C.recovery.yearTitle = EN.recovery.yearTitle;
-  C.recovery.answers.price = EN.recovery.answers.price;
+  /* Цена, условия списания и согласие с документами — переведены.
+     Суммы и валюта те же, что в английском и на чекауте Gumroad ($9.99 в
+     месяц, $29.99 в год, плюс налог по ставке страны): меняется только язык,
+     не цифры. Каждое утверждение английского текста сохранено — цена,
+     период, автопродление, срок отмены (24 часа), способ отмены, ссылка на
+     условия. Меняешь цену в copy.js — поменяй её и здесь, во всех строках. */
+  C.billing = {
+    price: '$9.99',
+    period: 'por mês',
+    priceLine: '$9.99 + impostos',
+    renewLine: 'por mês, renovação automática',
+    disclaimer: 'A assinatura custa $9.99 por mês mais os impostos do seu país, exibidos por completo antes do pagamento, e é renovada automaticamente todo mês, a menos que você a cancele pelo menos 24 horas antes do fim do período de cobrança atual. Cancele quando quiser nas configurações da sua conta — veja os {terms}.',
+    yearPrice: '$29.99 + impostos',
+    yearPeriod: 'por ano',
+    yearDisclaimer: 'O plano anual custa $29.99 mais os impostos do seu país, exibidos por completo antes do pagamento, e é renovado automaticamente todo ano, a menos que você o cancele pelo menos 24 horas antes do fim do período atual. Pagando mês a mês, um ano custa $119.88 sem impostos. Cancele quando quiser nas configurações da sua conta — veja os {terms}.',
+    support: 'Dúvidas sobre pagamento: {email}.'
+  };
+  C.paywall.legal = 'Ao clicar em “{cta}”, você aceita os {terms} e a {privacy}.';
+  C.paywall.terms = 'Termos de Uso';
+  C.paywall.privacy = 'Política de Privacidade';
+  C.paywall.privacyInline = 'Política de Privacidade';
+  C.recovery.yearTitle = 'Plano anual — 75% mais barato';
+  C.recovery.answers.price = 'O plano anual custa $29.99 em vez dos $119.88 que um ano soma pagando mês a mês. Dá $2.50 por mês.';
 
   global.COPY_ALL.pt = C;
   if (global.LANG === 'pt') { global.COPY = C; }

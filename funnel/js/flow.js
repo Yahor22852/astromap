@@ -420,9 +420,28 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     if (!S.time.known) { return true; }
     return el('hh').value !== '' && el('mm').value !== '';
   }
+  /* Карта посчитана, а человек меняет город или время. Раньше S.natal
+     оставалась прежней: кнопка уже говорила «Дальше», и на следующие экраны,
+     в сводку, пейволл и продукт уезжала карта для СТАРЫХ места и времени.
+     Теперь любое изменение входных данных стирает расчёт и всё, что из него
+     выведено (совместимость, превью), и кнопка снова предлагает посчитать. */
+  function resetChart() {
+    if (!S.natal) { return; }
+    S.natal = null;
+    S.syn = null;
+    pvData = null;
+    el('s3map').classList.add('hidden');
+    el('big3').classList.add('hidden');
+    el('big3').innerHTML = '';
+    el('scoreBox').classList.add('hidden');
+    el('cta').textContent = C.ctaCalc;
+    persist();
+  }
+
   function onTime() {
     S.time.h = el('hh').value === '' ? null : +el('hh').value;
     S.time.min = el('mm').value === '' ? null : +el('mm').value;
+    resetChart();
     el('cta').disabled = !timeReady();
   }
   ['hh', 'mm'].forEach(function (id) { el(id).addEventListener('change', onTime); });
@@ -482,6 +501,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     function choose(i) {
       var c = results[i];
       if (!c) { return; }
+      resetChart();
       S.city = FC.toObject(c);
       input.value = FC.label(c);
       close();
@@ -584,6 +604,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
 
     input.addEventListener('input', function () {
       S.city = null;
+      resetChart();
       el('cta').disabled = !timeReady();
       openFor(input.value);
     });
@@ -615,10 +636,37 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
         close();
       }
     });
+    /* Город вписан руками, но строка в подсказках не нажата. Раньше кнопка
+       так и оставалась выключенной: человек видел в поле «Barysaw, Belarus»
+       и не понимал, чего от него хотят. Если набранное ТОЧНО совпадает с
+       городом из списка — с подписью страны или без, — это и есть выбор.
+       Опечатки по-прежнему не проходят: нужно полное совпадение названия. */
+    function pickExact() {
+      if (S.city) { return; }
+      var text = FC.norm(input.value).trim();
+      if (text.length < 2) { return; }
+      var head = text.indexOf(',') > 0 ? text.slice(0, text.indexOf(',')).trim() : text;
+      var found = FC.search(input.value.indexOf(',') > 0
+        ? input.value.slice(0, input.value.indexOf(',')) : input.value, 8);
+      var best = null;
+      for (var i = 0; i < found.length && !best; i++) {
+        if (FC.norm(FC.label(found[i])) === text) { best = found[i]; }
+      }
+      for (var j = 0; j < found.length && !best; j++) {
+        if (FC.norm(found[j][0]) === head) { best = found[j]; }
+      }
+      if (!best) { return; }
+      S.city = FC.toObject(best);
+      input.value = FC.label(best);
+      persist();
+      el('cta').disabled = !timeReady();
+    }
+
     input.addEventListener('blur', function () {
       /* Палец уже в списке — уход фокуса ничего не значит. */
       if (interacting) { return; }
       close();
+      pickExact();
     });
 
     /* Экранная клавиатура приходит и уходит уже после того, как список
@@ -641,28 +689,60 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     /* Города нет в списке. Тогда считаем всё, кроме асцендента: для него
        нужны координаты, а их человек ввести не может — и выдумывать их
        нельзя, это и есть та самая «настоящая астрономическая величина». */
+    /* РУЧНОЙ ВВОД ПРИНИМАЕТСЯ СРАЗУ. Раньше место считалось заданным только
+       после кнопки «Use»: человек вписывал название, жал на главную кнопку —
+       а она выключена, и никакой подсказки почему. Теперь каждое изменение
+       названия или пояса сразу кладёт место в S.city, и главная кнопка
+       загорается; «Use» и Enter остаются, чтобы свернуть блок. */
+    function manualCity() {
+      var name = el('cityManualName').value.trim();
+      if (!name) { return null; }
+      return { n: name, lat: null, lon: null,
+               tz: parseFloat(el('cityManualOffset').value), dst: '' };
+    }
+    function syncManual() {
+      resetChart();
+      S.city = manualCity();
+      if (S.city) { input.value = S.city.n; }
+      persist();
+      el('cta').disabled = !timeReady();
+      el('s3note').textContent = S.city ? C.s3.cityManualNote : '';
+      el('s3note').classList.toggle('hidden', !S.city);
+    }
     el('cityManual').addEventListener('click', function () {
       var box = el('cityManualBox');
       box.hidden = !box.hidden;
-      if (!box.hidden) { el('cityManualName').focus(); }
+      if (box.hidden) { return; }
+      /* Название, уже набранное в поиске, переносим в ручное поле: вводить
+         его второй раз — ровно то место, где человек и застревал. */
+      var typed = input.value.trim();
+      if (!S.city && typed && !el('cityManualName').value.trim()) {
+        el('cityManualName').value = typed;
+        close();
+        syncManual();
+      }
+      el('cityManualName').focus();
     });
-    el('cityManualApply').addEventListener('click', function () {
-      var name = el('cityManualName').value.trim();
-      if (!name) { el('cityManualName').focus(); return; }
-      S.city = { n: name, lat: null, lon: null,
-                 tz: parseFloat(el('cityManualOffset').value), dst: '' };
-      input.value = name;
+    el('cityManualName').addEventListener('input', syncManual);
+    el('cityManualOffset').addEventListener('change', function () {
+      if (el('cityManualName').value.trim()) { syncManual(); }
+    });
+    function applyManual() {
+      if (!manualCity()) { el('cityManualName').focus(); return; }
+      syncManual();
       el('cityManualBox').hidden = true;
       close();
-      persist();
-      el('cta').disabled = !timeReady();
-      el('s3note').textContent = C.s3.cityManualNote;
-      el('s3note').classList.remove('hidden');
+      el('cityManualName').blur();
+    }
+    el('cityManualApply').addEventListener('click', applyManual);
+    el('cityManualName').addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') { ev.preventDefault(); applyManual(); }
     });
   })();
 
   el('noTime').addEventListener('change', function () {
     S.time.known = !this.checked;
+    resetChart();
     el('hh').disabled = this.checked;
     el('mm').disabled = this.checked;
     el('s3note').textContent = this.checked ? C.s3.unknownNote : '';
@@ -794,25 +874,32 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     runStages(stages, work, function () {
       persist();
       el('calc').classList.add('hidden');
-      drawMap(el('s3map'), false);
-      el('s3map').classList.remove('hidden');
-      el('big3').innerHTML = big3Html();
-      el('big3').classList.remove('hidden');
+      showChart();
       scrollToBlock(el('s3map'));
-
-      var notes = [];
-      if (!willHaveAsc) {
-        notes.push(S.time.known ? C.s3.cityManualNote : C.s3.unknownNote);
-      }
-      if (S.natal.moon.nearCusp || (S.natal.asc && S.natal.asc.nearCusp)) {
-        notes.push(C.s3.cuspNote);
-      }
-      el('s3note').textContent = notes.join(' ');
-      el('s3note').classList.toggle('hidden', !notes.length);
-
-      el('cta').textContent = C.ctaNext;
-      el('cta').disabled = false;
     });
+  }
+
+  /* Результат третьего экрана по уже посчитанной S.natal. Отдельно от
+     calcChart, потому что после смены языка карта не пересчитывается
+     заново со стадиями, а просто рисуется на новом языке. */
+  function showChart() {
+    drawMap(el('s3map'), false);
+    el('s3map').classList.remove('hidden');
+    el('big3').innerHTML = big3Html();
+    el('big3').classList.remove('hidden');
+
+    var notes = [];
+    if (!S.natal.asc) {
+      notes.push(S.time.known ? C.s3.cityManualNote : C.s3.unknownNote);
+    }
+    if (S.natal.moon.nearCusp || (S.natal.asc && S.natal.asc.nearCusp)) {
+      notes.push(C.s3.cuspNote);
+    }
+    el('s3note').textContent = notes.join(' ');
+    el('s3note').classList.toggle('hidden', !notes.length);
+
+    el('cta').textContent = C.ctaNext;
+    el('cta').disabled = false;
   }
 
   /* --- экран 4: совместимость -------------------------------------------- */
@@ -883,6 +970,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (!ok) { return; }
       pvCompute();
       if (S.screen === 's5') { pvRender(); }
+      if (S.screen === 's6') { el('pwMoves').innerHTML = pwMovesHtml(); }
     });
   }
 
@@ -1180,7 +1268,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
           '<b>' + o.t + '</b>' + o.d + '</span></div>';
       }).join('');
 
-    el('planPrice').textContent = C.billing.priceLine;
+    el('planPrice').innerHTML = priceHtml(C.billing.priceLine);
     el('planAfter').textContent = C.billing.renewLine;
     el('planDisc').innerHTML = discHtml(C.billing.disclaimer);
 
@@ -1276,8 +1364,22 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
      rcOpensHtml/rcProofHtml/rcLookHtml остались на месте — они собирают
      содержимое из тех же данных и понадобятся, если опрос решат вернуть;
      ни один из них сейчас не вызывается. */
+  /* «$9.99 + VAT» → сумма крупно, «+ VAT» (и хвост вроде «per year») —
+     отдельной мелкой подписью, см. .price__tax в flow.css. Делим по первому
+     « + »: формат цены один во всех языках. Строки из COPY, но всё равно
+     экранируем — это innerHTML. */
+  function priceHtml(line, tail) {
+    var esc = function (t) {
+      return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    };
+    var cut = line.indexOf(' + ');
+    var amount = cut > 0 ? line.slice(0, cut) : line;
+    var tax = (cut > 0 ? line.slice(cut + 1) : '') + (tail ? ' ' + tail : '');
+    return esc(amount) + (tax.trim() ? '<span class="price__tax">' + esc(tax.trim()) + '</span>' : '');
+  }
+
   function buildRecovery() {
-    el('onePrice').textContent = C.billing.yearPrice + ' ' + C.billing.yearPeriod;
+    el('onePrice').innerHTML = priceHtml(C.billing.yearPrice, C.billing.yearPeriod);
     el('oneDisc').innerHTML = discHtml(C.billing.yearDisclaimer);
     el('legalYear').innerHTML = legalHtml(C.recovery.yearCta);
   }
@@ -1380,6 +1482,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       b.addEventListener('click', function () {
         if (code === window.LANG) { close(); return; }
         try { localStorage.setItem('astromap.lang', code); } catch (e) {}
+        saveResume();
         location.reload();
       });
     });
@@ -1391,6 +1494,78 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     });
   })();
 
-  progress('s1');
-  dock('s1');
+  /* --- возврат на тот же шаг после смены языка ----------------------------
+     Язык меняется перезагрузкой (тексты подставляются один раз на старте),
+     а после перезагрузки воронка всегда открывалась с первого экрана: из
+     localStorage возвращались только дата и темы. Человек, сменивший язык на
+     третьем шаге или на пейволле, проходил всё заново.
+
+     Теперь перед перезагрузкой состояние и открытый экран кладутся в
+     sessionStorage — метка живёт в этой вкладке и читается один раз, так что
+     обычный повторный заход по-прежнему начинается с начала. Экран
+     собирается теми же функциями, что и при обычном переходе на него. */
+  function saveResume() {
+    try {
+      sessionStorage.setItem('astromap.resume', JSON.stringify({
+        screen: S.screen, time: S.time, city: S.city,
+        natal: S.natal, partner: S.partner, syn: S.syn
+      }));
+    } catch (e) { /* приватный режим — просто начнём с начала */ }
+  }
+
+  function resume() {
+    var r = null;
+    try {
+      r = JSON.parse(sessionStorage.getItem('astromap.resume') || 'null');
+      sessionStorage.removeItem('astromap.resume');
+    } catch (e) { r = null; }
+    if (!r || !r.screen || r.screen === 's1' || !dobReady()) { return false; }
+    /* Экран, до которого нельзя дойти без предыдущих ответов, не
+       восстанавливаем — лучше начать с начала, чем показать пустой. */
+    if (S.themes.length < 2 && r.screen !== 's2') { return false; }
+    if (['s4', 's5', 's6', 's7'].indexOf(r.screen) >= 0 && !r.natal) { return false; }
+
+    if (r.time) {
+      S.time = r.time;
+      el('noTime').checked = !S.time.known;
+      el('hh').disabled = el('mm').disabled = !S.time.known;
+      if (S.time.h !== null) { el('hh').value = S.time.h; }
+      if (S.time.min !== null) { el('mm').value = S.time.min; }
+      if (!S.time.known) {
+        el('s3note').textContent = C.s3.unknownNote;
+        el('s3note').classList.remove('hidden');
+      }
+    }
+    if (r.city) {
+      S.city = r.city;
+      /* Подпись города — на новом языке: страну берём из словаря заново. */
+      el('city').value = S.city.cc ? FC.label([S.city.n, S.city.cc]) : S.city.n;
+      if (typeof S.city.lat !== 'number') {
+        el('s3note').textContent = C.s3.cityManualNote;
+        el('s3note').classList.remove('hidden');
+      }
+    }
+    if (r.natal) { S.natal = r.natal; showChart(); }
+    /* Совместимость пересчитываем, только если её не пропустили: «пропустить»
+       на s4 обнуляет S.syn, но дату партнёра в полях оставляет. */
+    if (r.partner && r.partner.d && r.partner.m && r.partner.y &&
+        (r.syn || r.screen === 's4')) {
+      el('d2').value = r.partner.d; el('m2').value = r.partner.m; el('y2').value = r.partner.y;
+      onPartner();
+    } else {
+      S.syn = null;
+    }
+
+    if (S.natal) { pvStart(); }
+    if (r.screen === 's5') { buildSummary(); }
+    if (r.screen === 's6') { buildPaywall(); }
+    if (r.screen === 's7') { buildRecovery(); }
+    go(r.screen);
+    return true;
+  }
+
+  if (!resume()) {
+    progress('s1');
+    dock('s1');
+  }
 })();

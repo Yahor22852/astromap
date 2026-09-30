@@ -86,8 +86,14 @@ body {
    Теперь — плавающая стеклянная капсула, зафиксированная сверху, по образцу
    референса: тот же приём, что и в продукте (product/css/app.css), но в
    палитре и ширине воронки (max-width колонки — 420px, как у .app). */
+/* z-index 20, а не 5. Экран (.scr) контекста наложения не создаёт (см.
+   ниже), поэтому .citypick с его z-index 5 сравнивается с шапкой напрямую —
+   и при равных пятёрках побеждал тот, кто позже в разметке, то есть поле
+   города. Меню языков, выпадающее из шапки, рисовалось ПОД полем: «Minsk,
+   Belarus» проступало сквозь список, и он выглядел полупрозрачным, хотя фон
+   у него сплошной. Шапка должна быть выше всего содержимого экрана и дока. */
 .top {
-  position: fixed; top: 14px; left: 0; right: 0; z-index: 5;
+  position: fixed; top: 14px; left: 0; right: 0; z-index: 20;
   display: flex; justify-content: center;
   padding: 0 var(--pad); pointer-events: none;
 }
@@ -418,6 +424,16 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 }
 .plan__t { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
 .plan__p { margin-top: 6px; font-family: var(--serif); font-size: 30px; font-weight: 700; }
+/* Цена и налог — разными шрифтами. В Cormorant цифры по умолчанию
+   старого стиля («9» уходит под строку), а «VAT» — заглавные во весь рост,
+   и в одном кегле «$9.99 + VAT» выглядело криво: налог крупнее и выше
+   самой цены. Цифры — выровненные, налог — мелкой приглушённой подписью
+   рубленым шрифтом, на общей базовой линии. */
+.plan__p, .alt__p { font-variant-numeric: lining-nums; }
+.price__tax {
+  margin-left: 6px; font-family: var(--sans); font-size: 14px; font-weight: 500;
+  letter-spacing: .02em; color: var(--ink-dim); white-space: nowrap;
+}
 .plan__after { margin-top: 2px; font-size: 14px; color: var(--ink-dim); }
 .disc { margin-top: 14px; font-size: var(--t-legal); line-height: 16px; color: var(--ink-faint); }
 .legal { margin-top: 12px; font-size: var(--t-legal); line-height: 16px; color: var(--ink-faint); text-align: center; }

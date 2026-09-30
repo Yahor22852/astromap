@@ -554,7 +554,9 @@
       period: 'per month',
       /* Gumroad adds VAT at checkout, so the price on screen has to say so:
          without it the card promises 9.99 and the checkout charges more.
-         These billing strings are shared by the eight other locales. */
+         Every other locale carries its own translation of these strings
+         with the same amounts (js/lang/*.js) — change a price here, change it
+         there too. */
       priceLine: '$9.99 + VAT',
       renewLine: 'per month, renews automatically',
       disclaimer: 'The subscription is $9.99 per month plus VAT at your local rate, shown in full before you pay, and renews automatically each month unless you cancel at least 24 hours before the end of the current billing period. Cancel anytime in your account settings — see our {terms}.',

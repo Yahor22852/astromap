@@ -1,6 +1,6 @@
 /* Italiano — строки интерфейса воронки.
    Структура повторяет английский объект в js/copy.js ключ в ключ.
-   Биллинг и юридические строки сюда не переводятся — см. ниже. */
+   Биллинг и юридические строки переведены, суммы — как в английском, см. ниже. */
 (function (global) {
   'use strict';
 
@@ -261,18 +261,29 @@
     ]
   };
 
-  /* Цена, условия списания и согласие с документами остаются английскими
-     намеренно: это не текст интерфейса, а обязательства перед человеком,
-     и машинный перевод суммы, срока отмены или ссылки на условия — это то,
-     что разбирают в спорах по автопродлению. Их пишет юрист под каждый
-     рынок, вместе с валютой. */
-  C.billing = EN.billing;
-  C.paywall.legal = EN.paywall.legal;
-  C.paywall.terms = EN.paywall.terms;
-  C.paywall.privacy = EN.paywall.privacy;
-  C.paywall.privacyInline = EN.paywall.privacyInline;
-  C.recovery.yearTitle = EN.recovery.yearTitle;
-  C.recovery.answers.price = EN.recovery.answers.price;
+  /* Цена, условия списания и согласие с документами — переведены.
+     Суммы и валюта те же, что в английском и на чекауте Gumroad ($9.99 в
+     месяц, $29.99 в год, плюс налог по ставке страны): меняется только язык,
+     не цифры. Каждое утверждение английского текста сохранено — цена,
+     период, автопродление, срок отмены (24 часа), способ отмены, ссылка на
+     условия. Меняешь цену в copy.js — поменяй её и здесь, во всех строках. */
+  C.billing = {
+    price: '$9.99',
+    period: 'al mese',
+    priceLine: '$9.99 + IVA',
+    renewLine: 'al mese, si rinnova automaticamente',
+    disclaimer: 'L’abbonamento costa $9.99 al mese più l’IVA del tuo Paese, mostrata per intero prima del pagamento, e si rinnova automaticamente ogni mese, a meno che tu non lo disdica almeno 24 ore prima della fine del periodo di fatturazione in corso. Puoi disdire in qualsiasi momento dalle impostazioni del tuo account — vedi i {terms}.',
+    yearPrice: '$29.99 + IVA',
+    yearPeriod: 'all’anno',
+    yearDisclaimer: 'Il piano annuale costa $29.99 più l’IVA del tuo Paese, mostrata per intero prima del pagamento, e si rinnova automaticamente ogni anno, a meno che tu non lo disdica almeno 24 ore prima della fine del periodo in corso. Pagando mese per mese, un anno costa $119.88 IVA esclusa. Puoi disdire in qualsiasi momento dalle impostazioni del tuo account — vedi i {terms}.',
+    support: 'Domande sui pagamenti: {email}.'
+  };
+  C.paywall.legal = 'Facendo clic su «{cta}», accetti i {terms} e l’{privacy}.';
+  C.paywall.terms = 'Termini di utilizzo';
+  C.paywall.privacy = 'Informativa sulla privacy';
+  C.paywall.privacyInline = 'Informativa sulla privacy';
+  C.recovery.yearTitle = 'Piano annuale — il 75% in meno';
+  C.recovery.answers.price = 'Il piano annuale costa $29.99 invece dei $119.88 di un anno pagato mese per mese. Sono $2.50 al mese.';
 
   global.COPY_ALL.it = C;
   if (global.LANG === 'it') { global.COPY = C; }

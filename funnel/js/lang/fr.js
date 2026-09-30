@@ -1,6 +1,6 @@
 /* Français — строки интерфейса воронки.
    Структура повторяет английский объект в js/copy.js ключ в ключ.
-   Биллинг и юридические строки сюда не переводятся — см. ниже. */
+   Биллинг и юридические строки переведены, суммы — как в английском, см. ниже. */
 (function (global) {
   'use strict';
 
@@ -261,18 +261,29 @@
     ]
   };
 
-  /* Цена, условия списания и согласие с документами остаются английскими
-     намеренно: это не текст интерфейса, а обязательства перед человеком,
-     и машинный перевод суммы, срока отмены или ссылки на условия — это то,
-     что разбирают в спорах по автопродлению. Их пишет юрист под каждый
-     рынок, вместе с валютой. */
-  C.billing = EN.billing;
-  C.paywall.legal = EN.paywall.legal;
-  C.paywall.terms = EN.paywall.terms;
-  C.paywall.privacy = EN.paywall.privacy;
-  C.paywall.privacyInline = EN.paywall.privacyInline;
-  C.recovery.yearTitle = EN.recovery.yearTitle;
-  C.recovery.answers.price = EN.recovery.answers.price;
+  /* Цена, условия списания и согласие с документами — переведены.
+     Суммы и валюта те же, что в английском и на чекауте Gumroad ($9.99 в
+     месяц, $29.99 в год, плюс налог по ставке страны): меняется только язык,
+     не цифры. Каждое утверждение английского текста сохранено — цена,
+     период, автопродление, срок отмены (24 часа), способ отмены, ссылка на
+     условия. Меняешь цену в copy.js — поменяй её и здесь, во всех строках. */
+  C.billing = {
+    price: '$9.99',
+    period: 'par mois',
+    priceLine: '$9.99 + TVA',
+    renewLine: 'par mois, renouvelé automatiquement',
+    disclaimer: 'L’abonnement coûte $9.99 par mois, plus la TVA au taux de ton pays, affichée en totalité avant le paiement. Il se renouvelle automatiquement chaque mois, sauf si tu le résilies au moins 24 heures avant la fin de la période de facturation en cours. Tu peux résilier à tout moment dans les paramètres de ton compte — voir les {terms}.',
+    yearPrice: '$29.99 + TVA',
+    yearPeriod: 'par an',
+    yearDisclaimer: 'La formule annuelle coûte $29.99, plus la TVA au taux de ton pays, affichée en totalité avant le paiement. Elle se renouvelle automatiquement chaque année, sauf si tu la résilies au moins 24 heures avant la fin de la période en cours. En payant au mois, une année coûte $119.88 hors TVA. Tu peux résilier à tout moment dans les paramètres de ton compte — voir les {terms}.',
+    support: 'Questions sur le paiement : {email}.'
+  };
+  C.paywall.legal = 'En cliquant sur « {cta} », tu acceptes les {terms} et la {privacy}.';
+  C.paywall.terms = 'Conditions d’utilisation';
+  C.paywall.privacy = 'Politique de confidentialité';
+  C.paywall.privacyInline = 'Politique de confidentialité';
+  C.recovery.yearTitle = 'Formule annuelle — 75 % moins chère';
+  C.recovery.answers.price = 'La formule annuelle coûte $29.99 au lieu des $119.88 que représente une année payée au mois. Soit $2.50 par mois.';
 
   global.COPY_ALL.fr = C;
   if (global.LANG === 'fr') { global.COPY = C; }
