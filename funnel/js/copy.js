@@ -233,7 +233,10 @@
         wOk: 'Rozumiem',
         opening: 'Otwieramy płatność…',
         cont: 'Dokończ płatność rozpoczętą w TikToku',
-        contBtn: 'Kontynuuj płatność'
+        contBtn: 'Kontynuuj płatność',
+        doneTitle: 'Płatność zakończona ✓',
+        doneText: 'Klucz dostępu jest już wpisany — wystarczy wymyślić hasło.',
+        doneBtn: 'Otwórz dostęp'
       },
       checkoutOff: 'Płatność nie jest jeszcze podłączona. Twoje dane są zapisane — wróć tu za chwilę.',
       /* {cta} подставляется НАДПИСЬЮ ТОЙ КНОПКИ, что стоит на экране.
@@ -544,7 +547,10 @@
         wOk: 'Got it',
         opening: 'Opening payment…',
         cont: 'Finish the payment you started in TikTok',
-        contBtn: 'Continue payment'
+        contBtn: 'Continue payment',
+        doneTitle: 'Payment complete ✓',
+        doneText: 'Your access key is already filled in — just create a password.',
+        doneBtn: 'Open my access'
       },
       checkoutOff: 'Payments are not connected yet. Your details are saved — come back in a moment.',
       legal: 'By clicking “{cta}” you accept the {terms} and the {privacy}.',

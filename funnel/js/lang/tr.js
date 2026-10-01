@@ -200,7 +200,10 @@
         wOk: 'Anladım',
         opening: 'Ödeme açılıyor…',
         cont: 'TikTok’ta başladığın ödemeyi tamamla',
-        contBtn: 'Ödemeye devam et'
+        contBtn: 'Ödemeye devam et',
+        doneTitle: 'Ödeme tamamlandı ✓',
+        doneText: 'Erişim anahtarın zaten girildi — sadece bir şifre belirle.',
+        doneBtn: 'Erişimimi aç'
       },
       checkoutOff: 'Ödeme henüz bağlı değil. Bilgilerin kayıtlı — birazdan tekrar uğra.'
     },

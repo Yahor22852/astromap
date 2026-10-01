@@ -1009,6 +1009,8 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   background: var(--gold); color: #1a1405; font-size: 15px;
 }
 .whelp__busy { margin: 0; text-align: center; font-size: 16px; color: var(--ink); }
+.whelp__p { margin: 0 0 20px; font-size: 16px; line-height: 1.45; color: var(--ink-dim); }
+.whelp--done .whelp__ok { text-decoration: none; }
 
 /* Safari/Chrome: оплата из TikTok ждёт, но IP другой — кнопка возьмёт
    ссылку из буфера обмена. Плашка снизу, над доком. */

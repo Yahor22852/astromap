@@ -290,7 +290,12 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (b) { b.parentNode.removeChild(b); }
       document.body.style.overflow = '';
     }
-    frame.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'overlay=true';
+    /* Одноразовый номер покупки: Gumroad вернёт его в Ping (url_params), и
+       воркер по нему скажет этой странице «оплачено» — см. watchPurchase. */
+    var sid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function () { return (Math.random() * 16 | 0).toString(16); });
+    frame.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'overlay=true&astro_sid=' + sid;
+    watchPurchase(sid);
 
     el('payWallet').addEventListener('click', function () { startWalletHandoff(plan); });
     el('payClose').addEventListener('click', function () {
@@ -299,6 +304,62 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     });
     el('payClose').focus();
     document.dispatchEvent(new CustomEvent('funnel:inapp', { detail: { plan: plan } }));
+  }
+
+  /* После оплаты в окне Gumroad пытается увести всю страницу на страницу
+     доступа; без нажатия браузер это блокирует, и в окне остаётся «Sorry,
+     something went wrong». Поэтому спрашиваем воркер, пришёл ли от Gumroad
+     Ping с нашим номером покупки, — раз в 3 секунды, пока страница открыта,
+     но не дольше 30 минут. Окно оплаты можно и закрыть: если оплата прошла
+     в нём, экран «Оплата прошла» всё равно появится. */
+  var purchaseTimer = null;
+  function watchPurchase(sid) {
+    if (purchaseTimer) { clearInterval(purchaseTimer); }
+    var started = Date.now(), busy = false, finished = false;
+    var check = function () {
+      if (finished) { return; }
+      if (Date.now() - started > 30 * 60 * 1000) { clearInterval(purchaseTimer); return; }
+      if (busy) { return; }
+      busy = true;
+      apiPost('/purchase/status', { sid: sid }, 5000).then(function (r) {
+        busy = false;
+        if (!r || !r.paid || finished) { return; }
+        finished = true;
+        clearInterval(purchaseTimer);
+        purchaseDone(r);
+      }).catch(function () { busy = false; });
+    };
+    purchaseTimer = setInterval(check, 3000);
+    /* Вернулся на страницу (например, из почты) — проверяем сразу. */
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { check(); } });
+  }
+
+  function purchaseDone(r) {
+    var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
+    try {
+      /* Продукт подставит их в форму входа (product/js/app.js, showGateOnly). */
+      localStorage.setItem('astromap.prefill', JSON.stringify({
+        email: r.email || '', licenseKey: r.licenseKey || '', at: Date.now()
+      }));
+    } catch (e) {}
+    document.dispatchEvent(new CustomEvent('funnel:purchase', { detail: { inapp: true } }));
+    var box = el('paybox');
+    if (box) { box.parentNode.removeChild(box); }
+    var help = el('walletHelp');
+    if (help) { help.parentNode.removeChild(help); }
+    document.body.style.overflow = '';
+    var d = document.createElement('div');
+    d.className = 'whelp whelp--done';
+    d.setAttribute('role', 'dialog');
+    d.setAttribute('aria-modal', 'true');
+    d.innerHTML = '<div class="whelp__card"><h2 class="whelp__t"></h2><p class="whelp__p"></p>' +
+      '<a class="cta whelp__ok" href="product/?paid=1"></a></div>';
+    document.body.appendChild(d);
+    d.querySelector('.whelp__t').textContent = T.doneTitle;
+    d.querySelector('.whelp__p').textContent = T.doneText;
+    var go = d.querySelector('.whelp__ok');
+    go.textContent = T.doneBtn;
+    go.focus();
   }
 
   /* Кнопка «Оплатить через Apple Pay» внутри TikTok. Три вещи сразу, пока

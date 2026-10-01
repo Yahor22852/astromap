@@ -195,7 +195,10 @@
         wOk: 'Ho capito',
         opening: 'Apertura del pagamento…',
         cont: 'Completa il pagamento iniziato su TikTok',
-        contBtn: 'Continua il pagamento'
+        contBtn: 'Continua il pagamento',
+        doneTitle: 'Pagamento completato ✓',
+        doneText: 'La chiave di accesso è già inserita: crea solo una password.',
+        doneBtn: 'Apri il mio accesso'
       },
       checkoutOff: 'I pagamenti non sono ancora collegati. I tuoi dati sono salvati — torna fra poco.'
     },

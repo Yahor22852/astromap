@@ -3932,6 +3932,20 @@
     if (emailInput && !emailInput.value) {
       try { emailInput.value = localStorage.getItem(EMAIL_KEY) || ''; } catch (e) {}
     }
+    /* Оплата прошла в окне внутри TikTok: воронка узнала о ней по Gumroad
+       Ping и положила почту и ключ сюда (funnel/js/flow.js, purchaseDone).
+       Подставляем их — человеку остаётся придумать пароль. Живёт 2 часа. */
+    try {
+      var pre = JSON.parse(localStorage.getItem('astromap.prefill') || 'null');
+      if (pre && pre.at && Date.now() - pre.at < 2 * 3600 * 1000) {
+        var form = el('gateForm');
+        if (pre.email && emailInput) { emailInput.value = pre.email; }
+        if (pre.licenseKey && form && form.gateLicense) { form.gateLicense.value = normalizeKey(pre.licenseKey); }
+        setTimeout(function () { var pw = el('gatePassword'); if (pw) { pw.focus(); } }, 60);
+      } else if (pre) {
+        localStorage.removeItem('astromap.prefill');
+      }
+    } catch (e) {}
     if (shell) { shell.hidden = true; }
     if (gate) { gate.hidden = false; }
     if (message) { setGateStatus(message, true); }

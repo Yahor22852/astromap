@@ -242,6 +242,66 @@ async function handoff(request, env, action) {
   return jsonReply({ ok: false, hint: !!hint });
 }
 
+/* --- оплата внутри окна в TikTok: как странице узнать, что она прошла ---
+
+   После оплаты в окне (iframe) Gumroad пытается увести ВСЮ страницу на
+   страницу доступа, браузер это без нажатия не пускает, и в окне остаётся
+   «Sorry, something went wrong». Поэтому страница узнаёт об оплате сама:
+
+   - к ссылке чекаута в окне добавлен одноразовый номер astro_sid (UUID,
+     его знает только эта страница);
+   - Gumroad Ping (Gumroad → Settings → Advanced → Ping endpoint =
+     https://astromap-visits.<аккаунт>.workers.dev/gumroad/ping) присылает
+     о продаже почту, лицензионный ключ и параметры ссылки — среди них
+     url_params[astro_sid];
+   - страница раз в несколько секунд спрашивает POST /purchase/status
+     { sid } и, получив paid, закрывает окно и предлагает войти с уже
+     вписанными почтой и ключом.
+
+   Подписи у Gumroad Ping нет. Поддельный ping с чужим sid ничего не даёт:
+   sid знает только открывшая его страница, а ключ всё равно проверяет
+   license-verify при входе. Если задан GUMROAD_SELLER_ID, ping от другого
+   продавца отбрасывается. Записи живут PURCHASE_TTL_MS. */
+var PURCHASE_TTL_MS = 2 * 3600 * 1000;
+var PURCHASE_SCHEMA = 'CREATE TABLE IF NOT EXISTS purchase (' +
+  'sid TEXT PRIMARY KEY, email TEXT NOT NULL, license TEXT NOT NULL, created INTEGER NOT NULL)';
+
+async function gumroadPing(request, env) {
+  if (!env || !env.DB) { return new Response('not configured', { status: 503 }); }
+  var form = new URLSearchParams(await request.text());
+  if (env.GUMROAD_SELLER_ID && form.get('seller_id') !== env.GUMROAD_SELLER_ID) {
+    return new Response('ok');
+  }
+  var sid = form.get('url_params[astro_sid]') || '';
+  if (!/^[0-9a-f-]{20,64}$/i.test(sid)) { return new Response('ok'); }
+  var email = String(form.get('email') || '').slice(0, 200);
+  var license = String(form.get('license_key') || '').slice(0, 100);
+  var now = Date.now();
+  await run(env, async function () {
+    await env.DB.prepare('DELETE FROM purchase WHERE created < ?1').bind(now - PURCHASE_TTL_MS).run();
+    await env.DB.prepare(
+      'INSERT INTO purchase (sid, email, license, created) VALUES (?1, ?2, ?3, ?4) ' +
+      'ON CONFLICT (sid) DO UPDATE SET email = ?2, license = ?3, created = ?4'
+    ).bind(sid, email, license, now).run();
+  }, PURCHASE_SCHEMA);
+  return new Response('ok');
+}
+
+async function purchaseStatus(request, env) {
+  if (request.headers.get('Origin') !== ALLOWED_ORIGIN) { return jsonReply({ ok: false }, 403); }
+  if (!env || !env.DB) { return jsonReply({ ok: false, reason: 'not_configured' }, 503); }
+  var body = {};
+  try { body = JSON.parse(await request.text()); } catch (e) { body = {}; }
+  var sid = String(body.sid || '');
+  if (!/^[0-9a-f-]{20,64}$/i.test(sid)) { return jsonReply({ ok: false }, 400); }
+  var row = await run(env, function () {
+    return env.DB.prepare('SELECT email, license FROM purchase WHERE sid = ?1 AND created >= ?2')
+      .bind(sid, Date.now() - PURCHASE_TTL_MS).first();
+  }, PURCHASE_SCHEMA);
+  if (!row) { return jsonReply({ ok: true, paid: false }); }
+  return jsonReply({ ok: true, paid: true, email: row.email, licenseKey: row.license });
+}
+
 function esc(t) {
   return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -324,6 +384,8 @@ export default {
     if (request.method === 'POST' && url.pathname === '/handoff/put') { return handoff(request, env, 'put'); }
     if (request.method === 'POST' && url.pathname === '/handoff/take') { return handoff(request, env, 'take'); }
     if (request.method === 'POST' && url.pathname === '/handoff/claim') { return handoff(request, env, 'claim'); }
+    if (request.method === 'POST' && url.pathname === '/gumroad/ping') { return gumroadPing(request, env); }
+    if (request.method === 'POST' && url.pathname === '/purchase/status') { return purchaseStatus(request, env); }
     if (request.method === 'POST' && url.pathname === '/handoff/whoami') { return handoff(request, env, 'whoami'); }
     if (request.method === 'GET' && url.pathname === '/stats') { return stats(url, env); }
     return new Response('not found', { status: 404 });

@@ -195,7 +195,10 @@
         wOk: 'Verstanden',
         opening: 'Zahlung wird geöffnet…',
         cont: 'Schließ die in TikTok begonnene Zahlung ab',
-        contBtn: 'Zahlung fortsetzen'
+        contBtn: 'Zahlung fortsetzen',
+        doneTitle: 'Zahlung abgeschlossen ✓',
+        doneText: 'Dein Zugangsschlüssel ist schon eingetragen – leg nur noch ein Passwort fest.',
+        doneBtn: 'Zugang öffnen'
       },
       checkoutOff: 'Zahlungen sind noch nicht angebunden. Deine Angaben sind gespeichert — komm gleich wieder.'
     },
