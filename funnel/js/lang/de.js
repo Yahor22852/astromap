@@ -187,7 +187,7 @@
       inapp: {
         close: 'Zurück',
         paid: 'Schon bezahlt? Schlüssel eingeben',
-        trouble: 'Apple Pay und Google Pay funktionieren in TikTok nicht. Zahl hier mit Karte – oder kopiere den Link und öffne ihn in Safari oder Chrome: Deine Antworten kommen mit.',
+        trouble: 'Apple Pay und Google Pay funktionieren im eingebauten Browser einer App nicht. Zahl hier mit Karte – oder kopiere den Link und öffne ihn in Safari oder Chrome: Deine Antworten kommen mit.',
         copy: 'Link für Safari / Chrome kopieren',
         copied: 'Link kopiert – füge ihn in Safari oder Chrome ein.'
       },

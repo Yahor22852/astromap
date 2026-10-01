@@ -30,7 +30,20 @@
    Ссылки чекаута — те же, что CHECKOUT_URL / CHECKOUT_URL_YEAR в
    js/flow.js. Меняешь там — меняй и здесь. */
 (function () {
-  var INAPP = /musical_ly|bytedancewebview|tiktok|trill_/i.test(navigator.userAgent);
+  /* Признак встроенного браузера — не только по словам TikTok в
+     user-agent: у разных версий и платформ строка разная, и на одном
+     телефоне второй тестов TikTok не распознавался — страница делала
+     автоматический переход, и TikTok показывал экран блокировки. Поэтому
+     ещё и общий признак встроенного браузера:
+       iPhone — у Safari, Chrome, Firefox и Edge в user-agent всегда есть
+         «Safari/», у встроенных браузеров приложений (WKWebView) — нет.
+         Сайт с домашнего экрана тоже без «Safari/», его отличает
+         navigator.standalone.
+       Android — встроенный браузер (WebView) помечен «; wv)». */
+  var ua = navigator.userAgent;
+  var INAPP = /musical_ly|bytedance|tiktok|trill_|aweme|bytelocale/i.test(ua) ||
+    (/iPhone|iPad|iPod/.test(ua) && !/Safari\//.test(ua) && navigator.standalone !== true) ||
+    (/Android/.test(ua) && /; wv\)/.test(ua));
   /* Проверка без телефона: localStorage.setItem('astromap.qa.inapp', '1')
      в консоли включает тот же режим, removeItem — выключает. */
   try { if (localStorage.getItem('astromap.qa.inapp') === '1') { INAPP = true; } } catch (e) {}
