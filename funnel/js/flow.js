@@ -130,12 +130,16 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
 
   /* --- оплата из встроенного браузера TikTok --------------------------
      TikTok не открывает платёжные страницы в своём браузере. Вместо
-     перехода на Gumroad показываем свой экран: как открыть страницу в
-     настоящем браузере, кнопку «Открыть в браузере» и «Скопировать
-     ссылку». Адрес страницы при этом подменяется на ссылку-передачу
-     (?go=<план>#h=<ответы>), которую разбирает скрипт в <head> index.html —
-     её же TikTok и откроет через «••• → Открыть в браузере». */
-  function handoffUrl(plan, inQuery) {
+     перехода на Gumroad страница ПЕРЕЗАГРУЖАЕТСЯ на ссылке-передаче
+     astromap.me/?go=<план>&h=<ответы> (тот же экран оплаты, поверх —
+     инструкция), и уже её TikTok откроет через «••• → Открыть в
+     браузере». В Safari/Chrome ссылку разбирает скрипт в <head> index.html.
+
+     Почему перезагрузка, а не history.replaceState: первая версия меняла
+     адрес без перехода, и TikTok по «Открыть в браузере» открывал
+     исходный адрес — человек попадал в начало воронки без ответов.
+     Почему параметр, а не фрагмент #: встроенные браузеры его теряют. */
+  function handoffUrl(plan) {
     var f = null;
     try { f = JSON.parse(localStorage.getItem('astromap.funnel') || 'null'); } catch (e) { f = null; }
     var json = JSON.stringify({ f: f, l: window.LANG });
@@ -143,13 +147,12 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     for (var i = 0; i < bytes.length; i++) { bin += String.fromCharCode(bytes[i]); }
     var h = btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     var base = location.origin + location.pathname + '?go=' + plan;
-    return inQuery ? base + '&h=' + h : base + '#h=' + h;
+    return base + '&h=' + h;
   }
 
   function showInAppSheet(plan) {
     var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
-    var url = handoffUrl(plan, false);
-    try { history.replaceState(null, '', url); } catch (e) { /* без подмены — останется «Скопировать» */ }
+    var url = handoffUrl(plan);
     var old = el('inapp');
     if (old) { old.parentNode.removeChild(old); }
     var box = document.createElement('div');
@@ -184,7 +187,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     el('inappOpen').addEventListener('click', function () {
       var android = /android/i.test(navigator.userAgent);
       if (android) {
-        var u = handoffUrl(plan, true).replace(/^https:\/\//, '');
+        var u = url.replace(/^https:\/\//, '');
         location.href = 'intent://' + u + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
       } else {
         location.href = 'x-safari-' + url;
@@ -200,9 +203,11 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       } else { fallbackCopy(url); done(); }
     });
     el('inappClose').addEventListener('click', function () {
-      box.parentNode.removeChild(box);
-      try { history.replaceState(null, '', location.pathname); } catch (e) {}
-      el('cta').focus();
+      /* Назад — тоже переходом, а не правкой адреса: иначе TikTok так и
+         держал бы ссылку-передачу текущей, и перезагрузка снова открыла
+         бы эту инструкцию. */
+      saveResume();
+      location.replace(location.pathname + '?funnel');
     });
     el('inappOpen').focus();
     document.dispatchEvent(new CustomEvent('funnel:inapp', { detail: { plan: plan } }));
@@ -223,7 +228,12 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
      «ушёл на оплату» здесь не ставим: человек ещё не на чекауте. Её
      поставит скрипт в <head>, когда страница откроется в браузере. */
   function goCheckout(plan, url) {
-    if (window.ASTROMAP_INAPP) { showInAppSheet(plan); return; }
+    if (window.ASTROMAP_INAPP) {
+      /* Экран оплаты переживёт перезагрузку так же, как при смене языка. */
+      saveResume();
+      location.href = handoffUrl(plan);
+      return;
+    }
     markCheckout(plan);
     window.location.href = url;
   }
@@ -1701,4 +1711,12 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     progress('s1');
     dock('s1');
   }
+
+  /* Загрузка на ссылке-передаче внутри TikTok — показываем инструкцию
+     поверх восстановленного экрана оплаты. Вне TikTok сюда не доходит:
+     скрипт в <head> уже ушёл на чекаут. */
+  (function () {
+    var plan = new URLSearchParams(location.search).get('go');
+    if (window.ASTROMAP_INAPP && (plan === 'monthly' || plan === 'yearly')) { showInAppSheet(plan); }
+  })();
 })();
