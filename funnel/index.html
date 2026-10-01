@@ -9,6 +9,38 @@
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <script>
+/* Заход по ссылке — один на вкладку, в счётчик cf-worker/visits.js.
+   Источник — ?utm_source (или короткое ?src), кампания — ?utm_campaign;
+   без меток — домен, с которого перешли, иначе direct. Отправляется ДО
+   переадресации ниже, чтобы купившие, пришедшие по ссылке, тоже
+   считались: sendBeacon доживает до конца запроса и после ухода со страницы.
+
+   Метка в sessionStorage — чтобы смена языка (это перезагрузка страницы)
+   и «Назад» с чекаута не считались новым заходом. Тело — text/plain: так
+   запрос «простой», без предварительного OPTIONS. Ни cookies, ни
+   идентификатора человека не отправляется. Пустой VISITS_URL — ничего
+   не шлём. */
+(function () {
+  var VISITS_URL = 'https://astromap-visits.egorrut3030.workers.dev/hit';
+  try {
+    if (!VISITS_URL || sessionStorage.getItem('astromap.visit')) { return; }
+    sessionStorage.setItem('astromap.visit', '1');
+    var q = new URLSearchParams(location.search);
+    var source = q.get('utm_source') || q.get('src') || '';
+    if (!source && document.referrer) {
+      var host = new URL(document.referrer).hostname.replace(/^www\./, '');
+      if (host && host !== location.hostname) { source = host; }
+    }
+    var body = JSON.stringify({ source: source || 'direct', campaign: q.get('utm_campaign') || '' });
+    var blob = new Blob([body], { type: 'text/plain' });
+    if (!(navigator.sendBeacon && navigator.sendBeacon(VISITS_URL, blob))) {
+      fetch(VISITS_URL, { method: 'POST', body: blob, keepalive: true, mode: 'no-cors' })
+        .catch(function () {});
+    }
+  } catch (e) { /* приватный режим или старый браузер — без счётчика */ }
+})();
+</script>
+<script>
 /* Воронка и продукт живут на одном адресе (astromap.me и astromap.me/product/),
    но человек, который уже купил, не должен снова проходить квиз и пейволл.
    Поэтому до отрисовки чего-либо:
