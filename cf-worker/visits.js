@@ -14,34 +14,30 @@
    символы выбрасываются, длина — до 40 знаков.
 
    Деплой — как у license-verify.js и horoscope-ai.js, вручную в дашборде
-   Cloudflare:
-     1. Workers & Pages → Create → Worker, имя astromap-visits (тогда адрес
-        совпадёт с VISITS_URL в funnel/index.html; другое имя — поправь там).
-        Edit code → вставить этот файл целиком → Deploy.
-     2. Workers & Pages → KV → Create namespace (например astromap-visits).
-        В воркере Settings → Bindings → Add → KV namespace,
-        Variable name: VISITS.
-     3. Settings → Variables → Add, тип Secret: STATS_KEY — любой длинный
-        пароль. Им открывается сводка.
+   Cloudflare. Пошагово — в funnel/README.md, раздел «Счётчик заходов».
+   Коротко: воркер astromap-visits с этим кодом, база D1 с привязкой DB,
+   секрет STATS_KEY. Таблицу воркер создаёт сам при первом заходе.
 
    Сводка: https://astromap-visits.<аккаунт>.workers.dev/stats?key=<STATS_KEY>
      &days=30 — сколько дней показать (по умолчанию 30, максимум 90).
      &format=json — то же самое данными, а не таблицей.
 
-   Хранение: один ключ KV на день, day:YYYY-MM-DD → { "tiktok / sept_promo": 12,
-   ... }, живёт 400 дней. KV не умеет атомарный инкремент, поэтому два
-   захода в одну и ту же миллисекунду могут засчитаться как один. Для
-   сравнения ссылок между собой это не важно; для точного счёта на большом
-   трафике нужен Durable Object или Analytics Engine.
+   ПОЧЕМУ D1, А НЕ KV. Первая версия держала день в одном ключе KV. KV
+   принимает не больше одной записи в секунду в ключ и раздаёт новые
+   значения по миру с задержкой до минуты — при рекламном наплыве
+   счётчик терял бы заметную долю заходов, а бесплатный лимит KV — 1000
+   записей в сутки. В D1 прибавление единицы — один атомарный UPSERT,
+   бесплатно до 100 000 записей в сутки.
 
-   Защита от мусора: принимаются только запросы со страницы astromap.me
-   (заголовок Origin), и за день сохраняется не больше MAX_SOURCES_PER_DAY
-   разных меток — остальные складываются в «other». Накрутить счётчик
-   руками при желании можно: это счётчик заходов, а не биллинг. */
+   Таблица visits(day, label, n): день (UTC), метка «источник / кампания»,
+   число заходов. Защита от мусора: принимаются только запросы со
+   страницы astromap.me (заголовок Origin), и за день заводится не
+   больше MAX_SOURCES_PER_DAY разных меток — остальные складываются в
+   «other». Накрутить счётчик руками при желании можно: это счётчик
+   заходов, а не биллинг. */
 
 var ALLOWED_ORIGIN = 'https://astromap.me';
 var MAX_SOURCES_PER_DAY = 200;
-var DAY_TTL_S = 400 * 24 * 3600;
 
 function clean(v) {
   return String(v || '').toLowerCase().replace(/[^a-z0-9._-]+/g, '_')
@@ -50,25 +46,45 @@ function clean(v) {
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
+var SCHEMA = 'CREATE TABLE IF NOT EXISTS visits (' +
+  'day TEXT NOT NULL, label TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, ' +
+  'PRIMARY KEY (day, label))';
+
+/* Запрос к таблице; если её ещё нет (первый заход после деплоя) —
+   создаём и повторяем. Так в дашборде не нужно ничего запускать руками. */
+async function run(env, fn) {
+  try { return await fn(); }
+  catch (e) {
+    if (!/no such table/i.test(String(e && e.message))) { throw e; }
+    await env.DB.exec(SCHEMA);
+    return fn();
+  }
+}
+
 async function hit(request, env) {
   if (request.headers.get('Origin') !== ALLOWED_ORIGIN) {
     return new Response(null, { status: 403 });
   }
-  if (!env || !env.VISITS) { return new Response(null, { status: 503 }); }
+  if (!env || !env.DB) { return new Response(null, { status: 503 }); }
 
   var data = {};
   try { data = JSON.parse(await request.text()); } catch (e) { data = {}; }
   var source = clean(data.source) || 'direct';
   var campaign = clean(data.campaign);
   var label = campaign ? source + ' / ' + campaign : source;
+  var day = today();
 
-  var key = 'day:' + today();
-  var counts = (await env.VISITS.get(key, 'json')) || {};
-  if (!(label in counts) && Object.keys(counts).length >= MAX_SOURCES_PER_DAY) {
-    label = 'other';
-  }
-  counts[label] = (counts[label] || 0) + 1;
-  await env.VISITS.put(key, JSON.stringify(counts), { expirationTtl: DAY_TTL_S });
+  await run(env, async function () {
+    var known = await env.DB.prepare(
+      'SELECT (SELECT COUNT(*) FROM visits WHERE day = ?1) AS labels, ' +
+      'EXISTS (SELECT 1 FROM visits WHERE day = ?1 AND label = ?2) AS has'
+    ).bind(day, label).first();
+    if (!known.has && known.labels >= MAX_SOURCES_PER_DAY) { label = 'other'; }
+    await env.DB.prepare(
+      'INSERT INTO visits (day, label, n) VALUES (?1, ?2, 1) ' +
+      'ON CONFLICT (day, label) DO UPDATE SET n = n + 1'
+    ).bind(day, label).run();
+  });
   /* Ответ браузеру не нужен: sendBeacon его не читает. CORS-заголовок
      всё равно ставим — на случай отправки через fetch. */
   return new Response(null, {
@@ -82,7 +98,7 @@ function esc(t) {
 }
 
 async function stats(url, env) {
-  if (!env || !env.VISITS || !env.STATS_KEY) {
+  if (!env || !env.DB || !env.STATS_KEY) {
     return new Response('not configured', { status: 503 });
   }
   if (url.searchParams.get('key') !== env.STATS_KEY) {
@@ -93,7 +109,15 @@ async function stats(url, env) {
   for (var i = 0; i < days; i++) {
     dates.push(new Date(Date.now() - i * 86400000).toISOString().slice(0, 10));
   }
-  var perDay = await Promise.all(dates.map(function (d) { return env.VISITS.get('day:' + d, 'json'); }));
+  var res = await run(env, function () {
+    return env.DB.prepare('SELECT day, label, n FROM visits WHERE day >= ?1')
+      .bind(dates[dates.length - 1]).all();
+  });
+  var byDate = {};
+  (res.results || []).forEach(function (r) {
+    (byDate[r.day] = byDate[r.day] || {})[r.label] = r.n;
+  });
+  var perDay = dates.map(function (d) { return byDate[d]; });
 
   var total = {}, rows = [];
   dates.forEach(function (d, i) {

@@ -358,11 +358,43 @@ relationshipsWho fits you, and why». Ломалось на всех ширин�
 `cf-worker/visits.js`: источник из `?utm_source=` (или короткого `?src=`),
 кампания из `?utm_campaign=`; без меток — домен, с которого перешли, иначе
 `direct`. Смена языка и «Назад» с чекаута новым заходом не считаются. Ни
-cookies, ни IP, ни идентификатора человека не хранится — только счётчики по
-дням.
+cookies, ни IP, ни идентификатора человека не хранится — только число
+заходов по дням и меткам, в базе D1. Адрес воркера — `VISITS_URL` в
+index.html; пока воркер не задеплоен, запрос уходит в 404 и ни на что не
+влияет.
 
-Ссылки для рекламы: `https://astromap.me/?utm_source=tiktok&utm_campaign=sept`.
-Сводка: `https://astromap-visits.<аккаунт>.workers.dev/stats?key=<STATS_KEY>`
-(`&days=90`, `&format=json`). Деплой воркера — в шапке `cf-worker/visits.js`;
-пока он не задеплоен, запрос уходит в 404 и ни на что не влияет. Адрес
-воркера — `VISITS_URL` в index.html.
+### Деплой (один раз, дашборд Cloudflare)
+
+1. **Воркер.** dash.cloudflare.com → Workers & Pages → Create → Create
+   Worker. Имя — `astromap-visits` (тогда адрес совпадёт с `VISITS_URL`).
+   Deploy, затем Edit code → удалить всё → вставить `cf-worker/visits.js`
+   целиком → Deploy.
+2. **База.** Storage & Databases → D1 SQL Database → Create → имя
+   `astromap-visits`. Таблицу создавать не нужно — воркер сделает это сам.
+3. **Привязка.** Воркер → Settings → Bindings → Add binding → D1 database →
+   Variable name `DB`, база `astromap-visits` → Deploy.
+4. **Пароль сводки.** Воркер → Settings → Variables and Secrets → Add →
+   Type: Secret, Name `STATS_KEY`, Value — длинный случайный пароль → Deploy.
+5. **Проверка воркера.** `https://astromap-visits.<аккаунт>.workers.dev/stats?key=<пароль>`
+   → «Заходы за 30 дн.: 0». `forbidden` — неверный пароль; `not configured`
+   — нет привязки `DB` или секрета `STATS_KEY` (шаги 3–4).
+6. **Проверка целиком** (после пуша сайта): открыть в приватном окне
+   `https://astromap.me/?utm_source=test&utm_campaign=check`, обновить
+   сводку — строка `test / check: 1`. Каждая следующая проверка — в новом
+   приватном окне: одна вкладка = один заход.
+
+Если адрес воркера вышел другим (другое имя или поддомен аккаунта) —
+поправить `VISITS_URL` в `funnel/index.html` и запушить.
+
+### Ссылки и сводка
+
+- Ссылка: `https://astromap.me/?utm_source=tiktok&utm_campaign=sept`
+  или короче `https://astromap.me/?src=blogger_anna`. Метки приводятся к
+  нижнему регистру, пробелы и спецсимволы → `_`, длина до 40 знаков.
+- Сводка: `.../stats?key=<пароль>`; `&days=90` — период (до 90 дней),
+  `&format=json` — данными. День считается по UTC.
+- В день заводится до 200 разных меток, остальное — в `other`.
+- Бесплатный тариф D1 — 100 000 записей в сутки, то есть столько же
+  заходов. Данные хранятся, пока их не удалить.
+- Это счётчик заходов, а не уникальных людей: один человек в двух
+  вкладках — два захода. Сравнивать ссылки между собой он позволяет.
