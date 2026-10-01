@@ -189,8 +189,8 @@
       inapp: {
         close: 'Volver',
         paid: '¿Ya pagaste? Introduce tu clave',
-        trouble: '¿El pago no carga? Copia el enlace y ábrelo en Safari o Chrome: tus respuestas te acompañan.',
-        copy: 'Copiar enlace',
+        trouble: 'Apple Pay y Google Pay no funcionan dentro de TikTok. Paga aquí con tarjeta, o copia el enlace y ábrelo en Safari o Chrome: tus respuestas te acompañan.',
+        copy: 'Copiar enlace para Safari / Chrome',
         copied: 'Enlace copiado: pégalo en Safari o Chrome.'
       },
       checkoutOff: 'Los pagos aún no están conectados. Tus datos quedan guardados: vuelve en un momento.'

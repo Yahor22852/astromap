@@ -192,8 +192,8 @@
       inapp: {
         close: 'Geri',
         paid: 'Ödedin mi? Anahtarını gir',
-        trouble: 'Ödeme yüklenmiyor mu? Bağlantıyı kopyala, Safari veya Chrome’da aç — yanıtların seninle gelir.',
-        copy: 'Bağlantıyı kopyala',
+        trouble: 'Apple Pay ve Google Pay TikTok içinde çalışmıyor. Burada kartla öde ya da bağlantıyı kopyalayıp Safari veya Chrome’da aç: yanıtların seninle gelir.',
+        copy: 'Safari / Chrome için bağlantıyı kopyala',
         copied: 'Bağlantı kopyalandı — Safari veya Chrome’a yapıştır.'
       },
       checkoutOff: 'Ödeme henüz bağlı değil. Bilgilerin kayıtlı — birazdan tekrar uğra.'

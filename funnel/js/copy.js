@@ -225,8 +225,8 @@
       inapp: {
         close: 'Wróć',
         paid: 'Już zapłacono? Wpisz klucz',
-        trouble: 'Płatność się nie ładuje? Skopiuj link i otwórz go w Safari lub Chrome — Twoje odpowiedzi przejdą razem z Tobą.',
-        copy: 'Skopiuj link',
+        trouble: 'Apple Pay i Google Pay nie działają w TikToku. Zapłać tu kartą — albo skopiuj link i otwórz go w Safari lub Chrome: Twoje odpowiedzi przejdą razem z Tobą.',
+        copy: 'Skopiuj link do Safari / Chrome',
         copied: 'Link skopiowany — wklej go w Safari lub Chrome.'
       },
       checkoutOff: 'Płatność nie jest jeszcze podłączona. Twoje dane są zapisane — wróć tu za chwilę.',
@@ -530,8 +530,8 @@
       inapp: {
         close: 'Back',
         paid: 'Already paid? Enter your key',
-        trouble: 'Payment not loading? Copy the link and open it in Safari or Chrome — your answers come with you.',
-        copy: 'Copy link',
+        trouble: 'Apple Pay and Google Pay don’t work inside TikTok. Pay by card here — or copy the link and open it in Safari or Chrome: your answers come with you.',
+        copy: 'Copy link for Safari / Chrome',
         copied: 'Link copied — paste it into Safari or Chrome.'
       },
       checkoutOff: 'Payments are not connected yet. Your details are saved — come back in a moment.',
