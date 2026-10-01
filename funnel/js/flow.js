@@ -602,11 +602,17 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (i >= 0) { ev.preventDefault(); choose(i); }
     });
 
+    /* ТОЧНОЕ СОВПАДЕНИЕ ЗАСЧИТЫВАЕТСЯ ПРЯМО ПРИ НАБОРЕ. Раньше — только
+       по blur, а на iPhone тап по пустому месту или по выключенной кнопке
+       фокус с поля не снимает: человек вписал «Barysaw, Belarus», клавиатура
+       убрана, а кнопка так и стоит серой. Подсказки при этом остаются
+       открытыми — можно выбрать другой город с тем же названием. */
     input.addEventListener('input', function () {
       S.city = null;
       resetChart();
-      el('cta').disabled = !timeReady();
       openFor(input.value);
+      pickExact(false);
+      el('cta').disabled = !timeReady();
     });
     /* Возврат в поле снова показывает подсказки — и по нажатию, и по табу. */
     input.addEventListener('focus', function () { openFor(input.value); });
@@ -641,23 +647,30 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
        и не понимал, чего от него хотят. Если набранное ТОЧНО совпадает с
        городом из списка — с подписью страны или без, — это и есть выбор.
        Опечатки по-прежнему не проходят: нужно полное совпадение названия. */
-    function pickExact() {
-      if (S.city) { return; }
+    /* Вызывается и при наборе, и при уходе из поля. При наборе (rewrite
+       false) текст в поле не трогаем — иначе курсор прыгал бы в конец
+       посреди слова; подпись со страной ставится, когда человек уходит. */
+    function pickExact(rewrite) {
+      if (S.city) {
+        if (rewrite && S.city.cc) { input.value = FC.label([S.city.n, S.city.cc]); }
+        return;
+      }
       var text = FC.norm(input.value).trim();
       if (text.length < 2) { return; }
-      var head = text.indexOf(',') > 0 ? text.slice(0, text.indexOf(',')).trim() : text;
-      var found = FC.search(input.value.indexOf(',') > 0
-        ? input.value.slice(0, input.value.indexOf(',')) : input.value, 8);
+      /* С запятой — это «город, страна», и совпасть должна вся строка:
+         иначе «Barysaw, Poland» засчитывался бы как Борисов в Беларуси.
+         Без запятой — точное название города; тёзок много, берём самый
+         крупный, как Enter в подсказках. */
+      var comma = input.value.indexOf(',');
+      var found = FC.search(comma > 0 ? input.value.slice(0, comma) : input.value, 8);
       var best = null;
       for (var i = 0; i < found.length && !best; i++) {
-        if (FC.norm(FC.label(found[i])) === text) { best = found[i]; }
-      }
-      for (var j = 0; j < found.length && !best; j++) {
-        if (FC.norm(found[j][0]) === head) { best = found[j]; }
+        var name = comma > 0 ? FC.label(found[i]) : found[i][0];
+        if (FC.norm(name).trim() === text) { best = found[i]; }
       }
       if (!best) { return; }
       S.city = FC.toObject(best);
-      input.value = FC.label(best);
+      if (rewrite) { input.value = FC.label(best); }
       persist();
       el('cta').disabled = !timeReady();
     }
@@ -666,7 +679,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       /* Палец уже в списке — уход фокуса ничего не значит. */
       if (interacting) { return; }
       close();
-      pickExact();
+      pickExact(true);
     });
 
     /* Экранная клавиатура приходит и уходит уже после того, как список
@@ -684,6 +697,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (menu.hidden) { return; }
       if (wrap && wrap.contains(ev.target)) { return; }
       close();
+      pickExact(true);
     });
 
     /* Города нет в списке. Тогда считаем всё, кроме асцендента: для него
