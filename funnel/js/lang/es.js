@@ -264,28 +264,28 @@
   };
 
   /* Цена, условия списания и согласие с документами — переведены.
-     Суммы и валюта те же, что в английском и на чекауте Gumroad ($9.99 в
+     Суммы и валюта те же, что в английском и на чекауте Gumroad ($7.99 в
      месяц, $29.99 в год, плюс налог по ставке страны): меняется только язык,
      не цифры. Каждое утверждение английского текста сохранено — цена,
      период, автопродление, срок отмены (24 часа), способ отмены, ссылка на
      условия. Меняешь цену в copy.js — поменяй её и здесь, во всех строках. */
   C.billing = {
-    price: '$9.99',
+    price: '$7.99',
     period: 'al mes',
-    priceLine: '$9.99 + IVA',
+    priceLine: '$7.99 + IVA',
     renewLine: 'al mes, se renueva automáticamente',
-    disclaimer: 'La suscripción cuesta $9.99 al mes más el IVA de tu país, que verás completo antes de pagar, y se renueva automáticamente cada mes salvo que la canceles al menos 24 horas antes del fin del periodo de facturación en curso. Puedes cancelarla cuando quieras en los ajustes de tu cuenta: consulta los {terms}.',
+    disclaimer: 'La suscripción cuesta $7.99 al mes más el IVA de tu país, que verás completo antes de pagar, y se renueva automáticamente cada mes salvo que la canceles al menos 24 horas antes del fin del periodo de facturación en curso. Puedes cancelarla cuando quieras en los ajustes de tu cuenta: consulta los {terms}.',
     yearPrice: '$29.99 + IVA',
     yearPeriod: 'al año',
-    yearDisclaimer: 'El plan anual cuesta $29.99 más el IVA de tu país, que verás completo antes de pagar, y se renueva automáticamente cada año salvo que lo canceles al menos 24 horas antes del fin del periodo en curso. Pagando mes a mes, un año cuesta $119.88 sin IVA. Puedes cancelarlo cuando quieras en los ajustes de tu cuenta: consulta los {terms}.',
+    yearDisclaimer: 'El plan anual cuesta $29.99 más el IVA de tu país, que verás completo antes de pagar, y se renueva automáticamente cada año salvo que lo canceles al menos 24 horas antes del fin del periodo en curso. Pagando mes a mes, un año cuesta $95.88 sin IVA. Puedes cancelarlo cuando quieras en los ajustes de tu cuenta: consulta los {terms}.',
     support: 'Dudas sobre pagos: {email}.'
   };
   C.paywall.legal = 'Al pulsar «{cta}», aceptas los {terms} y la {privacy}.';
   C.paywall.terms = 'Términos de uso';
   C.paywall.privacy = 'Política de privacidad';
   C.paywall.privacyInline = 'Política de privacidad';
-  C.recovery.yearTitle = 'Plan anual: un 75 % más barato';
-  C.recovery.answers.price = 'El plan anual cuesta $29.99 en lugar de los $119.88 que suma un año pagando mes a mes. Son $2.50 al mes.';
+  C.recovery.yearTitle = 'Plan anual: un 69 % más barato';
+  C.recovery.answers.price = 'El plan anual cuesta $29.99 en lugar de los $95.88 que suma un año pagando mes a mes. Son $2.50 al mes.';
 
   global.COPY_ALL.es = C;
   if (global.LANG === 'es') { global.COPY = C; }

@@ -262,28 +262,28 @@
   };
 
   /* Цена, условия списания и согласие с документами — переведены.
-     Суммы и валюта те же, что в английском и на чекауте Gumroad ($9.99 в
+     Суммы и валюта те же, что в английском и на чекауте Gumroad ($7.99 в
      месяц, $29.99 в год, плюс налог по ставке страны): меняется только язык,
      не цифры. Каждое утверждение английского текста сохранено — цена,
      период, автопродление, срок отмены (24 часа), способ отмены, ссылка на
      условия. Меняешь цену в copy.js — поменяй её и здесь, во всех строках. */
   C.billing = {
-    price: '$9.99',
+    price: '$7.99',
     period: 'pro Monat',
-    priceLine: '$9.99 + MwSt.',
+    priceLine: '$7.99 + MwSt.',
     renewLine: 'pro Monat, verlängert sich automatisch',
-    disclaimer: 'Das Abo kostet $9.99 pro Monat zzgl. MwSt. nach dem Satz deines Landes; der Gesamtbetrag wird dir vor der Zahlung angezeigt. Es verlängert sich automatisch jeden Monat, sofern du nicht spätestens 24 Stunden vor Ende des laufenden Abrechnungszeitraums kündigst. Du kannst jederzeit in deinen Kontoeinstellungen kündigen – siehe {terms}.',
+    disclaimer: 'Das Abo kostet $7.99 pro Monat zzgl. MwSt. nach dem Satz deines Landes; der Gesamtbetrag wird dir vor der Zahlung angezeigt. Es verlängert sich automatisch jeden Monat, sofern du nicht spätestens 24 Stunden vor Ende des laufenden Abrechnungszeitraums kündigst. Du kannst jederzeit in deinen Kontoeinstellungen kündigen – siehe {terms}.',
     yearPrice: '$29.99 + MwSt.',
     yearPeriod: 'pro Jahr',
-    yearDisclaimer: 'Der Jahresplan kostet $29.99 zzgl. MwSt. nach dem Satz deines Landes; der Gesamtbetrag wird dir vor der Zahlung angezeigt. Er verlängert sich automatisch jedes Jahr, sofern du nicht spätestens 24 Stunden vor Ende des laufenden Zeitraums kündigst. Bei monatlicher Zahlung kostet ein Jahr $119.88 ohne MwSt. Du kannst jederzeit in deinen Kontoeinstellungen kündigen – siehe {terms}.',
+    yearDisclaimer: 'Der Jahresplan kostet $29.99 zzgl. MwSt. nach dem Satz deines Landes; der Gesamtbetrag wird dir vor der Zahlung angezeigt. Er verlängert sich automatisch jedes Jahr, sofern du nicht spätestens 24 Stunden vor Ende des laufenden Zeitraums kündigst. Bei monatlicher Zahlung kostet ein Jahr $95.88 ohne MwSt. Du kannst jederzeit in deinen Kontoeinstellungen kündigen – siehe {terms}.',
     support: 'Fragen zur Zahlung: {email}.'
   };
   C.paywall.legal = 'Mit einem Klick auf „{cta}“ akzeptierst du die {terms} und die {privacy}.';
   C.paywall.terms = 'Nutzungsbedingungen';
   C.paywall.privacy = 'Datenschutzerklärung';
   C.paywall.privacyInline = 'Datenschutzerklärung';
-  C.recovery.yearTitle = 'Jahresplan — 75 % günstiger';
-  C.recovery.answers.price = 'Der Jahresplan kostet $29.99 statt der $119.88, die bei monatlicher Zahlung im Jahr zusammenkommen. Das sind $2.50 im Monat.';
+  C.recovery.yearTitle = 'Jahresplan — 69 % günstiger';
+  C.recovery.answers.price = 'Der Jahresplan kostet $29.99 statt der $95.88, die bei monatlicher Zahlung im Jahr zusammenkommen. Das sind $2.50 im Monat.';
 
   global.COPY_ALL.de = C;
   if (global.LANG === 'de') { global.COPY = C; }

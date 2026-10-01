@@ -246,12 +246,12 @@
         { k: 'look',  t: 'Tylko się rozglądam' }
       ],
       answers: {
-        price: 'Plan roczny kosztuje 119,99 zł zamiast 479,88 zł, które wychodzą przy płaceniu co miesiąc. To 10 zł miesięcznie.',
+        price: 'Plan roczny kosztuje $29.99 zamiast $95.88, które wychodzą przy płaceniu co miesiąc. To $2.50 miesięcznie.',
         trust: 'Oto Twoje pozycje, policzone z podanej daty, godziny i miejsca. To ta sama matematyka, z której korzystają efemerydy — sprawdź je w dowolnym kalkulatorze astrologicznym, mają się zgadzać co do dziesiątej części stopnia.',
         what: 'Dostajesz dostęp do aplikacji, w której Twoja mapa łączy się z aktualnym niebem. Konkretnie:',
         look: 'Spokojnie. Mapa zostaje zapisana w tej przeglądarce, a rozbiór poniżej jest darmowy i pełny — nic w nim nie jest zasłonięte.'
       },
-      yearTitle: 'Plan roczny \u2014 taniej o 75%',
+      yearTitle: 'Plan roczny \u2014 taniej o 69%',
       yearCta: 'Wybierz plan roczny',
       backToPlan: 'Wróć do planu miesięcznego',
       readFree: 'Otwórz darmowy rozbiór'
@@ -260,29 +260,29 @@
     /* ------------------------------------------------ биллинг */
     billing: {
       /* Модель: месячная подписка без вводного периода.
-         ЦЕНА В ЗЛОТЫХ — пересчёт с 9,99 USD, а не отдельно установленная цена.
-         Перед запуском поставь ту сумму, которую реально списывает платёжка,
-         и приведи disclaimer в соответствие: расхождение цифр здесь и на
-         checkout — это спор по автопродлению, а не мелкая неточность. */
-      price: '39,99 zł',
+         ЦЕНА В ДОЛЛАРАХ, как на чекауте Gumroad. Раньше здесь стояли злотые —
+         пересчёт с прежних 9,99 USD, которого платёжка не списывала: на
+         экране одна сумма, на оплате другая. Цифры — те же, что в английском
+         блоке ниже; меняешь там — меняй и здесь. */
+      price: '$7.99',
       period: 'miesięcznie',
       /* «+ VAT» стоит в самой цене, а не только в disclaimer: Gumroad
          добавляет налог на чекауте, и без этой приписки человек видит одну
          сумму на экране и другую при оплате. Строка выросла до 14 знаков —
          при 30px в контентном блоке 327px это укладывается в одну строку. */
-      priceLine: '39,99 zł + VAT',
+      priceLine: '$7.99 + VAT',
       renewLine: 'miesięcznie, odnawia się automatycznie',
       /* Все обязательные элементы на месте: цена, период, автопродление,
          дедлайн отмены, способ отмены. Вводного периода в этой модели нет,
          поэтому и формулировки про его окончание нет. */
-      disclaimer: 'Subskrypcja kosztuje 39,99 zł miesięcznie plus VAT według stawki Twojego kraju, pokazany w całości przed płatnością, i odnawia się automatycznie co miesiąc, o ile nie anulujesz jej co najmniej 24 godziny przed końcem bieżącego okresu rozliczeniowego. Anulujesz w każdej chwili w ustawieniach konta — zobacz {terms}.',
+      disclaimer: 'Subskrypcja kosztuje $7.99 miesięcznie plus VAT według stawki Twojego kraju, pokazany w całości przed płatnością, i odnawia się automatycznie co miesiąc, o ile nie anulujesz jej co najmniej 24 godziny przed końcem bieżącego okresu rozliczeniowego. Anulujesz w każdej chwili w ustawieniach konta — zobacz {terms}.',
       /* Годовой план на recovery-экране. Скидка считается из цен, которые
-         человек видит на экране: 119,99 / (39,99 x 12 = 479,88) = 25%,
-         то есть 75% экономии. Меняешь любую из двух цен — пересчитай процент
+         человек видит на экране: 29,99 / (7,99 x 12 = 95,88) = 31,3%,
+         то есть 68,7% экономии, на экране — 69%. Меняешь любую из двух цен — пересчитай процент
          в yearTitle и в answers.price, иначе на экране будет неверная цифра. */
-      yearPrice: '119,99 zł + VAT',
+      yearPrice: '$29.99 + VAT',
       yearPeriod: 'rocznie',
-      yearDisclaimer: 'Plan roczny kosztuje 119,99 zł plus VAT według stawki Twojego kraju, pokazany w całości przed płatnością, i odnawia się automatycznie co rok, o ile nie anulujesz go co najmniej 24 godziny przed końcem bieżącego okresu. Przy planie miesięcznym rok kosztuje 479,88 zł bez VAT. Anulujesz w każdej chwili w ustawieniach konta \u2014 zobacz {terms}.',
+      yearDisclaimer: 'Plan roczny kosztuje $29.99 plus VAT według stawki Twojego kraju, pokazany w całości przed płatnością, i odnawia się automatycznie co rok, o ile nie anulujesz go co najmniej 24 godziny przed końcem bieżącego okresu. Przy planie miesięcznym rok kosztuje $95.88 bez VAT. Anulujesz w każdej chwili w ustawieniach konta \u2014 zobacz {terms}.',
       support: 'Pytania o płatności: {email}.'
     },
 
@@ -538,31 +538,31 @@
         { k: 'look',  t: 'Just looking' }
       ],
       answers: {
-        price: 'The annual plan is $29.99 instead of the $119.88 a year adds up to when paying monthly. That is $2.50 a month.',
+        price: 'The annual plan is $29.99 instead of the $95.88 a year adds up to when paying monthly. That is $2.50 a month.',
         trust: 'Here are your positions, calculated from the date, time and place you gave. This is the same maths ephemerides use — check them in any astrology calculator and they should agree to within a tenth of a degree.',
         what: 'You get access to the app where your chart meets the current sky. Specifically:',
         look: 'That’s fine. Your map stays saved in this browser, and the reading below is free and complete — nothing in it is covered up.'
       },
-      yearTitle: 'Annual plan \u2014 75% cheaper',
+      yearTitle: 'Annual plan \u2014 69% cheaper',
       yearCta: 'Get the annual plan',
       backToPlan: 'Back to the monthly plan',
       readFree: 'Open the free reading'
     },
 
     billing: {
-      price: '$9.99',
+      price: '$7.99',
       period: 'per month',
       /* Gumroad adds VAT at checkout, so the price on screen has to say so:
-         without it the card promises 9.99 and the checkout charges more.
+         without it the card promises 7.99 and the checkout charges more.
          Every other locale carries its own translation of these strings
          with the same amounts (js/lang/*.js) — change a price here, change it
          there too. */
-      priceLine: '$9.99 + VAT',
+      priceLine: '$7.99 + VAT',
       renewLine: 'per month, renews automatically',
-      disclaimer: 'The subscription is $9.99 per month plus VAT at your local rate, shown in full before you pay, and renews automatically each month unless you cancel at least 24 hours before the end of the current billing period. Cancel anytime in your account settings — see our {terms}.',
+      disclaimer: 'The subscription is $7.99 per month plus VAT at your local rate, shown in full before you pay, and renews automatically each month unless you cancel at least 24 hours before the end of the current billing period. Cancel anytime in your account settings — see our {terms}.',
       yearPrice: '$29.99 + VAT',
       yearPeriod: 'per year',
-      yearDisclaimer: 'The annual plan is $29.99 plus VAT at your local rate, shown in full before you pay, and renews automatically every year unless you cancel at least 24 hours before the end of the current period. Paying monthly, a year costs $119.88 before VAT. Cancel anytime in your account settings \u2014 see our {terms}.',
+      yearDisclaimer: 'The annual plan is $29.99 plus VAT at your local rate, shown in full before you pay, and renews automatically every year unless you cancel at least 24 hours before the end of the current period. Paying monthly, a year costs $95.88 before VAT. Cancel anytime in your account settings \u2014 see our {terms}.',
       support: 'Questions about billing: {email}.'
     },
 

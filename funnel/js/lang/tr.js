@@ -267,28 +267,28 @@
   };
 
   /* Цена, условия списания и согласие с документами — переведены.
-     Суммы и валюта те же, что в английском и на чекауте Gumroad ($9.99 в
+     Суммы и валюта те же, что в английском и на чекауте Gumroad ($7.99 в
      месяц, $29.99 в год, плюс налог по ставке страны): меняется только язык,
      не цифры. Каждое утверждение английского текста сохранено — цена,
      период, автопродление, срок отмены (24 часа), способ отмены, ссылка на
      условия. Меняешь цену в copy.js — поменяй её и здесь, во всех строках. */
   C.billing = {
-    price: '$9.99',
+    price: '$7.99',
     period: 'aylık',
-    priceLine: '$9.99 + KDV',
+    priceLine: '$7.99 + KDV',
     renewLine: 'aylık, otomatik yenilenir',
-    disclaimer: 'Abonelik aylık $9.99 artı ülkendeki orana göre KDV’dir; toplam tutar ödemeden önce eksiksiz gösterilir. Mevcut fatura döneminin bitiminden en az 24 saat önce iptal etmezsen her ay otomatik olarak yenilenir. Dilediğin zaman hesap ayarlarından iptal edebilirsin — bkz. {terms}.',
+    disclaimer: 'Abonelik aylık $7.99 artı ülkendeki orana göre KDV’dir; toplam tutar ödemeden önce eksiksiz gösterilir. Mevcut fatura döneminin bitiminden en az 24 saat önce iptal etmezsen her ay otomatik olarak yenilenir. Dilediğin zaman hesap ayarlarından iptal edebilirsin — bkz. {terms}.',
     yearPrice: '$29.99 + KDV',
     yearPeriod: 'yıllık',
-    yearDisclaimer: 'Yıllık plan $29.99 artı ülkendeki orana göre KDV’dir; toplam tutar ödemeden önce eksiksiz gösterilir. Mevcut dönemin bitiminden en az 24 saat önce iptal etmezsen her yıl otomatik olarak yenilenir. Aylık ödemede bir yıl KDV hariç $119.88 tutar. Dilediğin zaman hesap ayarlarından iptal edebilirsin — bkz. {terms}.',
+    yearDisclaimer: 'Yıllık plan $29.99 artı ülkendeki orana göre KDV’dir; toplam tutar ödemeden önce eksiksiz gösterilir. Mevcut dönemin bitiminden en az 24 saat önce iptal etmezsen her yıl otomatik olarak yenilenir. Aylık ödemede bir yıl KDV hariç $95.88 tutar. Dilediğin zaman hesap ayarlarından iptal edebilirsin — bkz. {terms}.',
     support: 'Ödemeyle ilgili sorular: {email}.'
   };
   C.paywall.legal = '“{cta}” düğmesine tıklayarak {terms}’nı ve {privacy}’nı kabul etmiş olursun.';
   C.paywall.terms = 'Kullanım Koşulları';
   C.paywall.privacy = 'Gizlilik Politikası';
   C.paywall.privacyInline = 'Gizlilik Politikası';
-  C.recovery.yearTitle = 'Yıllık plan — %75 daha ucuz';
-  C.recovery.answers.price = 'Yıllık plan, aylık ödemede bir yılda biriken $119.88 yerine $29.99. Bu da ayda $2.50 demek.';
+  C.recovery.yearTitle = 'Yıllık plan — %69 daha ucuz';
+  C.recovery.answers.price = 'Yıllık plan, aylık ödemede bir yılda biriken $95.88 yerine $29.99. Bu da ayda $2.50 demek.';
 
   global.COPY_ALL.tr = C;
   if (global.LANG === 'tr') { global.COPY = C; }
