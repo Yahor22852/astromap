@@ -168,7 +168,7 @@
        адресом product/?paid=1. Там остаётся воронка, а вход — по ссылке
        «Войти» на первом экране, то есть по нажатию. */
     if (window.ASTROMAP_INAPP) { return; }
-    if (/[?&]funnel(=|&|$)/.test(location.search)) { return; }
+    if (/[?&](funnel|fpdebug)(=|&|$)/.test(location.search)) { return; }
     var a = JSON.parse(localStorage.getItem('astromap.access') || 'null');
     if (a && a.email && a.licenseKey) { location.replace('product/'); return; }
     /* Та же вкладка, из которой уходили на оплату (sessionStorage живёт до

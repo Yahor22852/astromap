@@ -126,9 +126,11 @@ async function hit(request, env) {
    обмена, куда её положила кнопка в TikTok. Сами данные по одному
    отпечатку не отдаются никогда. */
 var HANDOFF_TTL_MS = 30 * 60 * 1000;
-var HANDOFF_SCHEMA = 'CREATE TABLE IF NOT EXISTS handoff (' +
-  'id TEXT PRIMARY KEY, fp TEXT NOT NULL, plan TEXT NOT NULL, data TEXT NOT NULL, ' +
-  'created INTEGER NOT NULL)';
+/* handoff2, а не handoff: у записи появились поля для второго уровня
+   сравнения, и новая таблица проще миграции. Старая просто пустеет. */
+var HANDOFF_SCHEMA = 'CREATE TABLE IF NOT EXISTS handoff2 (' +
+  'id TEXT PRIMARY KEY, fp TEXT NOT NULL, coarse TEXT NOT NULL, token TEXT NOT NULL, ' +
+  'plan TEXT NOT NULL, data TEXT NOT NULL, created INTEGER NOT NULL)';
 
 function expandIPv6(ip) {
   var parts = ip.split('::');
@@ -163,42 +165,80 @@ function jsonReply(obj, status) {
   });
 }
 
+/* Три уровня, от точного к осторожному:
+
+   1. IP + полный отпечаток совпали — данные отдаются сразу, страница
+      уходит на чекаут.
+   2. Совпали только IP и грубый отпечаток (тип телефона + часовой пояс) —
+      потому что Safari 26 по умолчанию искажает часть характеристик
+      устройства (Advanced Fingerprinting Protection), и полный отпечаток
+      из TikTok с ним не сходится. Данные НЕ отдаются: ответ — confirm и
+      одноразовый token, страница показывает «Заверши оплату, начатую в
+      TikTok», и только по нажатию забирает запись (/handoff/claim, снова
+      с проверкой IP и грубого отпечатка). Если таких записей с этого IP
+      несколько — неясно, чья, и не отдаётся ничего.
+   3. Совпал только полный отпечаток, IP другой — hint: страница
+      предлагает взять ссылку из буфера обмена.
+
+   /handoff/whoami — для отладочной страницы ?fpdebug: семейство адреса и
+   короткий хэш, по которым видно, одинаковый ли IP у TikTok и Safari. */
 async function handoff(request, env, action) {
   if (request.headers.get('Origin') !== ALLOWED_ORIGIN) { return jsonReply({ ok: false }, 403); }
   if (!env || !env.DB) { return jsonReply({ ok: false, reason: 'not_configured' }, 503); }
+  var ip = ipKey(request);
+  if (action === 'whoami') {
+    return jsonReply({ ok: true, family: ip.indexOf(':') >= 0 ? 'IPv6' : 'IPv4', tag: (await sha('tag|' + ip)).slice(0, 10) });
+  }
   var body = {};
   try { body = JSON.parse(await request.text()); } catch (e) { body = {}; }
-  var fp = String(body.fp || '');
-  if (!fp || fp.length > 300) { return jsonReply({ ok: false }, 400); }
+  var fp = String(body.fp || ''), coarse = String(body.coarse || '');
+  if (!fp || fp.length > 300 || !coarse || coarse.length > 120) { return jsonReply({ ok: false }, 400); }
   var fpHash = await sha('fp|' + fp);
-  var id = await sha(ipKey(request) + '|' + fp);
-  var now = Date.now();
+  var id = await sha(ip + '|' + fp);
+  var coarseHash = await sha(ip + '|coarse|' + coarse);
+  var now = Date.now(), since = now - HANDOFF_TTL_MS;
 
   if (action === 'put') {
     var plan = body.plan === 'yearly' ? 'yearly' : (body.plan === 'monthly' ? 'monthly' : '');
     var data = typeof body.data === 'string' ? body.data : '';
     if (!plan || !data || data.length > 6000) { return jsonReply({ ok: false }, 400); }
+    var token = crypto.randomUUID();
     await run(env, async function () {
-      await env.DB.prepare('DELETE FROM handoff WHERE created < ?1').bind(now - HANDOFF_TTL_MS).run();
+      await env.DB.prepare('DELETE FROM handoff2 WHERE created < ?1').bind(since).run();
       await env.DB.prepare(
-        'INSERT INTO handoff (id, fp, plan, data, created) VALUES (?1, ?2, ?3, ?4, ?5) ' +
-        'ON CONFLICT (id) DO UPDATE SET fp = ?2, plan = ?3, data = ?4, created = ?5'
-      ).bind(id, fpHash, plan, data, now).run();
+        'INSERT INTO handoff2 (id, fp, coarse, token, plan, data, created) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) ' +
+        'ON CONFLICT (id) DO UPDATE SET fp = ?2, coarse = ?3, token = ?4, plan = ?5, data = ?6, created = ?7'
+      ).bind(id, fpHash, coarseHash, token, plan, data, now).run();
     }, HANDOFF_SCHEMA);
     return jsonReply({ ok: true });
   }
 
+  if (action === 'claim') {
+    var t = String(body.token || '');
+    var claimed = await run(env, function () {
+      return env.DB.prepare('SELECT id, plan, data FROM handoff2 WHERE token = ?1 AND coarse = ?2 AND created >= ?3')
+        .bind(t, coarseHash, since).first();
+    }, HANDOFF_SCHEMA);
+    if (!claimed) { return jsonReply({ ok: false }); }
+    await env.DB.prepare('DELETE FROM handoff2 WHERE id = ?1').bind(claimed.id).run();
+    return jsonReply({ ok: true, plan: claimed.plan, data: claimed.data });
+  }
+
   /* take */
   var row = await run(env, function () {
-    return env.DB.prepare('SELECT plan, data FROM handoff WHERE id = ?1 AND created >= ?2')
-      .bind(id, now - HANDOFF_TTL_MS).first();
+    return env.DB.prepare('SELECT plan, data FROM handoff2 WHERE id = ?1 AND created >= ?2')
+      .bind(id, since).first();
   }, HANDOFF_SCHEMA);
   if (row) {
-    await env.DB.prepare('DELETE FROM handoff WHERE id = ?1').bind(id).run();
+    await env.DB.prepare('DELETE FROM handoff2 WHERE id = ?1').bind(id).run();
     return jsonReply({ ok: true, plan: row.plan, data: row.data });
   }
-  var hint = await env.DB.prepare('SELECT 1 AS x FROM handoff WHERE fp = ?1 AND created >= ?2 LIMIT 1')
-    .bind(fpHash, now - HANDOFF_TTL_MS).first();
+  var near = await env.DB.prepare('SELECT token FROM handoff2 WHERE coarse = ?1 AND created >= ?2 LIMIT 2')
+    .bind(coarseHash, since).all();
+  var list = (near && near.results) || [];
+  if (list.length === 1) { return jsonReply({ ok: false, confirm: true, token: list[0].token }); }
+  var hint = await env.DB.prepare('SELECT 1 AS x FROM handoff2 WHERE fp = ?1 AND created >= ?2 LIMIT 1')
+    .bind(fpHash, since).first();
   return jsonReply({ ok: false, hint: !!hint });
 }
 
@@ -283,6 +323,8 @@ export default {
     if (request.method === 'POST' && url.pathname === '/hit') { return hit(request, env); }
     if (request.method === 'POST' && url.pathname === '/handoff/put') { return handoff(request, env, 'put'); }
     if (request.method === 'POST' && url.pathname === '/handoff/take') { return handoff(request, env, 'take'); }
+    if (request.method === 'POST' && url.pathname === '/handoff/claim') { return handoff(request, env, 'claim'); }
+    if (request.method === 'POST' && url.pathname === '/handoff/whoami') { return handoff(request, env, 'whoami'); }
     if (request.method === 'GET' && url.pathname === '/stats') { return stats(url, env); }
     return new Response('not found', { status: 404 });
   }

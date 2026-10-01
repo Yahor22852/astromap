@@ -183,6 +183,16 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       navigator.hardwareConcurrency || 0, navigator.maxTouchPoints || 0].join('|');
   }
 
+  /* Грубый отпечаток — то, что Safari 26 со своей защитой от отпечатков
+     (Advanced Fingerprinting Protection, включена по умолчанию) не
+     искажает: тип телефона и часовой пояс. По нему одному данные не
+     отдаются — только кнопка «Продолжить оплату» (см. воркер). */
+  function coarseFp() {
+    var tz = '';
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+    return WALLET + '|' + tz;
+  }
+
   function handoffData() {
     var f = null;
     try { f = JSON.parse(localStorage.getItem('astromap.funnel') || 'null'); } catch (e) { f = null; }
@@ -304,7 +314,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
         navigator.clipboard.writeText(link).catch(function () { fallbackCopy(link); });
       } else { fallbackCopy(link); }
     } catch (e) { fallbackCopy(link); }
-    apiPost('/handoff/put', { fp: deviceFp(), plan: plan, data: handoffData() })
+    apiPost('/handoff/put', { fp: deviceFp(), coarse: coarseFp(), plan: plan, data: handoffData() })
       .catch(function () { /* остаётся буфер обмена */ });
     document.dispatchEvent(new CustomEvent('funnel:wallet', { detail: { plan: plan, wallet: WALLET } }));
 
@@ -354,28 +364,82 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     try { checked = sessionStorage.getItem('astromap.tt.checked') === '1'; sessionStorage.setItem('astromap.tt.checked', '1'); } catch (e) {}
     if (checked) { fallback(); return; }
 
-    apiPost('/handoff/take', { fp: deviceFp() }, 3500).then(function (r) {
+    apiPost('/handoff/take', { fp: deviceFp(), coarse: coarseFp() }, 3500).then(function (r) {
       if (done) { return; }
       if (r && r.ok && (r.plan === 'monthly' || r.plan === 'yearly')) {
         done = true;
-        var data = null;
-        try { data = JSON.parse(r.data); } catch (e) { data = null; }
-        try {
-          if (data && data.f && data.f.dob && data.f.dob.y) {
-            localStorage.setItem('astromap.funnel', JSON.stringify(data.f));
-          }
-          if (data && typeof data.l === 'string' && /^[a-z]{2}$/.test(data.l)) {
-            localStorage.setItem('astromap.lang', data.l);
-          }
-        } catch (e) {}
-        showOpening(T.opening);
-        markCheckout(r.plan);
-        location.replace(r.plan === 'yearly' ? CHECKOUT_URL_YEAR : CHECKOUT_URL);
+        finishHandoff(r, T);
         return;
       }
+      if (r && r.confirm && r.token) { done = true; showConfirmBanner(T, r.token); return; }
       if (r && r.hint) { done = true; showContinueBanner(T); return; }
       fallback();
     }).catch(fallback);
+  }
+
+  function finishHandoff(r, T) {
+    var data = null;
+    try { data = JSON.parse(r.data); } catch (e) { data = null; }
+    try {
+      if (data && data.f && data.f.dob && data.f.dob.y) {
+        localStorage.setItem('astromap.funnel', JSON.stringify(data.f));
+      }
+      if (data && typeof data.l === 'string' && /^[a-z]{2}$/.test(data.l)) {
+        localStorage.setItem('astromap.lang', data.l);
+      }
+    } catch (e) {}
+    showOpening(T.opening);
+    markCheckout(r.plan);
+    location.replace(r.plan === 'yearly' ? CHECKOUT_URL_YEAR : CHECKOUT_URL);
+  }
+
+  /* Совпали IP и грубый отпечаток: запись почти наверняка этого человека,
+     но данные отдаём только по нажатию — так чужой заказ случайному
+     человеку с тем же IP сам не откроется. */
+  function showConfirmBanner(T, token) {
+    var b = document.createElement('div');
+    b.className = 'ttcont';
+    b.innerHTML = '<p class="ttcont__t"></p><button type="button" class="cta ttcont__b"></button>';
+    document.body.appendChild(b);
+    b.querySelector('.ttcont__t').textContent = T.cont;
+    var btn = b.querySelector('.ttcont__b');
+    btn.textContent = T.contBtn;
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      apiPost('/handoff/claim', { fp: deviceFp(), coarse: coarseFp(), token: token }, 5000).then(function (r) {
+        if (r && r.ok && (r.plan === 'monthly' || r.plan === 'yearly')) { finishHandoff(r, T); return; }
+        b.parentNode.removeChild(b);
+        if (window.ASTROMAP_PAID_REDIRECT) { window.ASTROMAP_PAID_REDIRECT(); }
+      }).catch(function () { btn.disabled = false; });
+    });
+  }
+
+  /* astromap.me/?fpdebug — что страница видит в этом браузере: открыть в
+     TikTok и в Safari и сравнить. Строки отпечатков — в открытом виде,
+     IP — только семейство и короткий хэш с воркера. */
+  function fpDebug() {
+    var box = document.createElement('pre');
+    box.style.cssText = 'position:fixed;inset:auto 8px 8px 8px;z-index:99;max-height:60vh;overflow:auto;' +
+      'padding:12px;margin:0;border-radius:12px;background:#fff;color:#000;font:12px/1.45 ui-monospace,Menlo,monospace;' +
+      'white-space:pre-wrap;word-break:break-all;box-shadow:0 10px 30px rgba(0,0,0,.5)';
+    var lines = [
+      'in-app (TikTok etc): ' + !!window.ASTROMAP_INAPP,
+      'src=tiktok in URL:   ' + /[?&]src=tiktok(&|$)/.test(location.search),
+      'wallet:              ' + WALLET,
+      'fp:      ' + deviceFp(),
+      'coarse:  ' + coarseFp(),
+      'UA: ' + navigator.userAgent,
+      'IP: …'
+    ];
+    box.textContent = lines.join('\n');
+    document.body.appendChild(box);
+    apiPost('/handoff/whoami', {}, 4000).then(function (r) {
+      lines[lines.length - 1] = 'IP: ' + (r && r.ok ? r.family + ' #' + r.tag : 'нет ответа');
+      box.textContent = lines.join('\n');
+    }).catch(function () {
+      lines[lines.length - 1] = 'IP: воркер не ответил';
+      box.textContent = lines.join('\n');
+    });
   }
 
   function showOpening(text) {
@@ -1900,4 +1964,5 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   }
 
   if (window.ASTROMAP_TT_ARRIVAL) { arrivalFromTikTok(); }
+  if (/[?&]fpdebug(=|&|$)/.test(location.search)) { fpDebug(); }
 })();
