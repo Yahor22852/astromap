@@ -118,6 +118,13 @@
 (function () {
   try {
     if (window.ASTROMAP_HANDOFF) { return; }   /* уже уходим на чекаут */
+    /* Внутри TikTok — никаких автоматических переходов. Его браузер
+       блокирует переход, который страница делает сама, без нажатия:
+       купивший (или просто открывший окно оплаты) человек, вернувшись на
+       astromap.me, видел вместо сайта «Open this link in your browser» с
+       адресом product/?paid=1. Там остаётся воронка, а вход — по ссылке
+       «Войти» на первом экране, то есть по нажатию. */
+    if (window.ASTROMAP_INAPP) { return; }
     if (/[?&]funnel(=|&|$)/.test(location.search)) { return; }
     var a = JSON.parse(localStorage.getItem('astromap.access') || 'null');
     if (a && a.email && a.licenseKey) { location.replace('product/'); return; }
