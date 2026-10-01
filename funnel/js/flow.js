@@ -129,16 +129,25 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   }
 
   /* --- оплата из встроенного браузера TikTok --------------------------
-     TikTok не открывает платёжные страницы в своём браузере. Вместо
-     перехода на Gumroad страница ПЕРЕЗАГРУЖАЕТСЯ на ссылке-передаче
-     astromap.me/?go=<план>&h=<ответы> (тот же экран оплаты, поверх —
-     инструкция), и уже её TikTok откроет через «••• → Открыть в
-     браузере». В Safari/Chrome ссылку разбирает скрипт в <head> index.html.
+     TikTok не пускает свой браузер на платёжные страницы: переход на
+     gumroad.com заканчивался его экраном «Открой ссылку в своём браузере».
+     Оттуда два выхода, и оба плохие: «••• → Открыть в браузере» отдаёт
+     Safari ИСХОДНУЮ ссылку из профиля (проверено на телефоне — ни подмена
+     адреса, ни перезагрузка на другом адресе её не меняют), то есть
+     человек начинает квиз заново; а схемы x-safari-https:// и intent://
+     TikTok глушит молча.
 
-     Почему перезагрузка, а не history.replaceState: первая версия меняла
-     адрес без перехода, и TikTok по «Открыть в браузере» открывал
-     исходный адрес — человек попадал в начало воронки без ответов.
-     Почему параметр, а не фрагмент #: встроенные браузеры его теряют. */
+     Поэтому внутри TikTok чекаут открывается не переходом, а окном поверх
+     страницы — тем же iframe, которым пользуется официальный overlay
+     Gumroad (gumroad.js: тот же адрес товара с overlay=true). TikTok
+     блокирует переходы всей страницы, а не содержимое iframe; заголовков,
+     запрещающих встраивание, Gumroad не ставит. Человек остаётся на
+     astromap.me, и его ответы — тоже.
+
+     Если окно всё же не загрузится, внизу запасной путь: «Скопировать
+     ссылку». В ней ответы квиза (?go=<план>&h=...), и открытая в
+     Safari/Chrome она восстанавливает их и сразу ведёт на чекаут — это
+     делает скрипт в <head> index.html. */
   function handoffUrl(plan) {
     var f = null;
     try { f = JSON.parse(localStorage.getItem('astromap.funnel') || 'null'); } catch (e) { f = null; }
@@ -146,70 +155,59 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     var bytes = new TextEncoder().encode(json), bin = '';
     for (var i = 0; i < bytes.length; i++) { bin += String.fromCharCode(bytes[i]); }
     var h = btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    var base = location.origin + location.pathname + '?go=' + plan;
-    return base + '&h=' + h;
+    return location.origin + location.pathname + '?go=' + plan + '&h=' + h;
   }
 
-  function showInAppSheet(plan) {
+  function openEmbeddedCheckout(plan, url) {
     var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
-    var url = handoffUrl(plan);
-    var old = el('inapp');
+    markCheckout(plan);
+    var old = el('paybox');
     if (old) { old.parentNode.removeChild(old); }
     var box = document.createElement('div');
-    box.id = 'inapp';
-    box.className = 'inapp';
+    box.id = 'paybox';
+    box.className = 'paybox';
     box.setAttribute('role', 'dialog');
     box.setAttribute('aria-modal', 'true');
-    box.setAttribute('aria-labelledby', 'inappT');
     box.innerHTML =
-      '<div class="inapp__arrow" aria-hidden="true">↗</div>' +
-      '<div class="inapp__sheet">' +
-        '<h2 class="inapp__t" id="inappT"></h2>' +
-        '<p class="inapp__p" id="inappText"></p>' +
-        '<p class="inapp__step" id="inappStep"></p>' +
-        '<button type="button" class="cta inapp__open" id="inappOpen"></button>' +
-        '<button type="button" class="inapp__copy" id="inappCopy"></button>' +
-        '<p class="inapp__note" id="inappNote" hidden></p>' +
-        '<button type="button" class="inapp__close" id="inappClose"></button>' +
+      '<div class="paybox__bar">' +
+        '<button type="button" class="paybox__close" id="payClose"></button>' +
+        '<a class="paybox__paid" id="payPaid" href="product/?paid=1"></a>' +
+      '</div>' +
+      '<div class="paybox__frame">' +
+        '<div class="paybox__spin" id="paySpin" aria-hidden="true"></div>' +
+        '<iframe id="payFrame" title="Gumroad checkout" allow="payment *"></iframe>' +
+      '</div>' +
+      '<div class="paybox__help">' +
+        '<p class="paybox__trouble" id="payTrouble"></p>' +
+        '<button type="button" class="paybox__copy" id="payCopy"></button>' +
+        '<p class="paybox__note" id="payNote" hidden></p>' +
       '</div>';
     document.body.appendChild(box);
-    el('inappT').textContent = T.title;
-    el('inappText').textContent = T.text;
-    el('inappStep').textContent = T.step;
-    el('inappOpen').textContent = T.open;
-    el('inappCopy').textContent = T.copy;
-    el('inappClose').textContent = T.close;
+    document.body.style.overflow = 'hidden';
+    el('payClose').textContent = '← ' + T.close;
+    el('payPaid').textContent = T.paid;
+    el('payTrouble').textContent = T.trouble;
+    el('payCopy').textContent = T.copy;
+    var frame = el('payFrame');
+    frame.addEventListener('load', function () { el('paySpin').hidden = true; });
+    frame.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'overlay=true';
 
-    /* Попытка открыть внешний браузер самим. iOS: схема x-safari-https
-       (Safari 17+); Android: intent:// без пакета — откроется браузер по
-       умолчанию. TikTok может такие переходы глушить — тогда остаётся
-       путь через его меню, он описан на экране строкой выше. */
-    el('inappOpen').addEventListener('click', function () {
-      var android = /android/i.test(navigator.userAgent);
-      if (android) {
-        var u = url.replace(/^https:\/\//, '');
-        location.href = 'intent://' + u + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
-      } else {
-        location.href = 'x-safari-' + url;
-      }
-    });
-    el('inappCopy').addEventListener('click', function () {
+    var link = handoffUrl(plan);
+    el('payCopy').addEventListener('click', function () {
       var done = function () {
-        el('inappNote').textContent = T.copied;
-        el('inappNote').hidden = false;
+        el('payNote').textContent = T.copied;
+        el('payNote').hidden = false;
       };
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(done, function () { fallbackCopy(url); done(); });
-      } else { fallbackCopy(url); done(); }
+        navigator.clipboard.writeText(link).then(done, function () { fallbackCopy(link); done(); });
+      } else { fallbackCopy(link); done(); }
     });
-    el('inappClose').addEventListener('click', function () {
-      /* Назад — тоже переходом, а не правкой адреса: иначе TikTok так и
-         держал бы ссылку-передачу текущей, и перезагрузка снова открыла
-         бы эту инструкцию. */
-      saveResume();
-      location.replace(location.pathname + '?funnel');
+    el('payClose').addEventListener('click', function () {
+      box.parentNode.removeChild(box);
+      document.body.style.overflow = '';
+      el('cta').focus();
     });
-    el('inappOpen').focus();
+    el('payClose').focus();
     document.dispatchEvent(new CustomEvent('funnel:inapp', { detail: { plan: plan } }));
   }
 
@@ -224,16 +222,9 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     document.body.removeChild(ta);
   }
 
-  /* Единая точка ухода на оплату. В TikTok — экран передачи, и отметку
-     «ушёл на оплату» здесь не ставим: человек ещё не на чекауте. Её
-     поставит скрипт в <head>, когда страница откроется в браузере. */
+  /* Единая точка ухода на оплату. */
   function goCheckout(plan, url) {
-    if (window.ASTROMAP_INAPP) {
-      /* Экран оплаты переживёт перезагрузку так же, как при смене языка. */
-      saveResume();
-      location.href = handoffUrl(plan);
-      return;
-    }
+    if (window.ASTROMAP_INAPP) { openEmbeddedCheckout(plan, url); return; }
     markCheckout(plan);
     window.location.href = url;
   }
@@ -1711,12 +1702,4 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     progress('s1');
     dock('s1');
   }
-
-  /* Загрузка на ссылке-передаче внутри TikTok — показываем инструкцию
-     поверх восстановленного экрана оплаты. Вне TikTok сюда не доходит:
-     скрипт в <head> уже ушёл на чекаут. */
-  (function () {
-    var plan = new URLSearchParams(location.search).get('go');
-    if (window.ASTROMAP_INAPP && (plan === 'monthly' || plan === 'yearly')) { showInAppSheet(plan); }
-  })();
 })();

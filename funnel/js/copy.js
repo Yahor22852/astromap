@@ -223,13 +223,11 @@
       planTitle: 'Plan miesięczny',
       cta: 'Otwórz moją mapę',
       inapp: {
-        title: 'Otwórz płatność w przeglądarce',
-        text: 'TikTok nie otwiera stron płatności. Twoje odpowiedzi są zapisane i przejdą razem z Tobą.',
-        step: 'Stuknij ••• w prawym górnym rogu, potem „Otwórz w przeglądarce”.',
-        open: 'Otwórz w przeglądarce',
+        close: 'Wróć',
+        paid: 'Już zapłacono? Wpisz klucz',
+        trouble: 'Płatność się nie ładuje? Skopiuj link i otwórz go w Safari lub Chrome — Twoje odpowiedzi przejdą razem z Tobą.',
         copy: 'Skopiuj link',
-        copied: 'Link skopiowany — wklej go w Safari lub Chrome.',
-        close: 'Wróć'
+        copied: 'Link skopiowany — wklej go w Safari lub Chrome.'
       },
       checkoutOff: 'Płatność nie jest jeszcze podłączona. Twoje dane są zapisane — wróć tu za chwilę.',
       /* {cta} подставляется НАДПИСЬЮ ТОЙ КНОПКИ, что стоит на экране.
@@ -530,13 +528,11 @@
       planTitle: 'Monthly plan',
       cta: 'Unlock my map',
       inapp: {
-        title: 'Open the payment in your browser',
-        text: 'TikTok doesn’t open payment pages. Your answers are saved and will come with you.',
-        step: 'Tap ••• in the top right corner, then “Open in browser”.',
-        open: 'Open in browser',
+        close: 'Back',
+        paid: 'Already paid? Enter your key',
+        trouble: 'Payment not loading? Copy the link and open it in Safari or Chrome — your answers come with you.',
         copy: 'Copy link',
-        copied: 'Link copied — paste it into Safari or Chrome.',
-        close: 'Back'
+        copied: 'Link copied — paste it into Safari or Chrome.'
       },
       checkoutOff: 'Payments are not connected yet. Your details are saved — come back in a moment.',
       legal: 'By clicking “{cta}” you accept the {terms} and the {privacy}.',

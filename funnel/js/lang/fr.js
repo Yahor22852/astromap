@@ -185,13 +185,11 @@
       planTitle: 'Formule mensuelle',
       cta: 'Débloquer ma carte',
       inapp: {
-        title: 'Ouvre le paiement dans ton navigateur',
-        text: 'TikTok n’ouvre pas les pages de paiement. Tes réponses sont enregistrées et te suivent.',
-        step: 'Touche ••• en haut à droite, puis « Ouvrir dans le navigateur ».',
-        open: 'Ouvrir dans le navigateur',
+        close: 'Retour',
+        paid: 'Déjà payé ? Saisis ta clé',
+        trouble: 'Le paiement ne se charge pas ? Copie le lien et ouvre-le dans Safari ou Chrome — tes réponses te suivent.',
         copy: 'Copier le lien',
-        copied: 'Lien copié — colle-le dans Safari ou Chrome.',
-        close: 'Retour'
+        copied: 'Lien copié — colle-le dans Safari ou Chrome.'
       },
       checkoutOff: 'Les paiements ne sont pas encore branchés. Tes données sont enregistrées — reviens dans un instant.'
     },

@@ -187,13 +187,11 @@
       planTitle: 'Plan mensual',
       cta: 'Desbloquear mi mapa',
       inapp: {
-        title: 'Abre el pago en tu navegador',
-        text: 'TikTok no abre páginas de pago. Tus respuestas están guardadas y te acompañan.',
-        step: 'Toca ••• arriba a la derecha y luego «Abrir en el navegador».',
-        open: 'Abrir en el navegador',
+        close: 'Volver',
+        paid: '¿Ya pagaste? Introduce tu clave',
+        trouble: '¿El pago no carga? Copia el enlace y ábrelo en Safari o Chrome: tus respuestas te acompañan.',
         copy: 'Copiar enlace',
-        copied: 'Enlace copiado: pégalo en Safari o Chrome.',
-        close: 'Volver'
+        copied: 'Enlace copiado: pégalo en Safari o Chrome.'
       },
       checkoutOff: 'Los pagos aún no están conectados. Tus datos quedan guardados: vuelve en un momento.'
     },
