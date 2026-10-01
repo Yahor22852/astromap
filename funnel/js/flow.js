@@ -362,9 +362,20 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     };
     var checked = false;
     try { checked = sessionStorage.getItem('astromap.tt.checked') === '1'; sessionStorage.setItem('astromap.tt.checked', '1'); } catch (e) {}
-    if (checked) { fallback(); return; }
+    if (checked) {
+      try { localStorage.setItem('astromap.dbg.take', JSON.stringify({ at: new Date().toISOString().slice(11, 19), result: 'skipped: already checked in this tab' })); } catch (e) {}
+      fallback(); return;
+    }
 
+    var note = function (what) {
+      try {
+        localStorage.setItem('astromap.dbg.take', JSON.stringify({
+          at: new Date().toISOString().slice(11, 19), result: what, fp: deviceFp()
+        }));
+      } catch (e) {}
+    };
     apiPost('/handoff/take', { fp: deviceFp(), coarse: coarseFp() }, 3500).then(function (r) {
+      note(r ? (r.ok ? 'match' : r.confirm ? 'confirm' : r.hint ? 'hint (other IP)' : 'nothing found') : 'empty reply');
       if (done) { return; }
       if (r && r.ok && (r.plan === 'monthly' || r.plan === 'yearly')) {
         done = true;
@@ -374,7 +385,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (r && r.confirm && r.token) { done = true; showConfirmBanner(T, r.token); return; }
       if (r && r.hint) { done = true; showContinueBanner(T); return; }
       fallback();
-    }).catch(fallback);
+    }).catch(function (e) { note('request failed: ' + (e && e.name)); fallback(); });
   }
 
   function finishHandoff(r, T) {
@@ -429,6 +440,10 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       'fp:      ' + deviceFp(),
       'coarse:  ' + coarseFp(),
       'UA: ' + navigator.userAgent,
+      '— last handoff check (this browser):',
+      '  ' + (localStorage.getItem('astromap.dbg.take') || 'none'),
+      '— last landings (this browser):',
+      '  ' + (localStorage.getItem('astromap.dbg.landings') || 'none').replace(/\},\{/g, '},\n  {'),
       'IP: …'
     ];
     box.textContent = lines.join('\n');

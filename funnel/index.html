@@ -63,6 +63,17 @@
      в консоли включает тот же режим, removeItem — выключает. */
   try { if (localStorage.getItem('astromap.qa.inapp') === '1') { INAPP = true; } } catch (e) {}
   window.ASTROMAP_INAPP = INAPP;
+  /* Для ?fpdebug: три последних захода — когда, внутри TikTok или нет, с
+     каким адресом (параметр h с ответами вырезан). По ним видно, открыл ли
+     TikTok по «Открыть в браузере» ссылку с ?src=tiktok. */
+  try {
+    if (!/[?&]fpdebug(=|&|$)/.test(location.search)) {
+      var log = JSON.parse(localStorage.getItem('astromap.dbg.landings') || '[]');
+      log.unshift({ at: new Date().toISOString().slice(11, 19), inapp: INAPP,
+        url: location.pathname + location.search.replace(/([?&]h=)[^&]*/, '$1…') });
+      localStorage.setItem('astromap.dbg.landings', JSON.stringify(log.slice(0, 3)));
+    }
+  } catch (e) {}
   var CHECKOUT = {
     monthly: 'https://astromap.gumroad.com/l/astromap?monthly=true&wanted=true',
     yearly: 'https://astromap.gumroad.com/l/astromap?yearly=true&wanted=true'
@@ -175,6 +186,10 @@
        закрытия вкладки), — это почти всегда «Назад» с чекаута Gumroad без
        оплаты. Его не отправляем на гейт с «ключ летит на почту». */
     if (sessionStorage.getItem('astromap.checkoutTab')) { return; }
+    /* Пришёл из TikTok по ссылке из профиля, а ожидающей оплаты не нашлось:
+       отметка «ушёл на оплату» тут почти наверняка старая, и экран «ключ
+       летит на почту» человеку, который пришёл покупать, только мешает. */
+    if (window.ASTROMAP_TT_ARRIVAL) { return; }
     var co = JSON.parse(localStorage.getItem('astromap.checkout') || 'null');
     if (co && co.at && Date.now() - co.at < 72 * 3600 * 1000) { location.replace('product/?paid=1'); }
   } catch (e) { /* приватный режим — просто показываем воронку */ }
