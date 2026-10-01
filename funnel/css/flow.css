@@ -925,16 +925,17 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   padding-top: env(safe-area-inset-top, 0px);
 }
 .paybox__bar {
-  flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 8px calc(var(--pad) - 6px);
-  border-bottom: 1px solid var(--card-line-2);
+  flex: none; display: flex; align-items: center;
+  padding: 4px calc(var(--pad) - 6px);
+  background: #fff; border-bottom: 1px solid #ececec;
 }
 .paybox__close {
   min-height: 44px; padding: 0 6px; border: 0; background: transparent; cursor: pointer;
-  font-family: var(--sans); font-size: 15px; font-weight: 600; color: var(--ink);
+  font-family: var(--sans); font-size: 16px; font-weight: 600; color: #000;
 }
-.paybox__paid { padding: 0 6px; font-size: 13px; color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }
-.paybox__close:focus-visible, .paybox__paid:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 6px; }
+.paybox__paid { padding: 0 6px; font-size: 14px; color: #555; text-decoration: underline; text-underline-offset: 3px; }
+.paybox__close:focus-visible { outline: 2px solid #000; outline-offset: 2px; border-radius: 6px; }
+.paybox__paid:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 6px; }
 /* Белая подложка под iframe: чекаут Gumroad светлый, и пока он грузится,
    тёмная рамка вокруг белой страницы мигала бы. */
 .paybox__frame { position: relative; flex: 1 1 auto; min-height: 0; background: #fff; }
@@ -948,17 +949,29 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 @keyframes paybox-spin { to { transform: rotate(360deg); } }
 .paybox__help {
   flex: none; padding: 10px var(--pad) calc(12px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--card-line-2); text-align: center;
+  background: #fff; border-top: 1px solid #ececec; text-align: center;
 }
-/* Кнопка кошелька — чёрная пилюля, как у самих Apple Pay и Google Pay:
-   её должно быть видно сразу, это главный выход из ограничений TikTok. */
+/* Кнопка кошелька — по образцу родных Apple Pay / Google Pay: чёрная на
+   белом, во всю ширину, высота 56px, скругление как у системной кнопки
+   iOS, логотип и «Pay» системным шрифтом. Стоит на белой полосе над
+   белым же чекаутом Gumroad — вместе это читается как одна страница
+   оплаты, а кнопка — как обычный способ оплаты, а не реклама. */
+.paybox__walletrow {
+  flex: none; padding: 12px var(--pad) 10px; background: #fff;
+}
 .paybox__wallet {
-  min-height: 44px; padding: 0 18px; border: 1px solid rgba(255, 255, 255, .35);
-  border-radius: 999px; background: #000; color: #fff; cursor: pointer;
-  font-family: var(--sans); font-size: 15px; font-weight: 700; letter-spacing: .01em;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
+  display: flex; align-items: center; justify-content: center; gap: 2px;
+  width: 100%; height: 56px; padding: 0 16px;
+  border: 0; border-radius: 12px; background: #000; color: #fff; cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Roboto, Arial, sans-serif;
+  font-size: 24px; font-weight: 600; letter-spacing: -.01em; line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease, opacity .12s ease;
 }
-.paybox__wallet:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.paybox__wallet:active { transform: scale(.985); opacity: .9; }
+.paybox__wallet:focus-visible { outline: 3px solid #0a84ff; outline-offset: 2px; }
+.paybox__apple { font-size: 27px; margin-top: -3px; }
+.paybox__g { width: 24px; height: 24px; margin-right: 6px; }
 .paybox__spin--light { position: static; margin: 0 auto 14px; border-color: rgba(245, 239, 228, .2); border-top-color: var(--gold); }
 
 /* Инструкция «как открыть в браузере»: поверх окна оплаты, стрелка — в
