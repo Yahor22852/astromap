@@ -47,7 +47,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
 
   /* Страница уже уходит на чекаут (передача из TikTok, см. <head>):
      ничего не рисуем и, главное, ничего не пишем в хранилище. */
-  if (window.ASTROMAP_HANDOFF) { return; }
+  if (window.ASTROMAP_HANDOFF || window.ASTROMAP_FRAMED) { return; }
 
   var C = window.COPY;
   var A = window.Astro;
@@ -224,13 +224,53 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     el('payWallet').textContent = T.wallet.replace('{w}', WALLET);
     el('payPaid').textContent = T.paid;
     var frame = el('payFrame');
-    frame.addEventListener('load', function () { el('paySpin').hidden = true; });
+    /* «Continue shopping» и подобные ссылки Gumroad ведут туда, откуда
+       пришёл покупатель, — на astromap.me, и открывают его ВНУТРИ окна:
+       воронка оказывалась вложенной сама в себя, док и шапка наезжали друг
+       на друга. Чужой (gumroad.com) документ прочитать нельзя — обращение к
+       его адресу бросает исключение; если адрес читается, значит, в окне
+       уже наш сайт, и окно закрывается: человек и так на нужной странице. */
+    frame.addEventListener('load', function () {
+      el('paySpin').hidden = true;
+      var ours = false, path = '';
+      try {
+        ours = frame.contentWindow.location.origin === location.origin;
+        path = frame.contentWindow.location.pathname;
+      } catch (e) { ours = false; }
+      if (!ours) { return; }
+      closePaybox();
+      /* Ссылка из квитанции после оплаты ведёт в продукт. Перейти туда сами
+         мы не можем — TikTok блокирует переходы без нажатия, — поэтому
+         крупная кнопка: переход по нажатию он пропускает. */
+      /* Адрес — явно с ?paid=1: продукт к моменту load уже стёр его из
+         своей адресной строки, а без него гейт не в режиме «ключ на почте». */
+      if (/^\/product\//.test(path)) { showAccessButton('product/?paid=1'); }
+    });
+    window.addEventListener('message', function onMsg(ev) {
+      if (ev.origin !== location.origin || ev.data !== 'astromap:close-pay') { return; }
+      window.removeEventListener('message', onMsg);
+      closePaybox();
+    });
+    function showAccessButton(target) {
+      var bar = document.createElement('div');
+      bar.className = 'ttcont';
+      bar.innerHTML = '<a class="cta ttcont__b"></a>';
+      var link = bar.querySelector('a');
+      link.href = target;
+      link.textContent = T.paid;
+      document.body.appendChild(bar);
+      link.focus();
+    }
+    function closePaybox() {
+      var b = el('paybox');
+      if (b) { b.parentNode.removeChild(b); }
+      document.body.style.overflow = '';
+    }
     frame.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'overlay=true';
 
     el('payWallet').addEventListener('click', function () { startWalletHandoff(plan); });
     el('payClose').addEventListener('click', function () {
-      box.parentNode.removeChild(box);
-      document.body.style.overflow = '';
+      closePaybox();
       el('cta').focus();
     });
     el('payClose').focus();

@@ -9,6 +9,21 @@
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <script>
+/* Страница открыта внутри нашего же окна оплаты (ссылка Gumroad «Continue
+   shopping» ведёт обратно на astromap.me прямо в iframe). Ничего не
+   рисуем, ничего не считаем и просим окно закрыться — человек и так уже на
+   этой странице, снаружи. Чужие сайты, встроившие нас, сюда не попадают:
+   доступ к адресу родителя есть только при общем origin. */
+(function () {
+  var framedByUs = false;
+  try { framedByUs = window.self !== window.top && window.parent.location.origin === location.origin; } catch (e) {}
+  if (!framedByUs) { return; }
+  window.ASTROMAP_FRAMED = true;
+  document.documentElement.style.display = 'none';
+  try { window.parent.postMessage('astromap:close-pay', location.origin); } catch (e) {}
+})();
+</script>
+<script>
 /* ВСТРОЕННЫЙ БРАУЗЕР TIKTOK И ПЕРЕДАЧА В НАСТОЯЩИЙ.
 
    Здесь две вещи. Первая — признак «мы внутри TikTok» (window.ASTROMAP_INAPP):
@@ -53,6 +68,7 @@
     yearly: 'https://astromap.gumroad.com/l/astromap?yearly=true&wanted=true'
   };
   var LANGS = ['en', 'pl', 'ru', 'uk', 'de', 'es', 'fr', 'it', 'pt', 'tr'];
+  if (window.ASTROMAP_FRAMED) { return; }
   try {
     var q = new URLSearchParams(location.search);
     var plan = q.get('go');
@@ -93,7 +109,7 @@
 (function () {
   var VISITS_URL = 'https://astromap-visits.egorrut3030.workers.dev/hit';
   try {
-    if (!VISITS_URL || sessionStorage.getItem('astromap.visit')) { return; }
+    if (!VISITS_URL || window.ASTROMAP_FRAMED || sessionStorage.getItem('astromap.visit')) { return; }
     sessionStorage.setItem('astromap.visit', '1');
     var q = new URLSearchParams(location.search);
     var source = q.get('utm_source') || q.get('src') || '';
@@ -136,6 +152,7 @@
      вызывает эту переадресацию сам. Иначе старая отметка «ушёл на оплату»
      увела бы на гейт раньше, чем мы узнаем, что человек пришёл платить. */
   window.ASTROMAP_PAID_REDIRECT = paidRedirect;
+  if (window.ASTROMAP_FRAMED) { return; }
   if (!window.ASTROMAP_INAPP && /[?&]src=tiktok(&|$)/.test(location.search)) {
     window.ASTROMAP_TT_ARRIVAL = true;
     return;
