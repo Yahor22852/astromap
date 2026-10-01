@@ -1025,4 +1025,9 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 /* Ввод в поле города на телефоне: снизу временно добавляется место, чтобы
    поле можно было поднять под шапку над клавиатурой, о которой браузер не
    сообщает (встроенный браузер TikTok на Android). См. liftField в flow.js. */
-body.kb-lift .scr.is-active { padding-bottom: calc(152px + 65vh + env(safe-area-inset-bottom, 0px)); }
+/* 100vh, а не доля: когда клавиатура уменьшает окно, vh во встроенном
+   браузере тоже уменьшается, и 65vh не хватало, чтобы поле из низа экрана
+   доехало до шапки. */
+body.kb-lift .scr.is-active { padding-bottom: calc(152px + 100vh + env(safe-area-inset-bottom, 0px)); }
+/* Список над полем — когда под ним места нет (см. fitMenu). */
+.citypick__menu.citypick__menu--up { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 6px; }

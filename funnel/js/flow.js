@@ -1009,21 +1009,44 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
       return h > (screen.height || h) * 0.72;
     }
+    /* Поднять поле под шапку. Один раз мало — видео с Android (TikTok)
+       показало, что браузер, пока выезжает клавиатура, сам подтягивает
+       поле к её верхней кромке и тем отменяет наш подъём, а подсказки
+       остаются под клавиатурой. Поэтому поднимаем несколько раз за время
+       анимации клавиатуры и при каждом изменении размера окна, пока курсор
+       в поле: последнее слово остаётся за нами. */
+    var liftOn = null, liftTimers = [];
+    function headerBottom() {
+      var head = el('top');
+      return head && !head.classList.contains('hidden') ? head.getBoundingClientRect().bottom : 0;
+    }
+    function doLift(field) {
+      var y = field.getBoundingClientRect().top + window.pageYOffset - (headerBottom() + 12);
+      if (Math.abs(field.getBoundingClientRect().top - (headerBottom() + 12)) > 4) {
+        window.scrollTo(0, Math.max(0, y));
+      }
+    }
     function liftField(field) {
       if (!COARSE) { return; }
+      liftOn = field;
       document.body.classList.add('kb-lift');
-      var lift = function () {
-        var head = el('top');
-        var off = head && !head.classList.contains('hidden') ? head.getBoundingClientRect().bottom + 12 : 16;
-        var y = field.getBoundingClientRect().top + window.pageYOffset - off;
-        window.scrollTo(0, Math.max(0, y));
-      };
-      lift();
-      /* Клавиатура на Android выезжает ~300 мс и сама может сдвинуть
-         страницу — поправляем ещё раз, когда она на месте. */
-      setTimeout(function () { lift(); fitMenu(); }, 350);
+      liftTimers.forEach(clearTimeout);
+      liftTimers = [0, 120, 300, 550, 900, 1400].map(function (t) {
+        return setTimeout(function () {
+          if (liftOn === field && document.activeElement === field) { doLift(field); fitMenu(); }
+        }, t);
+      });
     }
-    function dropLift() { document.body.classList.remove('kb-lift'); }
+    function dropLift() {
+      liftOn = null;
+      liftTimers.forEach(clearTimeout);
+      liftTimers = [];
+      document.body.classList.remove('kb-lift');
+    }
+    function onViewportChange() {
+      if (liftOn && document.activeElement === liftOn) { doLift(liftOn); }
+      fitMenu();
+    }
     window.astromapLiftField = liftField;
     window.astromapDropLift = dropLift;
 
@@ -1035,16 +1058,31 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
         return vh - menu.getBoundingClientRect().top - 10;
       };
       menu.style.maxHeight = '';
+      menu.classList.remove('citypick__menu--up');
       /* Именно нарисованная высота, а не scrollHeight: у списка есть штатный
          потолок в 264px из CSS, и растягивать его сверх этого мы не хотим. */
       var need = menu.getBoundingClientRect().height;
 
-      if (gap() < need) {
+      /* Поле уже поднято под шапку (liftField) — страницу не трогаем:
+         прокрутка вниз ради списка отменяла подъём, и поле уезжало под
+         шапку или за экран. Дальше — только высота списка или список над
+         полем. */
+      if (!liftOn && gap() < need) {
         var room = Math.max(0, document.documentElement.scrollHeight - window.innerHeight - window.scrollY);
         var by = Math.min(need - gap(), room);
         if (by > 0) { window.scrollBy(0, by); }
       }
       var avail = gap();
+      /* Под полем всё равно тесно (клавиатура, о которой браузер не
+         сообщил, или страницу некуда прокрутить) — открываем список НАД
+         полем, если там места больше. */
+      var above = input.getBoundingClientRect().top - headerBottom() - 12;
+      if (avail < Math.min(need, 160) && above > avail) {
+        menu.classList.add('citypick__menu--up');
+        menu.style.maxHeight = Math.max(96, Math.min(264, above)) + 'px';
+        return;
+      }
+      menu.classList.remove('citypick__menu--up');
       if (avail < need) { menu.style.maxHeight = Math.max(132, avail) + 'px'; }
     }
 
@@ -1171,9 +1209,9 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
        открыт: на телефоне это событие resize (а где есть visualViewport —
        ещё и его собственный resize). Без пересчёта список, помещавшийся
        секунду назад, оказывается под доком. */
-    window.addEventListener('resize', fitMenu);
+    window.addEventListener('resize', onViewportChange);
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', fitMenu);
+      window.visualViewport.addEventListener('resize', onViewportChange);
     }
     /* Нажатие мимо поля и мимо списка закрывает подсказки. Раньше это
        держалось на одном blur, то есть на предположении, что фокус
