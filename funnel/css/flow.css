@@ -1021,3 +1021,8 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   box-shadow: 0 -16px 40px rgba(0, 0, 0, .5);
 }
 .ttcont__t { margin: 0 0 10px; font-size: 15px; line-height: 1.4; color: var(--ink); text-align: center; }
+
+/* Ввод в поле города на телефоне: снизу временно добавляется место, чтобы
+   поле можно было поднять под шапку над клавиатурой, о которой браузер не
+   сообщает (встроенный браузер TikTok на Android). См. liftField в flow.js. */
+body.kb-lift .scr.is-active { padding-bottom: calc(152px + 65vh + env(safe-area-inset-bottom, 0px)); }

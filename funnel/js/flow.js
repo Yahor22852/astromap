@@ -954,6 +954,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       S.city = FC.toObject(c);
       input.value = FC.label(c);
       close();
+      dropLift();
       persist();
       el('cta').disabled = !timeReady();
     }
@@ -993,10 +994,44 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
        дока (см. .scr в flow.css), и перекрыть кнопку на время выбора — это
        нормально, а вот уехать за сгиб нельзя. Нижний предел в 132px — три
        строки: список, в котором видно меньше, бесполезен. */
+    /* КЛАВИАТУРА, О КОТОРОЙ БРАУЗЕР НЕ СООБЩАЕТ. Встроенный браузер TikTok
+       на Android кладёт клавиатуру поверх страницы: окно не уменьшается,
+       visualViewport тоже, и поле к себе браузер не прокручивает — поле
+       города и подсказки оказывались под клавиатурой. Признак такого случая —
+       видимая высота почти во весь экран, когда в поле стоит курсор. Тогда
+       считаем видимой верхние KB_SHARE экрана и поднимаем поле под шапку
+       сами; чтобы было куда прокрутить, на время ввода снизу добавляется
+       место (body.kb-lift в flow.css). */
+    var COARSE = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    var KB_SHARE = 0.52;
+    function keyboardHidden() {
+      if (!COARSE) { return false; }
+      var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+      return h > (screen.height || h) * 0.72;
+    }
+    function liftField(field) {
+      if (!COARSE) { return; }
+      document.body.classList.add('kb-lift');
+      var lift = function () {
+        var head = el('top');
+        var off = head && !head.classList.contains('hidden') ? head.getBoundingClientRect().bottom + 12 : 16;
+        var y = field.getBoundingClientRect().top + window.pageYOffset - off;
+        window.scrollTo(0, Math.max(0, y));
+      };
+      lift();
+      /* Клавиатура на Android выезжает ~300 мс и сама может сдвинуть
+         страницу — поправляем ещё раз, когда она на месте. */
+      setTimeout(function () { lift(); fitMenu(); }, 350);
+    }
+    function dropLift() { document.body.classList.remove('kb-lift'); }
+    window.astromapLiftField = liftField;
+    window.astromapDropLift = dropLift;
+
     function fitMenu() {
       if (menu.hidden) { return; }
       var gap = function () {
         var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+        if (document.activeElement === input && keyboardHidden()) { vh = window.innerHeight * KB_SHARE; }
         return vh - menu.getBoundingClientRect().top - 10;
       };
       menu.style.maxHeight = '';
@@ -1064,7 +1099,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       el('cta').disabled = !timeReady();
     });
     /* Возврат в поле снова показывает подсказки — и по нажатию, и по табу. */
-    input.addEventListener('focus', function () { openFor(input.value); });
+    input.addEventListener('focus', function () { liftField(input); openFor(input.value); });
     input.addEventListener('click', function () { openFor(input.value); });
     input.addEventListener('keydown', function (ev) {
       if (menu.hidden) {
@@ -1129,6 +1164,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (interacting) { return; }
       close();
       pickExact(true);
+      dropLift();
     });
 
     /* Экранная клавиатура приходит и уходит уже после того, как список
@@ -1187,6 +1223,8 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       el('cityManualName').focus();
     });
     el('cityManualName').addEventListener('input', syncManual);
+    el('cityManualName').addEventListener('focus', function () { liftField(el('cityManualName')); });
+    el('cityManualName').addEventListener('blur', dropLift);
     el('cityManualOffset').addEventListener('change', function () {
       if (el('cityManualName').value.trim()) { syncManual(); }
     });
