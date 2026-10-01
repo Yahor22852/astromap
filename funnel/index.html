@@ -129,6 +129,19 @@
    ?funnel в адресе отключает переадресацию — чтобы можно было посмотреть
    воронку с браузера, где продукт уже открыт. */
 (function () {
+  /* Пришёл из TikTok в настоящий браузер (?src=tiktok — это ссылка из
+     профиля, которую TikTok отдаёт по «Открыть в браузере»): сначала
+     flow.js спрашивает воркер, нет ли ожидающей оплаты с этого телефона
+     (кнопка «Оплатить через Apple Pay» в TikTok), и только если нет —
+     вызывает эту переадресацию сам. Иначе старая отметка «ушёл на оплату»
+     увела бы на гейт раньше, чем мы узнаем, что человек пришёл платить. */
+  window.ASTROMAP_PAID_REDIRECT = paidRedirect;
+  if (!window.ASTROMAP_INAPP && /[?&]src=tiktok(&|$)/.test(location.search)) {
+    window.ASTROMAP_TT_ARRIVAL = true;
+    return;
+  }
+  paidRedirect();
+  function paidRedirect() {
   try {
     if (window.ASTROMAP_HANDOFF) { return; }   /* уже уходим на чекаут */
     /* Внутри TikTok — никаких автоматических переходов. Его браузер
@@ -148,6 +161,7 @@
     var co = JSON.parse(localStorage.getItem('astromap.checkout') || 'null');
     if (co && co.at && Date.now() - co.at < 72 * 3600 * 1000) { location.replace('product/?paid=1'); }
   } catch (e) { /* приватный режим — просто показываем воронку */ }
+  }
 })();
 </script>
 <script>

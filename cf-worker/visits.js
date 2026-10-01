@@ -13,6 +13,9 @@
    а если его нет — direct. Метки приводятся к нижнему регистру, лишние
    символы выбрасываются, длина — до 40 знаков.
 
+   Второе назначение воркера — передача оплаты из TikTok в настоящий
+   браузер (/handoff/put, /handoff/take), см. раздел handoff ниже.
+
    Деплой — как у license-verify.js и horoscope-ai.js, вручную в дашборде
    Cloudflare. Пошагово — в funnel/README.md, раздел «Счётчик заходов».
    Коротко: воркер astromap-visits с этим кодом, база D1 с привязкой DB,
@@ -52,11 +55,11 @@ var SCHEMA = 'CREATE TABLE IF NOT EXISTS visits (' +
 
 /* Запрос к таблице; если её ещё нет (первый заход после деплоя) —
    создаём и повторяем. Так в дашборде не нужно ничего запускать руками. */
-async function run(env, fn) {
+async function run(env, fn, schema) {
   try { return await fn(); }
   catch (e) {
     if (!/no such table/i.test(String(e && e.message))) { throw e; }
-    await env.DB.exec(SCHEMA);
+    await env.DB.exec(schema || SCHEMA);
     return fn();
   }
 }
@@ -91,6 +94,112 @@ async function hit(request, env) {
     status: 204,
     headers: { 'Access-Control-Allow-Origin': ALLOWED_ORIGIN }
   });
+}
+
+/* --- передача оплаты из TikTok в настоящий браузер ---------------------
+
+   Apple Pay и Google Pay во встроенном браузере TikTok недоступны, а его
+   «••• → Открыть в браузере» отдаёт Safari исходную ссылку из профиля, без
+   ответов квиза. Поэтому по кнопке «Оплатить через Apple Pay» страница в
+   TikTok кладёт сюда ответы и план (POST /handoff/put), а та же страница,
+   открытая в Safari по ссылке из профиля, забирает их (POST /handoff/take)
+   и сразу уходит на чекаут.
+
+   КАК УЗНАЁТСЯ «ТОТ ЖЕ ТЕЛЕФОН». Запись ищется по паре «IP + отпечаток
+   устройства». Отпечаток считает страница: экран, плотность пикселей,
+   часовой пояс, число ядер, точки касания, платформа — то, что у
+   встроенного браузера TikTok и у Safari на одном телефоне совпадает.
+   Одного IP мало: через мобильного оператора с одного адреса выходят
+   тысячи людей, и чужой заказ с чужой датой рождения достался бы
+   случайному человеку. Одного отпечатка тоже мало — одинаковых iPhone
+   много. Вместе, да ещё в окне 30 минут, совпадение двух людей —
+   практически исключено. IPv6 сравнивается по первым 64 битам: телефон
+   меняет вторую половину адреса сам.
+
+   Что хранится: ответы квиза и план, не дольше HANDOFF_TTL_MS, и запись
+   удаляется при первом же чтении. IP и отпечаток — только хэшами.
+
+   Если IP в Safari другой (Частный узел iCloud, или одно приложение ходит
+   через IPv6, а другое через IPv4), запись не отдаётся, а ответ говорит
+   hint: true — «есть ожидающая оплата с таким же устройством». Тогда
+   страница показывает кнопку «Продолжить оплату» и берёт ссылку из буфера
+   обмена, куда её положила кнопка в TikTok. Сами данные по одному
+   отпечатку не отдаются никогда. */
+var HANDOFF_TTL_MS = 30 * 60 * 1000;
+var HANDOFF_SCHEMA = 'CREATE TABLE IF NOT EXISTS handoff (' +
+  'id TEXT PRIMARY KEY, fp TEXT NOT NULL, plan TEXT NOT NULL, data TEXT NOT NULL, ' +
+  'created INTEGER NOT NULL)';
+
+function expandIPv6(ip) {
+  var parts = ip.split('::');
+  var head = parts[0] ? parts[0].split(':') : [];
+  var tail = parts.length > 1 && parts[1] ? parts[1].split(':') : [];
+  var fill = [];
+  for (var i = head.length + tail.length; i < 8; i++) { fill.push('0'); }
+  return head.concat(fill, tail).map(function (h) { return ('0000' + h).slice(-4); });
+}
+
+function ipKey(request) {
+  var ip = request.headers.get('CF-Connecting-IP') || '';
+  if (ip.indexOf(':') >= 0) { return expandIPv6(ip.toLowerCase()).slice(0, 4).join(':'); }
+  return ip;
+}
+
+async function sha(text) {
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+    return ('0' + b.toString(16)).slice(-2);
+  }).join('');
+}
+
+function jsonReply(obj, status) {
+  return new Response(JSON.stringify(obj), {
+    status: status || 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+      'Access-Control-Allow-Origin': ALLOWED_ORIGIN
+    }
+  });
+}
+
+async function handoff(request, env, action) {
+  if (request.headers.get('Origin') !== ALLOWED_ORIGIN) { return jsonReply({ ok: false }, 403); }
+  if (!env || !env.DB) { return jsonReply({ ok: false, reason: 'not_configured' }, 503); }
+  var body = {};
+  try { body = JSON.parse(await request.text()); } catch (e) { body = {}; }
+  var fp = String(body.fp || '');
+  if (!fp || fp.length > 300) { return jsonReply({ ok: false }, 400); }
+  var fpHash = await sha('fp|' + fp);
+  var id = await sha(ipKey(request) + '|' + fp);
+  var now = Date.now();
+
+  if (action === 'put') {
+    var plan = body.plan === 'yearly' ? 'yearly' : (body.plan === 'monthly' ? 'monthly' : '');
+    var data = typeof body.data === 'string' ? body.data : '';
+    if (!plan || !data || data.length > 6000) { return jsonReply({ ok: false }, 400); }
+    await run(env, async function () {
+      await env.DB.prepare('DELETE FROM handoff WHERE created < ?1').bind(now - HANDOFF_TTL_MS).run();
+      await env.DB.prepare(
+        'INSERT INTO handoff (id, fp, plan, data, created) VALUES (?1, ?2, ?3, ?4, ?5) ' +
+        'ON CONFLICT (id) DO UPDATE SET fp = ?2, plan = ?3, data = ?4, created = ?5'
+      ).bind(id, fpHash, plan, data, now).run();
+    }, HANDOFF_SCHEMA);
+    return jsonReply({ ok: true });
+  }
+
+  /* take */
+  var row = await run(env, function () {
+    return env.DB.prepare('SELECT plan, data FROM handoff WHERE id = ?1 AND created >= ?2')
+      .bind(id, now - HANDOFF_TTL_MS).first();
+  }, HANDOFF_SCHEMA);
+  if (row) {
+    await env.DB.prepare('DELETE FROM handoff WHERE id = ?1').bind(id).run();
+    return jsonReply({ ok: true, plan: row.plan, data: row.data });
+  }
+  var hint = await env.DB.prepare('SELECT 1 AS x FROM handoff WHERE fp = ?1 AND created >= ?2 LIMIT 1')
+    .bind(fpHash, now - HANDOFF_TTL_MS).first();
+  return jsonReply({ ok: false, hint: !!hint });
 }
 
 function esc(t) {
@@ -172,6 +281,8 @@ export default {
       } });
     }
     if (request.method === 'POST' && url.pathname === '/hit') { return hit(request, env); }
+    if (request.method === 'POST' && url.pathname === '/handoff/put') { return handoff(request, env, 'put'); }
+    if (request.method === 'POST' && url.pathname === '/handoff/take') { return handoff(request, env, 'take'); }
     if (request.method === 'GET' && url.pathname === '/stats') { return stats(url, env); }
     return new Response('not found', { status: 404 });
   }

@@ -225,9 +225,15 @@
       inapp: {
         close: 'Wróć',
         paid: 'Już zapłacono? Wpisz klucz',
-        trouble: 'Apple Pay i Google Pay nie działają we wbudowanej przeglądarce aplikacji. Zapłać tu kartą — albo skopiuj link i otwórz go w Safari lub Chrome: Twoje odpowiedzi przejdą razem z Tobą.',
-        copy: 'Skopiuj link do Safari / Chrome',
-        copied: 'Link skopiowany — wklej go w Safari lub Chrome.'
+        wallet: 'Zapłać przez {w}',
+        wTitle: '{w} otwiera się w przeglądarce',
+        wStep1: 'Stuknij ••• w prawym górnym rogu',
+        wStep2: 'Wybierz „Otwórz w przeglądarce”',
+        wStep3: 'Płatność otworzy się sama — Twoje odpowiedzi i plan są zapisane',
+        wOk: 'Rozumiem',
+        opening: 'Otwieramy płatność…',
+        cont: 'Dokończ płatność rozpoczętą w TikToku',
+        contBtn: 'Kontynuuj płatność'
       },
       checkoutOff: 'Płatność nie jest jeszcze podłączona. Twoje dane są zapisane — wróć tu za chwilę.',
       /* {cta} подставляется НАДПИСЬЮ ТОЙ КНОПКИ, что стоит на экране.
@@ -530,9 +536,15 @@
       inapp: {
         close: 'Back',
         paid: 'Already paid? Enter your key',
-        trouble: 'Apple Pay and Google Pay don’t work in an app’s built-in browser. Pay by card here — or copy the link and open it in Safari or Chrome: your answers come with you.',
-        copy: 'Copy link for Safari / Chrome',
-        copied: 'Link copied — paste it into Safari or Chrome.'
+        wallet: 'Pay with {w}',
+        wTitle: '{w} opens in your browser',
+        wStep1: 'Tap ••• in the top right corner',
+        wStep2: 'Choose “Open in browser”',
+        wStep3: 'The payment opens by itself — your answers and plan are saved',
+        wOk: 'Got it',
+        opening: 'Opening payment…',
+        cont: 'Finish the payment you started in TikTok',
+        contBtn: 'Continue payment'
       },
       checkoutOff: 'Payments are not connected yet. Your details are saved — come back in a moment.',
       legal: 'By clicking “{cta}” you accept the {terms} and the {privacy}.',

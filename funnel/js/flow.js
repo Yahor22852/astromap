@@ -158,6 +158,46 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     return location.origin + location.pathname + '?go=' + plan + '&h=' + h;
   }
 
+  /* Apple Pay на iPhone, Google Pay на остальных — название кнопки и
+     инструкции. Внутри TikTok недоступны оба (см. README), кнопка ведёт в
+     настоящий браузер. */
+  var WALLET = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent) ? 'Apple Pay' : 'Google Pay';
+  var HANDOFF_API = 'https://astromap-visits.egorrut3030.workers.dev';
+  /* Проверка без деплоя: localStorage astromap.qa.api — адрес локального
+     воркера. Принимается только http://localhost, чтобы чужая страница не
+     могла подменить адрес и увести ответы квиза. */
+  try {
+    var qaApi = localStorage.getItem('astromap.qa.api');
+    if (qaApi && /^http:\/\/localhost:\d+$/.test(qaApi)) { HANDOFF_API = qaApi; }
+  } catch (e) {}
+
+  /* Отпечаток устройства для передачи оплаты: то, что у встроенного
+     браузера TikTok и у Safari/Chrome на одном телефоне совпадает. Не
+     язык (TikTok подставляет свой), не модель из user-agent (Chrome на
+     Android её прячет). Подробно — в cf-worker/visits.js, раздел handoff. */
+  function deviceFp() {
+    var tz = '';
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+    var sw = Math.min(screen.width, screen.height), sh = Math.max(screen.width, screen.height);
+    return [WALLET, sw + 'x' + sh, window.devicePixelRatio || 1, screen.colorDepth || 0, tz,
+      navigator.hardwareConcurrency || 0, navigator.maxTouchPoints || 0].join('|');
+  }
+
+  function handoffData() {
+    var f = null;
+    try { f = JSON.parse(localStorage.getItem('astromap.funnel') || 'null'); } catch (e) { f = null; }
+    return JSON.stringify({ f: f, l: window.LANG });
+  }
+
+  function apiPost(path, body, timeoutMs) {
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, timeoutMs || 4000) : null;
+    return fetch(HANDOFF_API + path, {
+      method: 'POST', body: JSON.stringify(body), keepalive: true,
+      headers: { 'Content-Type': 'text/plain' }, signal: ctl ? ctl.signal : undefined
+    }).then(function (r) { return r.json(); }).finally(function () { if (timer) { clearTimeout(timer); } });
+  }
+
   function openEmbeddedCheckout(plan, url) {
     var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
     markCheckout(plan);
@@ -171,37 +211,23 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     box.innerHTML =
       '<div class="paybox__bar">' +
         '<button type="button" class="paybox__close" id="payClose"></button>' +
-        '<a class="paybox__paid" id="payPaid" href="product/?paid=1"></a>' +
+        '<button type="button" class="paybox__wallet" id="payWallet"></button>' +
       '</div>' +
       '<div class="paybox__frame">' +
         '<div class="paybox__spin" id="paySpin" aria-hidden="true"></div>' +
         '<iframe id="payFrame" title="Gumroad checkout" allow="payment *"></iframe>' +
       '</div>' +
-      '<div class="paybox__help">' +
-        '<p class="paybox__trouble" id="payTrouble"></p>' +
-        '<button type="button" class="paybox__copy" id="payCopy"></button>' +
-        '<p class="paybox__note" id="payNote" hidden></p>' +
-      '</div>';
+      '<div class="paybox__help"><a class="paybox__paid" id="payPaid" href="product/?paid=1"></a></div>';
     document.body.appendChild(box);
     document.body.style.overflow = 'hidden';
     el('payClose').textContent = '← ' + T.close;
+    el('payWallet').textContent = T.wallet.replace('{w}', WALLET);
     el('payPaid').textContent = T.paid;
-    el('payTrouble').textContent = T.trouble;
-    el('payCopy').textContent = T.copy;
     var frame = el('payFrame');
     frame.addEventListener('load', function () { el('paySpin').hidden = true; });
     frame.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'overlay=true';
 
-    var link = handoffUrl(plan);
-    el('payCopy').addEventListener('click', function () {
-      var done = function () {
-        el('payNote').textContent = T.copied;
-        el('payNote').hidden = false;
-      };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(link).then(done, function () { fallbackCopy(link); done(); });
-      } else { fallbackCopy(link); done(); }
-    });
+    el('payWallet').addEventListener('click', function () { startWalletHandoff(plan); });
     el('payClose').addEventListener('click', function () {
       box.parentNode.removeChild(box);
       document.body.style.overflow = '';
@@ -209,6 +235,122 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     });
     el('payClose').focus();
     document.dispatchEvent(new CustomEvent('funnel:inapp', { detail: { plan: plan } }));
+  }
+
+  /* Кнопка «Оплатить через Apple Pay» внутри TikTok. Три вещи сразу, пока
+     у нас есть нажатие: ссылка с ответами — в буфер обмена (запасной путь,
+     если в браузере окажется другой IP), ответы и план — на воркер, и
+     крупная инструкция, как открыть страницу в браузере. Ждать ответа
+     воркера инструкция не ждёт: пока человек жмёт «•••», запрос успеет. */
+  function startWalletHandoff(plan) {
+    var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
+    var link = handoffUrl(plan);
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).catch(function () { fallbackCopy(link); });
+      } else { fallbackCopy(link); }
+    } catch (e) { fallbackCopy(link); }
+    apiPost('/handoff/put', { fp: deviceFp(), plan: plan, data: handoffData() })
+      .catch(function () { /* остаётся буфер обмена */ });
+    document.dispatchEvent(new CustomEvent('funnel:wallet', { detail: { plan: plan, wallet: WALLET } }));
+
+    var old = el('walletHelp');
+    if (old) { old.parentNode.removeChild(old); }
+    var h = document.createElement('div');
+    h.id = 'walletHelp';
+    h.className = 'whelp';
+    h.setAttribute('role', 'dialog');
+    h.setAttribute('aria-modal', 'true');
+    h.setAttribute('aria-labelledby', 'whelpT');
+    h.innerHTML =
+      '<div class="whelp__arrow" aria-hidden="true"><span>•••</span>↗</div>' +
+      '<div class="whelp__card">' +
+        '<h2 class="whelp__t" id="whelpT"></h2>' +
+        '<ol class="whelp__steps">' +
+          '<li><b>1</b><span id="whelp1"></span></li>' +
+          '<li><b>2</b><span id="whelp2"></span></li>' +
+          '<li><b>3</b><span id="whelp3"></span></li>' +
+        '</ol>' +
+        '<button type="button" class="cta whelp__ok" id="whelpOk"></button>' +
+      '</div>';
+    document.body.appendChild(h);
+    el('whelpT').textContent = T.wTitle.replace('{w}', WALLET);
+    el('whelp1').textContent = T.wStep1;
+    el('whelp2').textContent = T.wStep2;
+    el('whelp3').textContent = T.wStep3;
+    el('whelpOk').textContent = T.wOk;
+    el('whelpOk').addEventListener('click', function () { h.parentNode.removeChild(h); });
+    el('whelpOk').focus();
+  }
+
+  /* Тот же человек открыл ссылку из профиля в Safari/Chrome. Спрашиваем
+     воркер: есть ожидающая оплата с этого телефона — восстанавливаем
+     ответы и уходим на чекаут; есть только с этого устройства, но с
+     другим IP — предлагаем кнопку, которая возьмёт ссылку из буфера;
+     нет ничего — обычная воронка (и отложенная переадресация купивших). */
+  function arrivalFromTikTok() {
+    var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
+    var done = false;
+    var fallback = function () {
+      if (done) { return; }
+      done = true;
+      if (window.ASTROMAP_PAID_REDIRECT) { window.ASTROMAP_PAID_REDIRECT(); }
+    };
+    var checked = false;
+    try { checked = sessionStorage.getItem('astromap.tt.checked') === '1'; sessionStorage.setItem('astromap.tt.checked', '1'); } catch (e) {}
+    if (checked) { fallback(); return; }
+
+    apiPost('/handoff/take', { fp: deviceFp() }, 3500).then(function (r) {
+      if (done) { return; }
+      if (r && r.ok && (r.plan === 'monthly' || r.plan === 'yearly')) {
+        done = true;
+        var data = null;
+        try { data = JSON.parse(r.data); } catch (e) { data = null; }
+        try {
+          if (data && data.f && data.f.dob && data.f.dob.y) {
+            localStorage.setItem('astromap.funnel', JSON.stringify(data.f));
+          }
+          if (data && typeof data.l === 'string' && /^[a-z]{2}$/.test(data.l)) {
+            localStorage.setItem('astromap.lang', data.l);
+          }
+        } catch (e) {}
+        showOpening(T.opening);
+        markCheckout(r.plan);
+        location.replace(r.plan === 'yearly' ? CHECKOUT_URL_YEAR : CHECKOUT_URL);
+        return;
+      }
+      if (r && r.hint) { done = true; showContinueBanner(T); return; }
+      fallback();
+    }).catch(fallback);
+  }
+
+  function showOpening(text) {
+    var o = document.createElement('div');
+    o.className = 'whelp whelp--busy';
+    o.innerHTML = '<div class="whelp__card"><div class="paybox__spin paybox__spin--light"></div><p class="whelp__busy"></p></div>';
+    document.body.appendChild(o);
+    o.querySelector('.whelp__busy').textContent = text;
+  }
+
+  function showContinueBanner(T) {
+    var b = document.createElement('div');
+    b.className = 'ttcont';
+    b.innerHTML = '<p class="ttcont__t"></p><button type="button" class="cta ttcont__b"></button>';
+    document.body.appendChild(b);
+    b.querySelector('.ttcont__t').textContent = T.cont;
+    var btn = b.querySelector('.ttcont__b');
+    btn.textContent = T.contBtn;
+    btn.addEventListener('click', function () {
+      if (!navigator.clipboard || !navigator.clipboard.readText) { b.parentNode.removeChild(b); return; }
+      navigator.clipboard.readText().then(function (text) {
+        var u = null;
+        try { u = new URL(String(text).trim()); } catch (e) { u = null; }
+        var ok = u && u.origin === location.origin && /^(monthly|yearly)$/.test(u.searchParams.get('go') || '') &&
+          u.searchParams.get('h');
+        if (ok) { location.href = location.pathname + u.search; return; }
+        b.parentNode.removeChild(b);
+      }).catch(function () { b.parentNode.removeChild(b); });
+    });
   }
 
   function fallbackCopy(text) {
@@ -1702,4 +1844,6 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     progress('s1');
     dock('s1');
   }
+
+  if (window.ASTROMAP_TT_ARRIVAL) { arrivalFromTikTok(); }
 })();

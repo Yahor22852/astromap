@@ -187,9 +187,15 @@
       inapp: {
         close: 'Zurück',
         paid: 'Schon bezahlt? Schlüssel eingeben',
-        trouble: 'Apple Pay und Google Pay funktionieren im eingebauten Browser einer App nicht. Zahl hier mit Karte – oder kopiere den Link und öffne ihn in Safari oder Chrome: Deine Antworten kommen mit.',
-        copy: 'Link für Safari / Chrome kopieren',
-        copied: 'Link kopiert – füge ihn in Safari oder Chrome ein.'
+        wallet: 'Mit {w} bezahlen',
+        wTitle: '{w} öffnet sich im Browser',
+        wStep1: 'Tippe oben rechts auf •••',
+        wStep2: 'Wähle „Im Browser öffnen“',
+        wStep3: 'Die Zahlung öffnet sich von selbst – Antworten und Plan sind gespeichert',
+        wOk: 'Verstanden',
+        opening: 'Zahlung wird geöffnet…',
+        cont: 'Schließ die in TikTok begonnene Zahlung ab',
+        contBtn: 'Zahlung fortsetzen'
       },
       checkoutOff: 'Zahlungen sind noch nicht angebunden. Deine Angaben sind gespeichert — komm gleich wieder.'
     },

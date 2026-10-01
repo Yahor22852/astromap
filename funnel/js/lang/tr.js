@@ -192,9 +192,15 @@
       inapp: {
         close: 'Geri',
         paid: 'Ödedin mi? Anahtarını gir',
-        trouble: 'Apple Pay ve Google Pay bir uygulamanın kendi tarayıcısında çalışmıyor. Burada kartla öde ya da bağlantıyı kopyalayıp Safari veya Chrome’da aç: yanıtların seninle gelir.',
-        copy: 'Safari / Chrome için bağlantıyı kopyala',
-        copied: 'Bağlantı kopyalandı — Safari veya Chrome’a yapıştır.'
+        wallet: '{w} ile öde',
+        wTitle: '{w} tarayıcıda açılır',
+        wStep1: 'Sağ üst köşedeki •••’ye dokun',
+        wStep2: '“Tarayıcıda aç”ı seç',
+        wStep3: 'Ödeme kendiliğinden açılır — yanıtların ve planın kayıtlı',
+        wOk: 'Anladım',
+        opening: 'Ödeme açılıyor…',
+        cont: 'TikTok’ta başladığın ödemeyi tamamla',
+        contBtn: 'Ödemeye devam et'
       },
       checkoutOff: 'Ödeme henüz bağlı değil. Bilgilerin kayıtlı — birazdan tekrar uğra.'
     },
