@@ -189,6 +189,15 @@
       title: 'Haritan hazır',
       planTitle: 'Aylık plan',
       cta: 'Haritamı aç',
+      inapp: {
+        title: 'Ödemeyi tarayıcında aç',
+        text: 'TikTok ödeme sayfalarını açmıyor. Yanıtların kayıtlı, seninle birlikte gelecek.',
+        step: 'Sağ üst köşedeki •••’ye, ardından “Tarayıcıda aç”a dokun.',
+        open: 'Tarayıcıda aç',
+        copy: 'Bağlantıyı kopyala',
+        copied: 'Bağlantı kopyalandı — Safari veya Chrome’a yapıştır.',
+        close: 'Geri'
+      },
       checkoutOff: 'Ödeme henüz bağlı değil. Bilgilerin kayıtlı — birazdan tekrar uğra.'
     },
 

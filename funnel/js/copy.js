@@ -222,6 +222,15 @@
       title: 'Twoja mapa jest gotowa',
       planTitle: 'Plan miesięczny',
       cta: 'Otwórz moją mapę',
+      inapp: {
+        title: 'Otwórz płatność w przeglądarce',
+        text: 'TikTok nie otwiera stron płatności. Twoje odpowiedzi są zapisane i przejdą razem z Tobą.',
+        step: 'Stuknij ••• w prawym górnym rogu, potem „Otwórz w przeglądarce”.',
+        open: 'Otwórz w przeglądarce',
+        copy: 'Skopiuj link',
+        copied: 'Link skopiowany — wklej go w Safari lub Chrome.',
+        close: 'Wróć'
+      },
       checkoutOff: 'Płatność nie jest jeszcze podłączona. Twoje dane są zapisane — wróć tu za chwilę.',
       /* {cta} подставляется НАДПИСЬЮ ТОЙ КНОПКИ, что стоит на экране.
          Раньше название было вписано в строку буквами: поменяв paywall.cta
@@ -520,6 +529,15 @@
       title: 'Your map is ready',
       planTitle: 'Monthly plan',
       cta: 'Unlock my map',
+      inapp: {
+        title: 'Open the payment in your browser',
+        text: 'TikTok doesn’t open payment pages. Your answers are saved and will come with you.',
+        step: 'Tap ••• in the top right corner, then “Open in browser”.',
+        open: 'Open in browser',
+        copy: 'Copy link',
+        copied: 'Link copied — paste it into Safari or Chrome.',
+        close: 'Back'
+      },
       checkoutOff: 'Payments are not connected yet. Your details are saved — come back in a moment.',
       legal: 'By clicking “{cta}” you accept the {terms} and the {privacy}.',
       privacyInline: 'Privacy Policy',

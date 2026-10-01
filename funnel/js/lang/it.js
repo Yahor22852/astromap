@@ -184,6 +184,15 @@
       title: 'La tua mappa è pronta',
       planTitle: 'Piano mensile',
       cta: 'Sblocca la mia mappa',
+      inapp: {
+        title: 'Apri il pagamento nel browser',
+        text: 'TikTok non apre le pagine di pagamento. Le tue risposte sono salvate e vengono con te.',
+        step: 'Tocca ••• in alto a destra, poi «Apri nel browser».',
+        open: 'Apri nel browser',
+        copy: 'Copia link',
+        copied: 'Link copiato: incollalo in Safari o Chrome.',
+        close: 'Indietro'
+      },
       checkoutOff: 'I pagamenti non sono ancora collegati. I tuoi dati sono salvati — torna fra poco.'
     },
 

@@ -184,6 +184,15 @@
       title: 'Deine Karte ist fertig',
       planTitle: 'Monatsplan',
       cta: 'Meine Karte freischalten',
+      inapp: {
+        title: 'Öffne die Zahlung im Browser',
+        text: 'TikTok öffnet keine Zahlungsseiten. Deine Antworten sind gespeichert und kommen mit.',
+        step: 'Tippe oben rechts auf ••• und dann auf „Im Browser öffnen“.',
+        open: 'Im Browser öffnen',
+        copy: 'Link kopieren',
+        copied: 'Link kopiert – füge ihn in Safari oder Chrome ein.',
+        close: 'Zurück'
+      },
       checkoutOff: 'Zahlungen sind noch nicht angebunden. Deine Angaben sind gespeichert — komm gleich wieder.'
     },
 

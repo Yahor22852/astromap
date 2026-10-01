@@ -9,6 +9,60 @@
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <script>
+/* ВСТРОЕННЫЙ БРАУЗЕР TIKTOK И ПЕРЕДАЧА В НАСТОЯЩИЙ.
+
+   TikTok открывает ссылки в своём браузере и не пускает его на платёжные
+   страницы: вместо Gumroad человек видел «Открой ссылку в своём браузере»
+   и адрес чекаута, который надо копировать руками. Поэтому внутри TikTok
+   кнопка оплаты не ведёт на Gumroad, а показывает свой экран (flow.js,
+   showInAppSheet) и подменяет адрес страницы на
+     astromap.me/?go=monthly#h=<ответы квиза>
+   — именно его TikTok откроет по «••• → Открыть в браузере» или скопирует.
+
+   Здесь, уже в Safari/Chrome, этот адрес разбирается: ответы квиза
+   кладутся в localStorage (у встроенного браузера оно своё, и без этого
+   продукт после оплаты попросил бы дату рождения заново), ставится отметка
+   «ушёл на оплату», адрес очищается и страница уходит на чекаут. Ответы
+   едут во фрагменте (#), который не отправляется ни на сервер, ни в
+   Gumroad. На Android кнопка открывает Chrome через intent://, где
+   фрагмент не передаётся, поэтому там ответы в параметре h.
+
+   Ссылки чекаута — те же, что CHECKOUT_URL / CHECKOUT_URL_YEAR в
+   js/flow.js. Меняешь там — меняй и здесь. */
+(function () {
+  var INAPP = /musical_ly|bytedancewebview|tiktok|trill_/i.test(navigator.userAgent);
+  window.ASTROMAP_INAPP = INAPP;
+  var CHECKOUT = {
+    monthly: 'https://astromap.gumroad.com/l/astromap?monthly=true&wanted=true',
+    yearly: 'https://astromap.gumroad.com/l/astromap?yearly=true&wanted=true'
+  };
+  var LANGS = ['en', 'pl', 'ru', 'uk', 'de', 'es', 'fr', 'it', 'pt', 'tr'];
+  try {
+    var q = new URLSearchParams(location.search);
+    var plan = q.get('go');
+    if (!CHECKOUT[plan] || INAPP) { return; }
+    var h = (location.hash.match(/[#&]h=([^&]+)/) || [])[1] || q.get('h');
+    if (h) {
+      var bin = atob(h.replace(/-/g, '+').replace(/_/g, '/'));
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
+      var data = JSON.parse(new TextDecoder().decode(bytes));
+      if (data && data.f && data.f.dob && data.f.dob.y) {
+        localStorage.setItem('astromap.funnel', JSON.stringify(data.f));
+      }
+      if (data && LANGS.indexOf(data.l) >= 0) { localStorage.setItem('astromap.lang', data.l); }
+    }
+    localStorage.setItem('astromap.checkout', JSON.stringify({ plan: plan, at: Date.now() }));
+    sessionStorage.setItem('astromap.checkoutTab', '1');
+    /* Этот переход — не новый заход по ссылке, а продолжение того же. */
+    sessionStorage.setItem('astromap.visit', '1');
+    window.ASTROMAP_HANDOFF = true;
+    history.replaceState(null, '', location.pathname);
+    location.replace(CHECKOUT[plan]);
+  } catch (e) { /* битая ссылка — просто показываем воронку */ }
+})();
+</script>
+<script>
 /* Заход по ссылке — один на вкладку, в счётчик cf-worker/visits.js.
    Источник — ?utm_source (или короткое ?src), кампания — ?utm_campaign;
    без меток — домен, с которого перешли, иначе direct. Отправляется ДО
@@ -60,6 +114,7 @@
    воронку с браузера, где продукт уже открыт. */
 (function () {
   try {
+    if (window.ASTROMAP_HANDOFF) { return; }   /* уже уходим на чекаут */
     if (/[?&]funnel(=|&|$)/.test(location.search)) { return; }
     var a = JSON.parse(localStorage.getItem('astromap.access') || 'null');
     if (a && a.email && a.licenseKey) { location.replace('product/'); return; }

@@ -13,6 +13,8 @@
    ссылается согласие при списании денег, обязаны существовать и
    открываться — пока URL не заданы, названия выводятся текстом без ссылки,
    а в консоль идёт предупреждение. */
+/* Те же две ссылки продублированы в <head> index.html (передача из
+   встроенного браузера TikTok) — меняешь здесь, меняй и там. */
 var CHECKOUT_URL = 'https://astromap.gumroad.com/l/astromap?monthly=true&wanted=true';
                                   /* подписка: месячный план, $9.99/мес.
                                      ?wanted=true открывает чекаут сразу, минуя
@@ -42,6 +44,10 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
 
 (function () {
   'use strict';
+
+  /* Страница уже уходит на чекаут (передача из TikTok, см. <head>):
+     ничего не рисуем и, главное, ничего не пишем в хранилище. */
+  if (window.ASTROMAP_HANDOFF) { return; }
 
   var C = window.COPY;
   var A = window.Astro;
@@ -120,6 +126,106 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       localStorage.setItem('astromap.checkout', JSON.stringify({ plan: plan, at: Date.now() }));
       sessionStorage.setItem('astromap.checkoutTab', '1');
     } catch (e) { /* приватный режим — без отметки, гейт просто в обычном режиме */ }
+  }
+
+  /* --- оплата из встроенного браузера TikTok --------------------------
+     TikTok не открывает платёжные страницы в своём браузере. Вместо
+     перехода на Gumroad показываем свой экран: как открыть страницу в
+     настоящем браузере, кнопку «Открыть в браузере» и «Скопировать
+     ссылку». Адрес страницы при этом подменяется на ссылку-передачу
+     (?go=<план>#h=<ответы>), которую разбирает скрипт в <head> index.html —
+     её же TikTok и откроет через «••• → Открыть в браузере». */
+  function handoffUrl(plan, inQuery) {
+    var f = null;
+    try { f = JSON.parse(localStorage.getItem('astromap.funnel') || 'null'); } catch (e) { f = null; }
+    var json = JSON.stringify({ f: f, l: window.LANG });
+    var bytes = new TextEncoder().encode(json), bin = '';
+    for (var i = 0; i < bytes.length; i++) { bin += String.fromCharCode(bytes[i]); }
+    var h = btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    var base = location.origin + location.pathname + '?go=' + plan;
+    return inQuery ? base + '&h=' + h : base + '#h=' + h;
+  }
+
+  function showInAppSheet(plan) {
+    var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
+    var url = handoffUrl(plan, false);
+    try { history.replaceState(null, '', url); } catch (e) { /* без подмены — останется «Скопировать» */ }
+    var old = el('inapp');
+    if (old) { old.parentNode.removeChild(old); }
+    var box = document.createElement('div');
+    box.id = 'inapp';
+    box.className = 'inapp';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-labelledby', 'inappT');
+    box.innerHTML =
+      '<div class="inapp__arrow" aria-hidden="true">↗</div>' +
+      '<div class="inapp__sheet">' +
+        '<h2 class="inapp__t" id="inappT"></h2>' +
+        '<p class="inapp__p" id="inappText"></p>' +
+        '<p class="inapp__step" id="inappStep"></p>' +
+        '<button type="button" class="cta inapp__open" id="inappOpen"></button>' +
+        '<button type="button" class="inapp__copy" id="inappCopy"></button>' +
+        '<p class="inapp__note" id="inappNote" hidden></p>' +
+        '<button type="button" class="inapp__close" id="inappClose"></button>' +
+      '</div>';
+    document.body.appendChild(box);
+    el('inappT').textContent = T.title;
+    el('inappText').textContent = T.text;
+    el('inappStep').textContent = T.step;
+    el('inappOpen').textContent = T.open;
+    el('inappCopy').textContent = T.copy;
+    el('inappClose').textContent = T.close;
+
+    /* Попытка открыть внешний браузер самим. iOS: схема x-safari-https
+       (Safari 17+); Android: intent:// без пакета — откроется браузер по
+       умолчанию. TikTok может такие переходы глушить — тогда остаётся
+       путь через его меню, он описан на экране строкой выше. */
+    el('inappOpen').addEventListener('click', function () {
+      var android = /android/i.test(navigator.userAgent);
+      if (android) {
+        var u = handoffUrl(plan, true).replace(/^https:\/\//, '');
+        location.href = 'intent://' + u + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
+      } else {
+        location.href = 'x-safari-' + url;
+      }
+    });
+    el('inappCopy').addEventListener('click', function () {
+      var done = function () {
+        el('inappNote').textContent = T.copied;
+        el('inappNote').hidden = false;
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done, function () { fallbackCopy(url); done(); });
+      } else { fallbackCopy(url); done(); }
+    });
+    el('inappClose').addEventListener('click', function () {
+      box.parentNode.removeChild(box);
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+      el('cta').focus();
+    });
+    el('inappOpen').focus();
+    document.dispatchEvent(new CustomEvent('funnel:inapp', { detail: { plan: plan } }));
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  /* Единая точка ухода на оплату. В TikTok — экран передачи, и отметку
+     «ушёл на оплату» здесь не ставим: человек ещё не на чекауте. Её
+     поставит скрипт в <head>, когда страница откроется в браузере. */
+  function goCheckout(plan, url) {
+    if (window.ASTROMAP_INAPP) { showInAppSheet(plan); return; }
+    markCheckout(plan);
+    window.location.href = url;
   }
 
   /* Оплата не подключена: пользователю — фраза на языке воронки,
@@ -359,14 +465,20 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   /* --- экран 1 ----------------------------------------------------------- */
   function dobReady() { return !!(S.dob.d && S.dob.m && S.dob.y); }
 
-  function onDob() {
+  /* restoring === true — вызов при загрузке страницы, а не выбор даты.
+     Тогда сохранённое не перезаписываем: в S на старте восстановлены
+     только дата и темы, и persist() стёр бы из хранилища время, город и
+     партнёра. Из-за этого вернувшийся позже человек приносил в продукт
+     карту без места рождения, а передача из TikTok теряла их до ухода
+     на чекаут. */
+  function onDob(restoring) {
     S.dob = {
       d: +el('d1').value || null,
       m: +el('m1').value || null,
       y: +el('y1').value || null
     };
     if (!dobReady()) { el('s1res').classList.add('hidden'); el('cta').disabled = true; return; }
-    persist();
+    if (restoring !== true) { persist(); }
     /* Знак Солнца по дате: расчёт настоящий, не таблица диапазонов. */
     /* Предварительный знак Солнца до выбора города: считаем на полдень UTC.
        Солнце проходит знак за месяц, поэтому пояс на знак почти не влияет, а
@@ -384,7 +496,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     el('cta').disabled = false;
   }
   ['d1', 'm1', 'y1'].forEach(function (id) { el(id).addEventListener('change', onDob); });
-  if (dobReady()) { onDob(); }
+  if (dobReady()) { onDob(true); }
 
   /* --- экран 2: темы ------------------------------------------------------
      Ответ влияет дальше: список тем идёт в сводку (s5) и во вторую строку
@@ -1421,12 +1533,12 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     if (S.screen === 's4') { buildSummary(); pvStart(); go('s5'); return; }
     if (S.screen === 's5') { buildPaywall(); go('s6'); return; }
     if (S.screen === 's6') {
-      if (CHECKOUT_URL) { markCheckout('monthly'); window.location.href = CHECKOUT_URL; }
+      if (CHECKOUT_URL) { goCheckout('monthly', CHECKOUT_URL); }
       else { noCheckout('CHECKOUT_URL'); }
       return;
     }
     if (S.screen === 's7') {
-      if (CHECKOUT_URL_YEAR) { markCheckout('yearly'); window.location.href = CHECKOUT_URL_YEAR; }
+      if (CHECKOUT_URL_YEAR) { goCheckout('yearly', CHECKOUT_URL_YEAR); }
       else { noCheckout('CHECKOUT_URL_YEAR'); }
     }
   });

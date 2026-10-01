@@ -184,6 +184,15 @@
       title: 'Seu mapa está pronto',
       planTitle: 'Plano mensal',
       cta: 'Liberar meu mapa',
+      inapp: {
+        title: 'Abra o pagamento no navegador',
+        text: 'O TikTok não abre páginas de pagamento. Suas respostas estão salvas e vão junto com você.',
+        step: 'Toque em ••• no canto superior direito e depois em “Abrir no navegador”.',
+        open: 'Abrir no navegador',
+        copy: 'Copiar link',
+        copied: 'Link copiado — cole no Safari ou no Chrome.',
+        close: 'Voltar'
+      },
       checkoutOff: 'Os pagamentos ainda não estão ligados. Seus dados foram salvos — volte daqui a pouco.'
     },
 
