@@ -208,6 +208,27 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     }).then(function (r) { return r.json(); }).finally(function () { if (timer) { clearTimeout(timer); } });
   }
 
+  /* --- шаги воронки для сводки /stats -----------------------------------
+     Каждый шаг уходит в воркер один раз за вкладку (sessionStorage): смена
+     языка и «Назад» с чекаута его не повторяют, поэтому число на шаге —
+     это вкладки, дошедшие до него, а не нажатия. Отправляется только имя
+     шага — ни ответов, ни идентификатора. Список шагов закреплён в
+     воркере (FUNNEL_STEPS), чужое имя он отбросит. */
+  function track(step) {
+    try {
+      if (window.ASTROMAP_LEAVING) { return; }
+      var seen = JSON.parse(sessionStorage.getItem('astromap.steps') || '[]');
+      if (seen.indexOf(step) >= 0) { return; }
+      seen.push(step);
+      sessionStorage.setItem('astromap.steps', JSON.stringify(seen));
+      var blob = new Blob([JSON.stringify({ step: step })], { type: 'text/plain' });
+      var u = HANDOFF_API + '/step';
+      if (!(navigator.sendBeacon && navigator.sendBeacon(u, blob))) {
+        fetch(u, { method: 'POST', body: blob, keepalive: true, mode: 'no-cors' }).catch(function () {});
+      }
+    } catch (e) { /* приватный режим — без счётчика */ }
+  }
+
   function openEmbeddedCheckout(plan, url) {
     var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
     markCheckout(plan);
@@ -420,6 +441,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (done) { return; }
       done = true;
       if (window.ASTROMAP_PAID_REDIRECT) { window.ASTROMAP_PAID_REDIRECT(); }
+      if (S.screen === 's1') { track('s1'); }
     };
     var checked = false;
     try { checked = sessionStorage.getItem('astromap.tt.checked') === '1'; sessionStorage.setItem('astromap.tt.checked', '1'); } catch (e) {}
@@ -631,6 +653,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   /* --- переключение экранов ---------------------------------------------- */
   function go(id) {
     S.screen = id;
+    track(id);
     all('.scr').forEach(function (s) { s.classList.toggle('is-active', s.id === id); });
     progress(id);
     window.scrollTo(0, 0);
@@ -1946,11 +1969,16 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     if (S.screen === 's4') { buildSummary(); pvStart(); go('s5'); return; }
     if (S.screen === 's5') { buildPaywall(); go('s6'); return; }
     if (S.screen === 's6') {
+      /* Нажатие считаем здесь, а не в goCheckout: туда же приходит
+         продолжение оплаты из TikTok в Safari, и нажатие посчиталось бы
+         дважды. */
+      track('pay_m');
       if (CHECKOUT_URL) { goCheckout('monthly', CHECKOUT_URL); }
       else { noCheckout('CHECKOUT_URL'); }
       return;
     }
     if (S.screen === 's7') {
+      track('pay_y');
       if (CHECKOUT_URL_YEAR) { goCheckout('yearly', CHECKOUT_URL_YEAR); }
       else { noCheckout('CHECKOUT_URL_YEAR'); }
     }
@@ -1967,6 +1995,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (!CHECKOUT_URL_YEAR) {
         document.dispatchEvent(new CustomEvent('funnel:decline',
           { detail: { from: 's6', to: 'reading', plan: 'monthly' } }));
+        track('reading');
         window.location.href = 'reading.html';
         return;
       }
@@ -1990,6 +2019,12 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
        перезагружается прямо на s7, и s6 в этой загрузке не собирался —
        «назад к месячному» открывал пустую карточку без цены и условий. */
     if (S.screen === 's7') { buildPaywall(); go('s6'); return; }
+  });
+
+  /* Ссылка «прочитать бесплатно» на экране годового плана — тоже выход из
+     воронки, и в сводке он должен быть виден. */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('.rc__go')) { track('reading'); }
   });
 
   /* Стрелки перемещают фокус по плиткам, но не отправляют экран. */
@@ -2113,6 +2148,10 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   if (!resume()) {
     progress('s1');
     dock('s1');
+    /* Первый экран открыт без go(). Пришедший из TikTok в Safari считается,
+       только когда выяснилось, что он не продолжает оплату, начатую в
+       TikTok (fallback в arrivalFromTikTok): тот человек уже посчитан. */
+    if (!window.ASTROMAP_TT_ARRIVAL) { track('s1'); }
   }
 
   if (window.ASTROMAP_TT_ARRIVAL) { arrivalFromTikTok(); }

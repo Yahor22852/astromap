@@ -181,7 +181,7 @@
     if (window.ASTROMAP_INAPP) { return; }
     if (/[?&](funnel|fpdebug)(=|&|$)/.test(location.search)) { return; }
     var a = JSON.parse(localStorage.getItem('astromap.access') || 'null');
-    if (a && a.email && a.licenseKey) { location.replace('product/'); return; }
+    if (a && a.email && a.licenseKey) { window.ASTROMAP_LEAVING = true; location.replace('product/'); return; }
     /* Та же вкладка, из которой уходили на оплату (sessionStorage живёт до
        закрытия вкладки), — это почти всегда «Назад» с чекаута Gumroad без
        оплаты. Его не отправляем на гейт с «ключ летит на почту». */
@@ -191,7 +191,11 @@
        летит на почту» человеку, который пришёл покупать, только мешает. */
     if (window.ASTROMAP_TT_ARRIVAL) { return; }
     var co = JSON.parse(localStorage.getItem('astromap.checkout') || 'null');
-    if (co && co.at && Date.now() - co.at < 72 * 3600 * 1000) { location.replace('product/?paid=1'); }
+    if (co && co.at && Date.now() - co.at < 72 * 3600 * 1000) {
+      /* Флаг для flow.js: страница уходит, шаги воронки не считаем. */
+      window.ASTROMAP_LEAVING = true;
+      location.replace('product/?paid=1');
+    }
   } catch (e) { /* приватный режим — просто показываем воронку */ }
   }
 })();
