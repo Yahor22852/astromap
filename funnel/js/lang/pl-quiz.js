@@ -208,8 +208,7 @@
       equiv: 'Około $2.50 miesięcznie, pobierane jako $29.99 raz w roku plus VAT.',
       cta: 'Odbierz pełną mapę',
       back: 'Wróć do planu miesięcznego',
-      backPrev: 'Wróć do podglądu',
-      free: 'Przeczytaj darmowy przegląd'
+      backPrev: 'Wróć do podglądu'
     }
   };
 

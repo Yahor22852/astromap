@@ -207,8 +207,7 @@
       equiv: 'Etwa $2.50 pro Monat, abgebucht als $29.99 einmal im Jahr zzgl. MwSt.',
       cta: 'Deine vollständige Karte holen',
       back: 'Zurück zum Monatsplan',
-      backPrev: 'Zurück zur Vorschau',
-      free: 'Den kostenlosen Überblick lesen'
+      backPrev: 'Zurück zur Vorschau'
     }
   };
 

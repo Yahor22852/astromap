@@ -218,8 +218,7 @@
       equiv: 'About $2.50 a month, charged as $29.99 once a year plus VAT.',
       cta: 'Get your full map',
       back: 'Back to the monthly plan',
-      backPrev: 'Back to the preview',
-      free: 'Read the free overview'
+      backPrev: 'Back to the preview'
     }
   };
 

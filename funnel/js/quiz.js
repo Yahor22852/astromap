@@ -1297,10 +1297,8 @@
         '<p class="legal">' + F.legalHtml(yearCta()) + '</p>' +
         '<p class="legal checkout-note hidden"></p></div>' +
       '<p class="q-note">' + esc(Q.pay.key) + '</p>' +
-      '<div class="q-links"><button type="button" class="q-link" data-goto="preview">' + esc(Q.year.backPrev) + '</button>' +
-      '<a class="q-link" id="qFree" href="reading.html">' + esc(Q.year.free) + '</a></div>' +
+      '<div class="q-links"><button type="button" class="q-link" data-goto="preview">' + esc(Q.year.backPrev) + '</button></div>' +
       '<p class="signin"><span>' + esc(C.access.paidQ) + '</span> <a href="product/">' + esc(C.access.paidLink) + '</a></p>';
-    el('qFree').addEventListener('click', function () { F.track('q2_reading'); });
     dock(yearCta(), true, Q.year.back, C.billing.yearPrice + ' \u00B7 ' + Q.year.renew);
   };
 

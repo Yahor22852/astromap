@@ -207,8 +207,7 @@
       equiv: 'Environ $2.50 par mois, facturés $29.99 une fois par an plus TVA.',
       cta: 'Obtenir ma carte complète',
       back: 'Revenir au plan mensuel',
-      backPrev: 'Revenir à l’aperçu',
-      free: 'Lire l’aperçu gratuit'
+      backPrev: 'Revenir à l’aperçu'
     }
   };
 

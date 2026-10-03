@@ -207,8 +207,7 @@
       equiv: 'Ayda yaklaşık $2.50; yılda bir kez $29.99 artı KDV olarak tahsil edilir.',
       cta: 'Tam haritanı al',
       back: 'Aylık plana dön',
-      backPrev: 'Önizlemeye dön',
-      free: 'Ücretsiz özeti oku'
+      backPrev: 'Önizlemeye dön'
     }
   };
 

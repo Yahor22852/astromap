@@ -207,8 +207,7 @@
       equiv: 'Unos $2.50 al mes, cobrados como $29.99 una vez al año más IVA.',
       cta: 'Obtén tu carta completa',
       back: 'Volver al plan mensual',
-      backPrev: 'Volver a la vista previa',
-      free: 'Leer el resumen gratuito'
+      backPrev: 'Volver a la vista previa'
     }
   };
 

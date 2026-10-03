@@ -207,8 +207,7 @@
       equiv: 'Circa $2.50 al mese, addebitati come $29.99 una volta all’anno più IVA.',
       cta: 'Ottieni la tua carta completa',
       back: 'Torna al piano mensile',
-      backPrev: 'Torna all’anteprima',
-      free: 'Leggi la panoramica gratuita'
+      backPrev: 'Torna all’anteprima'
     }
   };
 

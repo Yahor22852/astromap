@@ -878,8 +878,7 @@ var QUIZ_PHASES = [
     { k: 'q2_pay_m', name: 'Нажали «оплатить» — месяц', opt: 'из открывших пейвол', base: 'q2_pay', color: 's2' },
     { k: 'q2_year', name: 'Открыли годовой план', opt: 'из открывших пейвол', base: 'q2_pay', color: 's4' },
     { k: 'q2_pay_y', name: 'Нажали «оплатить» — год', opt: 'из открывших годовой план', base: 'q2_year', color: 's4' },
-    { k: 'wallet', name: 'Нажали Apple Pay / Google Pay', opt: 'кнопка в окне оплаты внутри TikTok', base: 'q2_payclicks', color: 's2' },
-    { k: 'q2_reading', name: 'Ушли в бесплатный обзор', opt: 'ссылка на годовом плане', color: 'more' } ] }
+    { k: 'wallet', name: 'Нажали Apple Pay / Google Pay', opt: 'кнопка в окне оплаты внутри TikTok', base: 'q2_payclicks', color: 's2' } ] }
 ];
 
 function quizSection(f, opt) {

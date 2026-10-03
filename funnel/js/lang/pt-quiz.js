@@ -207,8 +207,7 @@
       equiv: 'Cerca de $2.50 por mês, cobrados como $29.99 uma vez por ano mais IVA.',
       cta: 'Receber meu mapa completo',
       back: 'Voltar ao plano mensal',
-      backPrev: 'Voltar à prévia',
-      free: 'Ler a visão geral gratuita'
+      backPrev: 'Voltar à prévia'
     }
   };
 
