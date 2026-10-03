@@ -41,7 +41,8 @@ html, body { height: 100%; }
    строка, и градиент вместе с ней ездил бы. */
 html {
   background-color: var(--bg-2);
-  background-image: linear-gradient(176deg, var(--bg-1) 0%, var(--bg-0) 46%, var(--bg-2) 100%);
+  background-image: radial-gradient(130% 55% at 50% 0%, var(--glow), transparent 70%),
+    linear-gradient(176deg, var(--bg-1) 0%, var(--bg-0) 46%, var(--bg-2) 100%);
   background-repeat: no-repeat;
   background-size: 100% 100vh;
   background-position: top center;
@@ -102,7 +103,7 @@ body {
 .top__pill {
   pointer-events: auto; width: 100%; max-width: 420px;
   padding: 12px 16px 10px;
-  background: rgba(11,13,34,.62);
+  background: rgba(42,10,47,.62);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--card-line-2); border-radius: 22px;
   box-shadow: 0 10px 30px rgba(0,0,0,.35);
@@ -480,7 +481,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
      же --bg-2: фон теперь привязан к экрану, поэтому у нижней кромки окна он
      ровно --bg-2 при любой прокрутке, и стыка не видно. */
   padding: 26px var(--pad) calc(14px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to top, var(--bg-2) 90%, rgba(10, 11, 28, 0));
+  background: linear-gradient(to top, var(--bg-2) 90%, rgba(34, 8, 42, 0));
 }
 .dock__in { max-width: 420px; margin: 0 auto; }
 .cta {
@@ -491,7 +492,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   height: var(--cta-h);
   border: 0;
   border-radius: 999px;
-  background: var(--gold);
+  background: var(--gold); background-image: var(--cta-fill);
   color: var(--on-gold);
   font-family: var(--sans);
   font-size: 17px;
@@ -506,10 +507,10 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
      больше, потому что по ней жмут один раз и, не увидев реакции, уходят. */
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 10px 26px -8px rgba(232,197,127,.55);
+  box-shadow: 0 10px 26px -8px rgba(248,190,230,.5);
   transition: opacity .2s ease, transform .18s cubic-bezier(.4,0,.2,1), box-shadow .25s ease;
 }
-.cta:hover:not([disabled]) { transform: translateY(-1px); box-shadow: 0 14px 32px -6px rgba(232,197,127,.65); }
+.cta:hover:not([disabled]) { transform: translateY(-1px); box-shadow: 0 14px 32px -6px rgba(248,190,230,.62); }
 .cta:active:not([disabled]) { transform: translateY(0) scale(.99); }
 .cta[disabled] { opacity: .28; cursor: default; box-shadow: none; }
 .cta:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
@@ -569,7 +570,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   display: block; width: 100%; height: 52px; padding: 0 14px 0 42px;
   border: 1px solid var(--card-line); border-radius: var(--radius-sm);
   background: var(--card) no-repeat 14px 50% / 18px 18px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a09b93' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d9b6cf' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
   color: var(--ink);
   font-family: var(--sans); font-size: 16px;   /* 16px: меньше — iOS зумит поле */
   text-overflow: ellipsis;
@@ -588,7 +589,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   -webkit-overflow-scrolling: touch; padding: 6px;
   /* Непрозрачный фон: --card полупрозрачна, и сквозь список просвечивали
      ссылка ручного ввода и звёзды. */
-  background: linear-gradient(var(--card), var(--card)), #15132E;
+  background: linear-gradient(var(--card), var(--card)), #3A1040;
   border: 1px solid var(--gold-line);
   border-radius: var(--radius-sm); box-shadow: 0 18px 40px -18px rgba(0,0,0,.7);
 }
@@ -896,7 +897,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   margin-top: 14px; padding: 16px 18px;
   border: 1.5px dashed var(--gold-line);
   border-radius: var(--radius);
-  background: rgba(232, 197, 127, 0.07);
+  background: rgba(248, 211, 236, 0.07);
   text-align: left;
 }
 .keynote__ic { flex: none; width: 40px; height: 34px; margin-top: 2px; color: var(--gold); }
@@ -972,13 +973,13 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .paybox__wallet:focus-visible { outline: 3px solid #0a84ff; outline-offset: 2px; }
 .paybox__apple { font-size: 27px; margin-top: -3px; }
 .paybox__g { width: 24px; height: 24px; margin-right: 6px; }
-.paybox__spin--light { position: static; margin: 0 auto 14px; border-color: rgba(245, 239, 228, .2); border-top-color: var(--gold); }
+.paybox__spin--light { position: static; margin: 0 auto 14px; border-color: rgba(255, 246, 251, .2); border-top-color: var(--gold); }
 
 /* Инструкция «как открыть в браузере»: поверх окна оплаты, стрелка — в
    правый верхний угол, где у TikTok кнопка «•••». */
 .whelp {
   position: fixed; inset: 0; z-index: 70;
-  background: rgba(5, 6, 18, .86);
+  background: rgba(20, 4, 24, .86);
   display: flex; align-items: center; justify-content: center;
   padding: 72px var(--pad) calc(24px + env(safe-area-inset-bottom, 0px));
 }
@@ -1006,7 +1007,7 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .whelp__steps b {
   flex: none; width: 28px; height: 28px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--gold); color: #1a1405; font-size: 15px;
+  background: var(--gold); color: var(--on-gold); font-size: 15px;
 }
 .whelp__busy { margin: 0; text-align: center; font-size: 16px; color: var(--ink); }
 .whelp__p { margin: 0 0 20px; font-size: 16px; line-height: 1.45; color: var(--ink-dim); }
@@ -1067,7 +1068,7 @@ body.kb-lift .scr.is-active { padding-bottom: calc(152px + 100vh + env(safe-area
 .q-cards .tile[role="checkbox"]::after { border-radius: 6px; }
 .q-cards .tile[aria-checked="true"]::after {
   border-color: var(--gold); background: var(--gold) no-repeat 50% 50% / 14px 14px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23241A05' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233B0E3E' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
 }
 
 .q-note { margin: 12px 0 0; font-size: 13px; line-height: 19px; color: var(--ink-dim); }
@@ -1090,7 +1091,7 @@ body.kb-lift .scr.is-active { padding-bottom: calc(152px + 100vh + env(safe-area
   font-family: var(--serif); font-size: 46px; font-weight: 600; line-height: 1.05; text-align: center;
   color: var(--ink-faint); font-variant-numeric: lining-nums tabular-nums; letter-spacing: .01em;
 }
-.q-readout.is-set { color: var(--gold); text-shadow: 0 0 24px rgba(232,197,127,.25); }
+.q-readout.is-set { color: var(--gold); text-shadow: 0 0 24px rgba(248,211,236,.32); }
 .q-pick { margin: 8px 0 0; text-align: center; font-size: 13px; color: var(--ink-dim); }
 .dpick__cols { display: flex; margin-top: 16px; }
 .dpick__cols .wheel { flex: 1 1 0; min-width: 0; }
