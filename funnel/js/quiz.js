@@ -373,6 +373,7 @@
     all('.scr').forEach(function (x) { x.classList.toggle('is-active', x === s); });
     header(id);
     if (!opts.silent) { window.scrollTo(0, 0); }
+    requestAnimationFrame(fitPickers);
     /* Фокус на заголовок нового шага: скринридер объявляет, где человек,
        а клавиатура начинает с начала экрана. */
     if (!opts.noFocus) {
@@ -566,6 +567,33 @@
       if (i >= 0) { scrollTo(i, true); }
     };
     return w;
+  }
+
+  /* Пикер на весь экран: сколько строк барабана помещается между верхом
+     панели и кнопкой внизу, с учётом того, что стоит под пикером (ссылка
+     «Не знаю времени», сообщение). Нечётное число 3–9, чтобы выбранная
+     строка была ровно посередине. Перевод scrollTop в строку от высоты не
+     зависит (отступы симметричны), поэтому выбор при пересчёте не сбивается. */
+  function fitPickers() {
+    var cols = document.querySelector('.scr.is-active .dpick__cols');
+    if (!cols) { return; }
+    var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    var dockEl = document.querySelector('.dock');
+    /* offsetParent у position:fixed всегда null — видимость дока по display. */
+    var bottom = dockEl && getComputedStyle(dockEl).display !== 'none' ? Math.min(vh, dockEl.getBoundingClientRect().top) : vh;
+    var box = cols.parentNode, after = 0;
+    for (var n = box.nextElementSibling; n; n = n.nextElementSibling) { after += n.offsetHeight + 10; }
+    for (var m = cols.nextElementSibling; m; m = m.nextElementSibling) { after += m.offsetHeight; }
+    var lab = cols.querySelector('.wheel__lab');
+    var chrome = 24 + 8 + (lab ? lab.offsetHeight : 0);
+    var avail = bottom - cols.getBoundingClientRect().top - chrome - after - 12;
+    var rows = Math.floor(avail / ROW);
+    if (rows % 2 === 0) { rows--; }
+    cols.style.setProperty('--rows', String(Math.max(3, Math.min(9, rows))));
+  }
+  window.addEventListener('resize', function () { requestAnimationFrame(fitPickers); });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', function () { requestAnimationFrame(fitPickers); });
   }
 
   /* --- выбор даты ---------------------------------------------------------

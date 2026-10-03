@@ -1096,47 +1096,56 @@ body.kb-lift .scr.is-active { padding-bottom: calc(152px + 100vh + env(safe-area
 .dpick__cols { display: flex; margin-top: 16px; }
 .dpick__cols .wheel { flex: 1 1 0; min-width: 0; }
 .dpick__cols .wheel--year { flex-grow: 1.3; }
-.dpick__cols .wheel + .wheel { margin-left: 8px; }
-.wheel__lab { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); text-align: center; }
-/* Строка 52px, видно пять: две сверху, выбранная, две снизу. ROW в
-   quiz.js должен совпадать с высотой строки. */
-.wheel__win {
-  position: relative; margin-top: 8px; height: 260px; border-radius: var(--radius);
+.wheel__lab { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim); text-align: center; }
+
+/* ПИКЕР НА ВЕСЬ ЭКРАН. Колонки — одна панель с общей полосой выбора,
+   как системный барабан iOS. Высота — сколько строк помещается между
+   заголовком и кнопкой (нечётное число, 5–9): её считает fitPickers() в
+   quiz.js и кладёт в --rows. Строка — 52px, это ROW в quiz.js. */
+.dpick__cols {
+  --rows: 5;
+  position: relative; padding: 14px 8px 10px; border-radius: 28px;
   border: 1px solid var(--card-line);
-  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.06) 50%, rgba(255,255,255,.02));
-  overflow: hidden;
+  background: radial-gradient(120% 70% at 50% 50%, rgba(255,255,255,.09), rgba(255,255,255,.03) 70%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 24px 60px -30px rgba(0,0,0,.6);
 }
-.wheel__win:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.wheel__win {
+  position: relative; margin-top: 8px; height: calc(var(--rows) * 52px);
+  border: 0; border-radius: 0; background: transparent; overflow: hidden;
+}
+.wheel__win:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; border-radius: 16px; }
 .wheel__list {
   height: 100%; overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: y mandatory;
-  padding: 104px 0; box-sizing: border-box; scrollbar-width: none; -webkit-overflow-scrolling: touch;
-  -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
-          mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+  padding: calc((var(--rows) - 1) / 2 * 52px) 0; box-sizing: border-box; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch; touch-action: pan-y;
+  -webkit-mask-image: linear-gradient(transparent, #000 34%, #000 66%, transparent);
+          mask-image: linear-gradient(transparent, #000 34%, #000 66%, transparent);
 }
 .wheel__list::-webkit-scrollbar { display: none; }
-/* Соседние строки меньше и тусклее, центральная — крупная и яркая.
-   Масштаб, а не font-size: так строка не меняет высоту и привязка не
-   сбивается. */
 .wheel__it {
   height: 52px; line-height: 52px; text-align: center; scroll-snap-align: center;
-  font-family: var(--serif); font-size: 30px; font-weight: 600; color: var(--ink-faint);
+  font-family: var(--serif); font-size: 32px; font-weight: 700; color: var(--ink-faint);
   cursor: pointer; user-select: none; -webkit-user-select: none;
   font-variant-numeric: lining-nums tabular-nums;
-  transform: scale(.6); opacity: .45;
+  transform: scale(.58); opacity: .4;
   transition: transform .12s ease, opacity .12s ease, color .12s ease;
 }
 .wheel__it.n2 { transform: scale(.66); opacity: .55; }
-.wheel__it.n1 { transform: scale(.78); opacity: .8; color: var(--ink-dim); }
-.wheel__it.on { transform: scale(1); opacity: 1; color: var(--ink); }
-.wheel__it.off { opacity: .2; text-decoration: line-through; cursor: default; }
+.wheel__it.n1 { transform: scale(.8); opacity: .82; color: var(--ink-dim); }
+.wheel__it.on { transform: scale(1.06); opacity: 1; color: var(--ink); }
+.wheel__it.off { opacity: .18; text-decoration: line-through; cursor: default; }
+/* Общая полоса выбора: у каждой колонки свой кусок от края до края,
+   крайние скруглены — вместе это одна полоса через всю панель. */
 .wheel__mark {
-  position: absolute; left: 6px; right: 6px; top: 104px; height: 52px; pointer-events: none;
-  border-top: 1px solid var(--gold-line); border-bottom: 1px solid var(--gold-line); border-radius: 12px;
-  background: var(--gold-soft);
+  position: absolute; left: 0; right: 0; top: calc((var(--rows) - 1) / 2 * 52px); height: 52px; pointer-events: none;
+  background: rgba(248, 211, 236, .14);
+  border-top: 1px solid rgba(248, 211, 236, .38); border-bottom: 1px solid rgba(248, 211, 236, .38);
 }
-.wheel:not(.wheel--unset) .wheel__it.on { color: var(--gold); }
+.dpick__cols .wheel:first-child .wheel__mark { left: 4px; border-left: 1px solid rgba(248, 211, 236, .38); border-radius: 16px 0 0 16px; }
+.dpick__cols .wheel:last-child .wheel__mark { right: 4px; border-right: 1px solid rgba(248, 211, 236, .38); border-radius: 0 16px 16px 0; }
+.wheel:not(.wheel--unset) .wheel__it.on { color: var(--gold); text-shadow: 0 0 18px rgba(248,211,236,.35); }
 .wheel--unset .wheel__it.on { color: var(--ink-dim); }
-.wheel--unset .wheel__mark { border-style: dashed; background: transparent; }
+.wheel--unset .wheel__mark { background: rgba(248, 211, 236, .06); }
 @media (prefers-reduced-motion: reduce) { .wheel__it { transition: none; } }
 
 /* --- место: результаты списком под полем, без всплывающего меню ----------- */
@@ -1200,3 +1209,41 @@ body.q-kb .dock { display: none; }
    оказались бы на 150px ниже содержимого. */
 html[data-variant="q2"] .scr.q.is-active { padding-bottom: 0; }
 html[data-variant="q2"] .q-docs { padding-bottom: calc(152px + env(safe-area-inset-bottom, 0px)); }
+
+/* Основные тексты — на ступень плотнее. Cormorant уже 700 у заголовка,
+   поэтому плотность заголовку добавляет тонкая обводка буквы. */
+.h1 { -webkit-text-stroke: .35px currentColor; }
+.tile__t, .b3__sign, .pv__h, .q-chosen__n, .res__val, .q-asp b { font-weight: 700; }
+.q-frag { font-weight: 500; }
+.q-readout { font-weight: 700; }
+
+/* Название в шапке: «AstroMap» без «App» — жирный серифный знак с
+   бело-розовым градиентом и маленькой планетой с кольцом, как на логотипе. */
+.top__brand {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--serif); font-style: normal; font-weight: 700;
+  font-size: 22px; line-height: 1; letter-spacing: .015em;
+  color: var(--ink);
+  background: linear-gradient(180deg, #FFFFFF 15%, #F6CBE8 95%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.top__brand::before {
+  content: ''; flex: none; width: 22px; height: 22px;
+  background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g' cx='40%25' cy='38%25' r='65%25'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='1' stop-color='%23F2B8DE'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M5.2 20.6C2.6 22.6 1.6 24.4 2.4 25.4c1.4 1.8 8.3-.7 15.4-5.6s11.6-10.6 10.2-12.4c-.8-1-3-.6-5.9.8' fill='none' stroke='%23F8D3EC' stroke-width='1.7' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='8.6' fill='url(%23g)'/%3E%3Cpath d='M8.6 21.3c4.3-1.4 10-4.7 14.6-8.6' fill='none' stroke='%23fff' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E");
+  filter: drop-shadow(0 0 6px rgba(248, 190, 230, .55));
+}
+@media (max-width: 340px) { .top__brand { font-size: 19px; } }
+
+/* Узкий экран: шапке не хватает места на «назад», знак, язык и название
+   фазы — фаза и так видна по полосе прогресса, подпись прячем. */
+@media (max-width: 360px) {
+  html[data-variant="q2"] .top__pct { display: none; }
+}
+/* Низкий экран (iPhone SE, клавиатура, встроенный браузер с панелями):
+   пикер компактнее, чтобы над кнопкой поместились хотя бы три строки. */
+@media (max-height: 700px) {
+  .q-pick { display: none; }
+  .q-readout { font-size: 36px; }
+  .dpick { margin-top: 10px; }
+  .dpick__cols { margin-top: 10px; padding-top: 10px; }
+}

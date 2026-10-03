@@ -13,7 +13,7 @@
   if (!EN) { return; }
 
   var C = {
-    brand: 'AstroMap App',
+    brand: 'AstroMap',
     progress: 'Твоя мапа',               /* ≤ 14 знаков */
     ctaNext: 'Далі',
     ctaCalc: 'Порахувати мапу',
@@ -185,7 +185,7 @@
     },
 
     paywall: {
-      eyebrow: 'AstroMap App',
+      eyebrow: 'AstroMap',
       title: 'Твоя мапа готова',
       planTitle: 'Місячний план',
       cta: 'Відкрити мою мапу',

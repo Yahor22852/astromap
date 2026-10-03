@@ -8,7 +8,7 @@
   if (!EN) { return; }
 
   var C = {
-    brand: 'AstroMap App',
+    brand: 'AstroMap',
     progress: 'Deine Karte',             /* ≤ 14 знаков */
     ctaNext: 'Weiter',
     ctaCalc: 'Meine Karte berechnen',
@@ -180,7 +180,7 @@
     },
 
     paywall: {
-      eyebrow: 'AstroMap App',
+      eyebrow: 'AstroMap',
       title: 'Deine Karte ist fertig',
       planTitle: 'Monatsplan',
       cta: 'Meine Karte freischalten',

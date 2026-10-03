@@ -13,7 +13,7 @@
   if (!EN) { return; }
 
   var C = {
-    brand: 'AstroMap App',
+    brand: 'AstroMap',
     progress: 'Haritan',                 /* ≤ 14 знаков */
     ctaNext: 'Devam',
     ctaCalc: 'Haritamı hesapla',
@@ -185,7 +185,7 @@
     },
 
     paywall: {
-      eyebrow: 'AstroMap App',
+      eyebrow: 'AstroMap',
       title: 'Haritan hazır',
       planTitle: 'Aylık plan',
       cta: 'Haritamı aç',

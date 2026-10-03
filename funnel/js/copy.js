@@ -11,7 +11,7 @@
   'use strict';
 
   var PL = {
-    brand: 'AstroMap App',
+    brand: 'AstroMap',
     progress: 'Twoja mapa',            /* ≤ 14 знаков */
     ctaNext: 'Dalej',
     ctaCalc: 'Policz moją mapę',
@@ -218,7 +218,7 @@
     },
 
     paywall: {
-      eyebrow: 'AstroMap App',
+      eyebrow: 'AstroMap',
       title: 'Twoja mapa jest gotowa',
       planTitle: 'Plan miesięczny',
       cta: 'Otwórz moją mapę',
@@ -360,7 +360,7 @@
   };
 
   var EN = {
-    brand: 'AstroMap App',
+    brand: 'AstroMap',
     progress: 'Your map',
     ctaNext: 'Continue',
     ctaCalc: 'Calculate my map',
@@ -532,7 +532,7 @@
     },
 
     paywall: {
-      eyebrow: 'AstroMap App',
+      eyebrow: 'AstroMap',
       title: 'Your map is ready',
       planTitle: 'Monthly plan',
       cta: 'Unlock my map',
