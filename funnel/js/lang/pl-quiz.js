@@ -44,7 +44,6 @@
       title: 'Data Twoich urodzin',
       sub: 'Od daty zaczynamy liczyć Twoją mapę.',
       day: 'Dzień', month: 'Miesiąc', year: 'Rok',
-      decades: 'Przejdź do dekady',
       pick: 'Przewiń każdy bęben do swojej daty.',
       confirm: 'Potwierdź datę',
       clamped: 'Dzień zmieniony na {d}: ten miesiąc ma dni: {n}.',

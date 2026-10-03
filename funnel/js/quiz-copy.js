@@ -54,7 +54,6 @@
       title: 'Your date of birth',
       sub: 'We start calculating your map from the date.',
       day: 'Day', month: 'Month', year: 'Year',
-      decades: 'Jump to a decade',
       pick: 'Turn each wheel to your date.',
       confirm: 'Confirm date',
       clamped: 'Day changed to {d}: this month has {n} days.',

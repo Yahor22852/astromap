@@ -570,7 +570,7 @@
 
   /* --- выбор даты ---------------------------------------------------------
      Три колонки в порядке локали (день-месяц-год, месяц-день-год, год-
-     месяц-день), над годом — быстрый переход по десятилетиям. Дней столько,
+     месяц-день). Дней столько,
      сколько в выбранном месяце и году; будущие дни, месяцы и годы
      выключены. Дата считается введённой, только когда тронуты все три
      колонки и человек нажал «Подтвердить». */
@@ -650,30 +650,12 @@
     partsOrder().forEach(function (t) { cols.appendChild(wheels[t].root); });
     wheels.year.root.classList.add('wheel--year');
 
-    /* Десятилетия: прыжок прокрутки, а не выбор года — колонка остаётся
-       «не тронутой», пока человек не остановит её на своём годе. */
-    var dec = document.createElement('div');
-    dec.className = 'dpick__dec';
-    dec.setAttribute('role', 'group');
-    dec.setAttribute('aria-label', Q.dob.decades);
-    var decs = [];
-    for (var d0 = Math.floor(Y / 10) * 10; d0 >= 1940; d0 -= 10) { decs.push(d0); }
-    dec.innerHTML = decs.map(function (d) {
-      return '<button type="button" class="chip q-dec" data-y="' + d + '">' + d + '</button>';
-    }).join('');
-    dec.addEventListener('click', function (ev) {
-      var b = ev.target.closest ? ev.target.closest('.q-dec') : null;
-      if (!b) { return; }
-      wheels.year.jump(Math.min(Y, +b.getAttribute('data-y') + (+b.getAttribute('data-y') === Math.floor(Y / 10) * 10 ? 0 : 5)));
-    });
-
     var hint = document.createElement('p');
     hint.className = 'q-pick';
     hint.textContent = Q.dob.pick;
     box.appendChild(readout);
     box.appendChild(hint);
     box.appendChild(cols);
-    box.appendChild(dec);
     box.appendChild(note);
 
     wheels.year.setItems(yearItems(), Y - 1995);

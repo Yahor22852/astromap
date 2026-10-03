@@ -43,7 +43,6 @@
       title: 'Ta date de naissance',
       sub: 'On commence le calcul de ta carte par la date.',
       day: 'Jour', month: 'Mois', year: 'Année',
-      decades: 'Aller à une décennie',
       pick: 'Fais tourner chaque roue jusqu’à ta date.',
       confirm: 'Confirmer la date',
       clamped: 'Jour changé en {d} : ce mois compte {n} jours.',

@@ -43,7 +43,6 @@
       title: 'La tua data di nascita',
       sub: 'Dalla data iniziamo a calcolare la tua carta.',
       day: 'Giorno', month: 'Mese', year: 'Anno',
-      decades: 'Vai a un decennio',
       pick: 'Gira ogni rotella fino alla tua data.',
       confirm: 'Conferma la data',
       clamped: 'Giorno cambiato in {d}: questo mese ha {n} giorni.',

@@ -43,7 +43,6 @@
       title: 'Sua data de nascimento',
       sub: 'Com a data começamos a calcular seu mapa.',
       day: 'Dia', month: 'Mês', year: 'Ano',
-      decades: 'Ir para uma década',
       pick: 'Gire cada roda até a sua data.',
       confirm: 'Confirmar data',
       clamped: 'Dia alterado para {d}: este mês tem {n} dias.',

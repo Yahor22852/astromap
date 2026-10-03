@@ -43,7 +43,6 @@
       title: 'Doğum tarihin',
       sub: 'Haritanı hesaplamaya tarihle başlıyoruz.',
       day: 'Gün', month: 'Ay', year: 'Yıl',
-      decades: 'Bir on yıla git',
       pick: 'Her çarkı doğum tarihine çevir.',
       confirm: 'Tarihi onayla',
       clamped: 'Gün {d} olarak değiştirildi: bu ayın gün sayısı {n}.',

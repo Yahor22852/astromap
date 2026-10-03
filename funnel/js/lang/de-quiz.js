@@ -43,7 +43,6 @@
       title: 'Dein Geburtsdatum',
       sub: 'Mit dem Datum beginnen wir, deine Karte zu berechnen.',
       day: 'Tag', month: 'Monat', year: 'Jahr',
-      decades: 'Zu einem Jahrzehnt springen',
       pick: 'Dreh jedes Rad auf dein Datum.',
       confirm: 'Datum bestätigen',
       clamped: 'Tag auf {d} geändert: Dieser Monat hat {n} Tage.',
