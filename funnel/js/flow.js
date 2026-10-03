@@ -51,6 +51,11 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
 
   var C = window.COPY;
   var A = window.Astro;
+  /* Вариант эксперимента (см. <head> index.html): 'a' — эта воронка,
+     'q2' — квиз v2 из js/quiz.js. В варианте q2 экраны s1–s5 здесь не
+     открываются, а общая часть — оплата, TikTok, язык, шаги — отдаётся
+     квизу через window.AstroFlow в конце файла. */
+  var V2 = window.ASTROMAP_VARIANT === 'q2';
   /* Один список городов на все языки (см. js/cities.js). Раньше их было два,
      CITIES_PL и CITIES_EN, и человек выбирал из того, что соответствовало
      языку интерфейса, — а сохранялся индекс в списке. Десять языков на двух
@@ -217,6 +222,10 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   function track(step) {
     try {
       if (window.ASTROMAP_LEAVING) { return; }
+      /* Тестовые проходы (?src=test…, localhost — см. <head>) в шаги не
+         попадают: раньше заходы с ними сводка отбрасывала, а шаги нет, и
+         проверочный проход смешивался с живыми людьми. */
+      if (window.ASTROMAP_TEST) { return; }
       var seen = JSON.parse(sessionStorage.getItem('astromap.steps') || '[]');
       if (seen.indexOf(step) >= 0) { return; }
       seen.push(step);
@@ -315,7 +324,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
        воркер по нему скажет этой странице «оплачено» — см. watchPurchase. */
     var sid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
       : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function () { return (Math.random() * 16 | 0).toString(16); });
-    frame.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'overlay=true&astro_sid=' + sid;
+    frame.src = withVariant(url) + '&overlay=true&astro_sid=' + sid;
     watchPurchase(sid);
 
     el('payWallet').addEventListener('click', function () { startWalletHandoff(plan); });
@@ -441,7 +450,8 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (done) { return; }
       done = true;
       if (window.ASTROMAP_PAID_REDIRECT) { window.ASTROMAP_PAID_REDIRECT(); }
-      if (S.screen === 's1') { track('s1'); }
+      if (V2) { if (window.AstroQuiz) { window.AstroQuiz.trackCurrent(); } }
+      else if (S.screen === 's1') { track('s1'); }
     };
     var checked = false;
     try { checked = sessionStorage.getItem('astromap.tt.checked') === '1'; sessionStorage.setItem('astromap.tt.checked', '1'); } catch (e) {}
@@ -484,7 +494,10 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     } catch (e) {}
     showOpening(T.opening);
     markCheckout(r.plan);
-    location.replace(r.plan === 'yearly' ? CHECKOUT_URL_YEAR : CHECKOUT_URL);
+    /* Вариант — тот, в котором человек проходил квиз в TikTok (он едет в
+       ответах), а не тот, что выпал этому браузеру. */
+    var v = data && data.f && data.f.v === 'q2' ? 'q2' : 'a';
+    location.replace(withVariant(r.plan === 'yearly' ? CHECKOUT_URL_YEAR : CHECKOUT_URL, v));
   }
 
   /* Совпали IP и грубый отпечаток: запись почти наверняка этого человека,
@@ -580,11 +593,19 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     document.body.removeChild(ta);
   }
 
+  /* Метка варианта на ссылке чекаута. Gumroad возвращает параметры ссылки
+     в Ping как url_params[...] (так же доезжает astro_sid), и воркер по
+     astro_v раскладывает оплаты по вариантам эксперимента. На сумму, товар
+     и условия метка не влияет. */
+  function withVariant(url, v) {
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'astro_v=' + (v || (V2 ? 'q2' : 'a'));
+  }
+
   /* Единая точка ухода на оплату. */
   function goCheckout(plan, url) {
     if (window.ASTROMAP_INAPP) { openEmbeddedCheckout(plan, url); return; }
     markCheckout(plan);
-    window.location.href = url;
+    window.location.href = withVariant(url);
   }
 
   /* Оплата не подключена: пользователю — фраза на языке воронки,
@@ -822,8 +843,40 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     window.scrollTo({ top: Math.max(0, y), behavior: reduced ? 'auto' : 'smooth' });
   }
 
+  /* --- несуществующие и будущие даты --------------------------------------
+     Селект дня всегда предлагал 1–31, и 31 февраля 1990 уходило в расчёт:
+     Date.UTC молча нормализует его в 3 марта, и экран уверенно показывал
+     «Рыбы 12,6°» для дня, которого не было. Теперь дни, которых нет в
+     выбранном месяце, и даты позже сегодняшней в селектах выключены, а уже
+     выбранный несуществующий день сбрасывается — без тихой подмены на
+     соседнее число, человек выбирает день сам. */
+  function daysIn(y, m) { return new Date(Date.UTC(y || 2000, m, 0)).getUTCDate(); }
+  function dateValid(o) {
+    if (!(o.d && o.m && o.y)) { return false; }
+    if (o.d > daysIn(o.y, o.m)) { return false; }
+    var now = new Date();
+    return Date.UTC(o.y, o.m - 1, o.d) <= Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+  function syncDateSelects(dId, mId, yId) {
+    var y = +el(yId).value || null, m = +el(mId).value || null;
+    var now = new Date(), curY = now.getFullYear();
+    var max = m ? daysIn(y || 2000, m) : 31;
+    all('#' + mId + ' option').forEach(function (o) {
+      o.disabled = !!(o.value && y === curY && +o.value > now.getMonth() + 1);
+    });
+    all('#' + dId + ' option').forEach(function (o) {
+      var d = +o.value;
+      o.disabled = !!(o.value && (d > max ||
+        (y === curY && m === now.getMonth() + 1 && d > now.getDate())));
+    });
+    [dId, mId].forEach(function (id) {
+      var s = el(id), opt = s.options[s.selectedIndex];
+      if (opt && opt.disabled) { s.value = ''; }
+    });
+  }
+
   /* --- экран 1 ----------------------------------------------------------- */
-  function dobReady() { return !!(S.dob.d && S.dob.m && S.dob.y); }
+  function dobReady() { return dateValid(S.dob); }
 
   /* restoring === true — вызов при загрузке страницы, а не выбор даты.
      Тогда сохранённое не перезаписываем: в S на старте восстановлены
@@ -832,6 +885,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
      карту без места рождения, а передача из TikTok теряла их до ухода
      на чекаут. */
   function onDob(restoring) {
+    syncDateSelects('d1', 'm1', 'y1');
     S.dob = {
       d: +el('d1').value || null,
       m: +el('m1').value || null,
@@ -1472,12 +1526,13 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   }
 
   function onPartner() {
+    syncDateSelects('d2', 'm2', 'y2');
     S.partner = {
       d: +el('d2').value || null,
       m: +el('m2').value || null,
       y: +el('y2').value || null
     };
-    if (!(S.partner.d && S.partner.m && S.partner.y)) {
+    if (!dateValid(S.partner)) {
       el('scoreBox').classList.add('hidden');
       el('cta').disabled = true;
       return;
@@ -1952,6 +2007,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
 
   /* --- навигация --------------------------------------------------------- */
   el('cta').addEventListener('click', function () {
+    if (V2) { return; }   /* у квиза свой обработчик */
     if (S.screen === 's1') { go('s2'); return; }
     if (S.screen === 's2') { go('s3'); return; }
     if (S.screen === 's3') {
@@ -1985,6 +2041,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   });
 
   el('ghost').addEventListener('click', function () {
+    if (V2) { return; }
     if (S.screen === 's4') { S.syn = null; buildSummary(); pvStart(); go('s5'); return; }
     if (S.screen === 's6') {
       /* Страховка на случай, если годовой товар снимут с продажи: экран s7
@@ -2145,7 +2202,22 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     return true;
   }
 
-  if (!resume()) {
+  /* --- общая часть для квиза v2 -----------------------------------------
+     Квиз (js/quiz.js) не дублирует оплату, передачу из TikTok, расчётные
+     помощники и строку согласия: берёт их отсюда. Всё остальное у него своё,
+     и экраны s1–s7 в его варианте не открываются вовсе. */
+  window.AstroFlow = {
+    v2: V2, track: track, deg: deg, goCheckout: goCheckout, noCheckout: noCheckout,
+    checkoutUrl: CHECKOUT_URL, checkoutUrlYear: CHECKOUT_URL_YEAR,
+    legalHtml: legalHtml, discHtml: discHtml, priceHtml: priceHtml,
+    daysIn: daysIn, dateValid: dateValid
+  };
+
+  if (V2) {
+    /* Экраны прежней воронки закрыты сразу, до первой отрисовки: s1
+       активен в разметке, и без этого он мелькнул бы перед квизом. */
+    all('.scr').forEach(function (s) { s.classList.remove('is-active'); });
+  } else if (!resume()) {
     progress('s1');
     dock('s1');
     /* Первый экран открыт без go(). Пришедший из TikTok в Safari считается,

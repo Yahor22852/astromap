@@ -143,7 +143,40 @@ var FUNNEL_STEPS = {
   pay_y:   'Нажали «оплатить» за год',
   reading: 'Ушли в бесплатное чтение',
   paid_m:  'Оплатили месяц',
-  paid_y:  'Оплатили год'
+  paid_y:  'Оплатили год',
+
+  /* Эксперимент: прежняя воронка ('a', шаги выше) против квиза v2 ('q2').
+     Оплаты по вариантам — по метке astro_v на ссылке чекаута, которую
+     Gumroad возвращает в Ping (см. gumroadPing). */
+  a_paid_m:  'A: оплатили месяц',
+  a_paid_y:  'A: оплатили год',
+  q2_goal:    'v2: цель',
+  q2_ctx:     'v2: контекст цели',
+  q2_dob:     'v2: дата рождения',
+  q2_sun:     'v2: Солнце',
+  q2_tk:      'v2: знает ли время',
+  q2_time:    'v2: время',
+  q2_place:   'v2: место',
+  q2_core:    'v2: основа карты',
+  q2_extra:   'v2: доп. темы',
+  q2_start:   'v2: с чего начать',
+  q2_pask:    'v2: добавить пару?',
+  q2_pdate:   'v2: дата пары',
+  q2_preview: 'v2: превью',
+  q2_bridge:  'v2: небо меняется',
+  q2_pay:     'v2: пейвол (месяц)',
+  q2_pay_m:   'v2: нажали «оплатить» месяц',
+  q2_year:    'v2: годовой план',
+  q2_pay_y:   'v2: нажали «оплатить» год',
+  q2_reading: 'v2: ушли в бесплатное чтение',
+  q2_tk_no:   'v2: время неизвестно',
+  q2_pask_no: 'v2: пару пропустили',
+  q2_err_date:'v2: дата скорректирована (нет такого дня / будущее)',
+  q2_place_nf:'v2: «моего места нет в списке»',
+  q2_pv_fail: 'v2: превью не загрузилось',
+  q2_pv_tab:  'v2: переключали вкладки превью',
+  q2_paid_m:  'v2: оплатили месяц',
+  q2_paid_y:  'v2: оплатили год'
 };
 var STEPS_SCHEMA = 'CREATE TABLE IF NOT EXISTS steps (' +
   'day TEXT NOT NULL, step TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, ' +
@@ -165,7 +198,7 @@ async function stepHit(request, env) {
   try { data = JSON.parse(await request.text()); } catch (e) { data = {}; }
   var step = String(data.step || '');
   /* Оплату присылает только Gumroad, не страница. */
-  if (!FUNNEL_STEPS[step] || /^paid_/.test(step)) { return new Response(null, { status: 400 }); }
+  if (!FUNNEL_STEPS[step] || /(^|_)paid_/.test(step)) { return new Response(null, { status: 400 }); }
   await addStep(env, step);
   await addCountry(env, 'step', step, countryOf(request));
   return new Response(null, { status: 204, headers: { 'Access-Control-Allow-Origin': ALLOWED_ORIGIN } });
@@ -352,7 +385,12 @@ async function gumroadPing(request, env) {
      на каждую продажу, а не только на оплаченные в окне TikTok, поэтому
      считаем до проверки astro_sid. */
   if (form.get('is_recurring_charge') !== 'true' && form.get('test') !== 'true') {
-    await addStep(env, /year/i.test(form.get('recurrence') || '') ? 'paid_y' : 'paid_m');
+    var per = /year/i.test(form.get('recurrence') || '') ? 'y' : 'm';
+    await addStep(env, 'paid_' + per);
+    /* Вариант эксперимента — метка astro_v на ссылке чекаута. Без метки
+       (прямая ссылка, старая вкладка) продажа в варианты не попадает. */
+    var variant = form.get('url_params[astro_v]') || '';
+    if (variant === 'q2' || variant === 'a') { await addStep(env, variant + '_paid_' + per); }
   }
   var sid = form.get('url_params[astro_sid]') || '';
   if (!/^[0-9a-f-]{20,64}$/i.test(sid)) { return new Response('ok'); }
@@ -802,6 +840,47 @@ function funnelSection(f, opt) {
     '</section>';
 }
 
+/* Эксперимент: A против квиза v2 в одной таблице. Старт A — экран даты
+   (s1), старт v2 — экран цели (q2_goal). Числа — вкладки, а не люди, и на
+   малых выборках разница между вариантами ничего не доказывает: сводка это
+   и пишет. */
+var Q2_ROUTE = ['q2_goal', 'q2_ctx', 'q2_dob', 'q2_sun', 'q2_tk', 'q2_time', 'q2_place', 'q2_core',
+  'q2_extra', 'q2_start', 'q2_pask', 'q2_pdate', 'q2_preview', 'q2_bridge', 'q2_pay', 'q2_pay_m',
+  'q2_year', 'q2_pay_y', 'q2_reading', 'q2_paid_m', 'q2_paid_y'];
+var Q2_SIDE = ['q2_tk_no', 'q2_pask_no', 'q2_err_date', 'q2_place_nf', 'q2_pv_fail', 'q2_pv_tab'];
+function experimentSection(f) {
+  if (!f.q2_goal) { return ''; }
+  var aStart = f.s1, bStart = f.q2_goal;
+  var line = function (name, a, b) {
+    return '<tr><td>' + esc(name) + '</td><td class="r">' + a + ' <span style="color:var(--muted)">' + pct(a, aStart) +
+      '</span></td><td class="r">' + b + ' <span style="color:var(--muted)">' + pct(b, bStart) + '</span></td></tr>';
+  };
+  return '<section id="experiment"><h2>Квиз v2 (основная воронка) и прежняя воронка до переключения</h2>' +
+    '<p class="sub">Это не A/B-тест: столбец A — прежняя воронка до переключения, сравнение «до/после». Доли — от старта своей воронки. Оплаты считаются по метке на ссылке чекаута; ' +
+    'продажи без метки (прямая ссылка, старая вкладка) есть только в общей строке «Оплатили».</p>' +
+    '<table><tr><th></th><th class="r">A</th><th class="r">v2</th></tr>' +
+    line('Старт', aStart, bStart) +
+    line('Пейвол (месяц)', f.s6, f.q2_pay) +
+    line('Нажали «оплатить»', f.pay_m + f.pay_y, f.q2_pay_m + f.q2_pay_y) +
+    line('Оплатили', f.a_paid_m + f.a_paid_y, f.q2_paid_m + f.q2_paid_y) +
+    '</table>' +
+    '<p class="note">Пока покупок единицы, разница между столбцами — шум; кроме того, за это время меняются трафик и креативы.</p>' +
+    '<h3>Шаги квиза v2</h3><table><tr><th>Шаг</th><th class="r">Дошли</th><th class="r">Ушли с предыдущего</th></tr>' +
+    Q2_ROUTE.map(function (k, i) {
+      var prev = i ? f[Q2_ROUTE[i - 1]] : null;
+      var optional = k === 'q2_time' || k === 'q2_pask' || k === 'q2_pdate' || k === 'q2_year' || k === 'q2_pay_y' ||
+        k === 'q2_reading' || k === 'q2_pay_m' || /paid/.test(k);
+      return '<tr><td>' + esc(FUNNEL_STEPS[k]) + '</td><td class="r">' + f[k] + ' <span style="color:var(--muted)">' +
+        pct(f[k], bStart) + '</span></td><td class="r">' + (prev != null && !optional && prev ? '−' + Math.max(0, prev - f[k]) : '') +
+        '</td></tr>';
+    }).join('') + '</table>' +
+    '<h3>Сигналы v2</h3><table>' + Q2_SIDE.map(function (k) {
+      return '<tr><td>' + esc(FUNNEL_STEPS[k]) + '</td><td class="r">' + f[k] + '</td></tr>';
+    }).join('') + '</table>' +
+    '<p class="note">Необязательные шаги (время, пара, годовой план) проходят не все — потерю на них не считаем. ' +
+    'Тестовые проходы (?src=test…, localhost) воронка в шаги не отправляет.</p></section>';
+}
+
 function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
   var key = encodeURIComponent(url.searchParams.get('key'));
   /* ?cc=PL — воронка только по этой стране. Шаги по странам считаются
@@ -898,6 +977,7 @@ function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
     '</div>';
 
   html += funnelSection(ccFunnel, { cc: cc, byCountry: byCountry, key: key, days: days });
+  if (!cc) { html += experimentSection(funnel); }
 
   /* Откуда приходят. */
   var maxV = list.length ? list[0].visits : 1;

@@ -30,6 +30,36 @@ for code in FUNNEL_LANGS:
         target = out / 'js' / 'lang' / name
         assert target.exists(), f'Missing funnel locale: js/lang/{name}'
 
+# Квиз v2: тексты на каждом языке воронки, ключ в ключ как английский
+# (js/quiz-copy.js). Недостающий ключ на экране молча стал бы английским,
+# лишний — опечаткой в имени, которую никто не читает.
+QUIZ_CHECK = r'''
+const vm = require('vm'), fs = require('fs');
+const g = { LANG: 'en' }; g.window = g; vm.createContext(g);
+const run = f => vm.runInContext(fs.readFileSync(f, 'utf8'), g);
+run(process.argv[1] + '/js/quiz-copy.js');
+const shape = (o, p = '') => typeof o !== 'object' || o === null ? [p + ':' + typeof o]
+  : Array.isArray(o) ? [p + ':array' + o.length].concat(...o.map((x, i) => shape(x, p + '.' + i)))
+  : [].concat(...Object.keys(o).sort().map(k => shape(o[k], p + '.' + k)));
+const en = shape(g.QUIZ_ALL.en).join('\n');
+const bad = [];
+for (const l of process.argv.slice(2)) {
+  run(process.argv[1] + '/js/lang/' + l + '-quiz.js');
+  if (!g.QUIZ_ALL[l]) { bad.push(l + ': not registered'); continue; }
+  const got = shape(g.QUIZ_ALL[l]).join('\n');
+  if (got !== en) {
+    const a = new Set(en.split('\n')), b = new Set(got.split('\n'));
+    bad.push(l + ': missing ' + [...a].filter(x => !b.has(x)).slice(0, 5) + ' extra ' + [...b].filter(x => !a.has(x)).slice(0, 5));
+  }
+}
+if (bad.length) { console.error(bad.join('\n')); process.exit(1); }
+'''
+QUIZ_LANGS = ['pl'] + FUNNEL_LANGS
+for code in QUIZ_LANGS:
+    assert (out / 'js' / 'lang' / f'{code}-quiz.js').exists(), f'Missing quiz locale: js/lang/{code}-quiz.js'
+r = subprocess.run(['node', '-e', QUIZ_CHECK, str(out)] + QUIZ_LANGS, capture_output=True, text=True)
+assert r.returncode == 0, 'Quiz locales differ from English:\n' + r.stderr
+
 for page in out.rglob('*.html'):
     parser = Links()
     parser.page = page

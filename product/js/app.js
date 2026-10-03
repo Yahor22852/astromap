@@ -116,6 +116,13 @@
               return t === 'money' ? 'career' : (t === 'calm' ? 'inner' : t);
             }).filter(function (t) { return FOCUS_AREAS.indexOf(t) >= 0; });
           }
+          /* СТАРТОВЫЙ РАЗДЕЛ ИЗ КВИЗА v2 («С чего тебе удобнее начать?»).
+             Один раз: первый вход после оплаты открывает выбранный раздел,
+             дальше продукт ведёт себя как обычно. «Ближайшие даты» — это
+             лента «Что впереди» на экране «Сегодня». */
+          if (p.start === 'chart' || p.start === 'sky' || p.start === 'dates') {
+            S.startView = p.start;
+          }
           if (p.partner && p.partner.y) {
             S.partner = { name: '', y: p.partner.y, m: p.partner.m, d: p.partner.d,
                           h: null, min: null, timeKnown: false, city: srcCity };
@@ -3506,6 +3513,13 @@
     /* Без данных открываем профиль: остальные экраны без него не считаются. */
     var fallback = S.profile ? 'today' : 'profile';
     var parsed = parseHash();
+    var startView = null;
+    if (!parsed.name && S.profile && S.startView) {
+      startView = S.startView;
+      delete S.startView;
+      save();
+      fallback = startView === 'chart' ? 'chart' : 'today';
+    }
     var h = parsed.name || fallback;
     if (ORDER.indexOf(h) < 0) { h = fallback; }
     applyHashState(h, parsed.args);
@@ -3542,6 +3556,11 @@
       : (h === 'settings' ? T.set.title : (T.ui[h + 'Title'] || T.ui.nav[h]));
     var view = el('view');
     view.innerHTML = views[h]();
+    /* «Ближайшие даты» из квиза: экран «Сегодня», прокрученный к ленте. */
+    if (startView === 'dates') {
+      var tl = view.querySelector('.tl');
+      if (tl) { setTimeout(function () { tl.scrollIntoView({ block: 'start' }); }, 0); }
+    }
     /* Страница Луны — узкая центрированная колонка, не двухколоночный грид
        остальных разделов (см. .view--moon в app.css). */
     view.classList.toggle('view--moon', h === 'moon');

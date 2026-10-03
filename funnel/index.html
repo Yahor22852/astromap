@@ -93,6 +93,7 @@
       if (data && data.f && data.f.dob && data.f.dob.y) {
         localStorage.setItem('astromap.funnel', JSON.stringify(data.f));
       }
+      var variant = data && data.f && data.f.v === 'q2' ? 'q2' : 'a';
       if (data && LANGS.indexOf(data.l) >= 0) { localStorage.setItem('astromap.lang', data.l); }
     }
     localStorage.setItem('astromap.checkout', JSON.stringify({ plan: plan, at: Date.now() }));
@@ -101,7 +102,8 @@
     sessionStorage.setItem('astromap.visit', '1');
     window.ASTROMAP_HANDOFF = true;
     history.replaceState(null, '', location.pathname);
-    location.replace(CHECKOUT[plan]);
+    /* Метка варианта эксперимента — см. withVariant() в flow.js. */
+    location.replace(CHECKOUT[plan] + '&astro_v=' + (typeof variant === 'string' ? variant : 'a'));
   } catch (e) { /* битая ссылка — просто показываем воронку */ }
 })();
 </script>
@@ -226,6 +228,32 @@
   document.documentElement.lang = l;
 })();
 </script>
+<script>
+/* ВОРОНКА: основная — квиз v2 ('q2', js/quiz.js). Прежняя воронка ('a',
+   экраны s1–s7 в flow.js) осталась в коде как запасная и открывается только
+   по ?quiz=1 — в этой вкладке, без запоминания, чтобы случайная ссылка не
+   закрепила человека в старой версии. Старое значение astromap.variant
+   (времён теста 50/50) больше не читается: все видят квиз v2.
+
+   ASTROMAP_TEST — проверочный заход: ?src=test…/utm_source=test…, метки
+   deploy…/…check… (те же правила, что у сводки заходов) и localhost. Шаги
+   воронки с такой вкладки не отправляются. */
+(function () {
+  var v = 'q2';
+  try {
+    var q = new URLSearchParams(location.search);
+    if (q.get('quiz') === '1') { sessionStorage.setItem('astromap.oldFunnel', '1'); }
+    if (q.get('quiz') === '2') { sessionStorage.removeItem('astromap.oldFunnel'); }
+    if (sessionStorage.getItem('astromap.oldFunnel') === '1') { v = 'a'; }
+    var src = String(q.get('utm_source') || q.get('src') || '').toLowerCase();
+    var test = /^test|^deploy|check/.test(src) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    if (test) { sessionStorage.setItem('astromap.test', '1'); }
+    window.ASTROMAP_TEST = test || sessionStorage.getItem('astromap.test') === '1';
+  } catch (e) { v = 'q2'; }
+  window.ASTROMAP_VARIANT = v;
+  document.documentElement.setAttribute('data-variant', v);
+})();
+</script>
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/flow.css">
 </head>
@@ -244,6 +272,8 @@
   <header class="top" id="top">
     <div class="top__pill">
       <div class="top__row">
+        <!-- Назад и фазы — только у квиза v2 (js/quiz.js). -->
+        <button class="top__back hidden" id="qBack" type="button"></button>
         <span class="top__brand" data-t="brand"></span>
         <span class="top__right">
         <!-- Десяти языкам не хватит места рядными пилюлями, как хватало
@@ -551,5 +581,16 @@
 })();
 </script>
 <script src="js/flow.js"></script>
+<!-- Квиз v2 — только в его варианте эксперимента: прежней воронке эти
+     25 КБ не нужны. Тексты: английский (он же запасной) + один язык. -->
+<script>
+(function () {
+  if (window.ASTROMAP_VARIANT !== 'q2' || window.ASTROMAP_HANDOFF || window.ASTROMAP_FRAMED) { return; }
+  var l = window.ASTROMAP_LANG;
+  document.write('<script src="js/quiz-copy.js"><\/script>');
+  if (l && l !== 'en') { document.write('<script src="js/lang/' + l + '-quiz.js"><\/script>'); }
+  document.write('<script src="js/quiz.js"><\/script>');
+})();
+</script>
 </body>
 </html>

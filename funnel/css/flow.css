@@ -1031,3 +1031,144 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 body.kb-lift .scr.is-active { padding-bottom: calc(152px + 100vh + env(safe-area-inset-bottom, 0px)); }
 /* Список над полем — когда под ним места нет (см. fitMenu). */
 .citypick__menu.citypick__menu--up { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 6px; }
+
+/* =========================================================================
+   КВИЗ v2 (js/quiz.js) — только вариант 'q2' эксперимента.
+   Те же токены, плитки, карточки результата и док, что у прежней воронки:
+   новые здесь только барабаны, поиск места списком, карточки превью и
+   шапка с фазами.
+   ========================================================================= */
+
+/* Шапка: «назад» слева и три фазы вместо пяти сегментов. Внутри фазы
+   сегмент заполняется по шагам маршрута — при ветвлении он растёт, а не
+   откатывается. */
+.top__back {
+  min-width: 44px; height: 44px; margin: -10px 4px -10px -10px;
+  border: 0; border-radius: 12px; background: transparent;
+  color: var(--ink); font-size: 20px; line-height: 1; cursor: pointer;
+}
+.top__back:hover { background: var(--gold-soft); }
+.top__back:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.top__back.hidden + .top__brand { margin-left: 0; }
+.top__row .top__brand { flex: 1 1 auto; min-width: 0; }
+.q-seg { position: relative; overflow: hidden; }
+.q-seg b { position: absolute; left: 0; top: 0; bottom: 0; background: var(--gold); border-radius: 2px;
+  transition: width .35s ease; }
+.bar.hidden { display: none; }
+@media (prefers-reduced-motion: reduce) { .q-seg b { transition: none; } }
+
+/* Карточки выбора: выбранная — с галочкой и рамкой, не только цветом. */
+.q-cards .tile { position: relative; min-height: 56px; padding-right: 48px; }
+.q-cards .tile[aria-checked="true"] { border-width: 2px; padding: 15px 47px 15px 17px; }
+.q-cards .tile::after {
+  content: ''; position: absolute; right: 16px; top: 50%; width: 22px; height: 22px; margin-top: -11px;
+  border: 1.5px solid var(--card-line); border-radius: 50%;
+}
+.q-cards .tile[role="checkbox"]::after { border-radius: 6px; }
+.q-cards .tile[aria-checked="true"]::after {
+  border-color: var(--gold); background: var(--gold) no-repeat 50% 50% / 14px 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23241A05' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+}
+
+.q-note { margin: 12px 0 0; font-size: 13px; line-height: 19px; color: var(--ink-dim); }
+.q-note:empty { display: none; }
+.q-note--lead { margin-top: 16px; }
+.q-paid { margin: 22px 0 0; padding: 12px 14px; border: 1px solid var(--card-line-2); border-radius: var(--radius-sm);
+  font-size: 13px; line-height: 19px; color: var(--ink-dim); }
+.q-link {
+  display: inline-flex; align-items: center; min-height: 44px; margin-top: 10px; padding: 0 2px;
+  border: 0; background: transparent; color: var(--gold); font-family: var(--sans); font-size: 15px;
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.q-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
+.q-links { display: flex; flex-wrap: wrap; column-gap: 18px; }
+
+/* --- барабаны: дата и время --------------------------------------------- */
+.dpick { margin-top: 18px; }
+.q-readout {
+  font-family: var(--serif); font-size: 34px; font-weight: 600; line-height: 1.1; text-align: center;
+  color: var(--ink-faint); font-variant-numeric: lining-nums tabular-nums;
+}
+.q-readout.is-set { color: var(--ink); }
+.q-pick { margin: 6px 0 0; text-align: center; font-size: 13px; color: var(--ink-dim); }
+.dpick__cols { display: flex; margin-top: 14px; }
+.dpick__cols .wheel { flex: 1 1 0; min-width: 0; }
+.dpick__cols .wheel--year { flex-grow: 1.3; }
+.dpick__cols .wheel + .wheel { margin-left: 8px; }
+.wheel__lab { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); text-align: center; }
+.wheel__win {
+  position: relative; margin-top: 6px; height: 220px; border-radius: var(--radius-sm);
+  border: 1px solid var(--card-line); background: var(--card); overflow: hidden;
+}
+.wheel__win:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.wheel__list {
+  height: 100%; overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: y mandatory;
+  padding: 88px 0; box-sizing: border-box; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  /* Соседние строки гаснут к краям — центр читается как выбор. */
+  -webkit-mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+          mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+}
+.wheel__list::-webkit-scrollbar { display: none; }
+.wheel__it {
+  height: 44px; line-height: 44px; text-align: center; scroll-snap-align: center;
+  font-size: 18px; color: var(--ink-dim); cursor: pointer; user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+.wheel__it.on { color: var(--ink); font-weight: 600; }
+.wheel__it.off { color: var(--ink-faint); opacity: .35; cursor: default; text-decoration: line-through; }
+.wheel__mark {
+  position: absolute; left: 6px; right: 6px; top: 88px; height: 44px; pointer-events: none;
+  border-top: 1px solid var(--gold-line); border-bottom: 1px solid var(--gold-line); border-radius: 8px;
+  background: var(--gold-soft);
+}
+.wheel--unset .wheel__it.on, .wheel--unset .wheel__it { color: var(--ink-faint); font-weight: 400; }
+.wheel--unset .wheel__mark { border-style: dashed; background: transparent; }
+.dpick__dec { display: flex; flex-wrap: wrap; margin-top: 12px; }
+.dpick__dec .chip { margin: 0 6px 6px 0; min-height: 44px; padding: 0 12px; font-size: 13px; }
+
+/* --- место: результаты списком под полем, без всплывающего меню ----------- */
+.q-results { list-style: none; margin: 8px 0 0; padding: 0; }
+.q-res {
+  display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 14px;
+  border: 1px solid var(--card-line-2); border-radius: var(--radius-sm); background: var(--card);
+  font-size: 15px; cursor: pointer;
+}
+.q-res + .q-res { margin-top: 6px; }
+.q-res:hover, .q-res.on { border-color: var(--gold-line); background: var(--gold-soft); }
+.q-res .citypick__land { margin-left: 12px; flex: 0 1 auto; text-align: right; }
+.q-chosen {
+  display: flex; align-items: center; justify-content: space-between; margin-top: 22px; padding: 16px 18px;
+  border: 2px solid var(--gold-line); border-radius: var(--radius); background: var(--gold-soft);
+}
+.q-chosen__n { margin-top: 4px; font-family: var(--serif); font-size: 24px; font-weight: 600; }
+.q-chosen .q-link { margin: 0 0 0 12px; flex: 0 0 auto; }
+.q-nf { margin: 18px 0 14px; }
+.q-nf .citypick__input { padding-left: 14px; background-image: none; }
+#q-place .field__lab { margin-top: 18px; }
+
+/* --- основа карты и превью ---------------------------------------------- */
+.q-core { margin-top: 10px; }
+.q-pt { padding: 16px 0; border-top: 1px solid var(--card-line-2); }
+.q-pt:first-child { border-top: 0; }
+.q-pt--lead { margin: 0 -14px; padding: 16px 14px; border: 1px solid var(--gold-line); border-radius: var(--radius); }
+.q-pt--lead + .q-pt { border-top: 0; }
+.q-pt--empty .b3__k { color: var(--ink-faint); }
+.q-card { margin-top: 18px; padding: 18px; border: 1px solid var(--card-line); border-radius: var(--radius); background: var(--card); }
+.q-card .pv__h { font-size: 22px; }
+.q-frag { margin: 10px 0 0; font-size: 16px; line-height: 1.55; color: var(--ink); }
+.q-asp { margin: 10px 0 0; font-size: 15px; color: var(--ink-dim); }
+.q-asp b { color: var(--ink); font-weight: 600; }
+.q-more { margin-top: 12px; border-top: 1px solid var(--card-line-2); padding-top: 10px; }
+.q-more summary { min-height: 32px; cursor: pointer; color: var(--gold); font-size: 14px; }
+.q-more p { margin: 6px 0 0; font-size: 15px; line-height: 1.5; color: var(--ink-dim); }
+.q-list { margin: 10px 0 0; padding-left: 18px; font-size: 15px; line-height: 1.5; color: var(--ink-dim); }
+.q-list li + li { margin-top: 6px; }
+.q-load { margin-top: 40px; text-align: center; color: var(--ink-dim); }
+.q .plan { margin-top: 22px; }
+.q .pw__h { margin-top: 22px; }
+
+.q-docknote { margin: 6px 0 0; text-align: center; font-size: 12px; line-height: 16px; color: var(--ink-dim); }
+/* Заголовок получает фокус кодом при смене шага (для скринридера) —
+   рамка вокруг него не нужна, это не интерактивный элемент. */
+.q .h1:focus { outline: none; }
+.top__row .top__brand { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

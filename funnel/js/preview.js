@@ -110,5 +110,13 @@
     };
   }
 
-  g.FunnelPreview = { ensure: ensure, compute: compute, isReady: function () { return state === 'ready'; } };
+  /* Повтор после сбоя (кнопка «Попробовать снова» в квизе v2): состояние
+     failed иначе окончательное, и повторный ensure сразу отвечал «нет». */
+  function retry(cb) {
+    if (state === 'failed') { state = 'idle'; }
+    ensure(cb);
+  }
+
+  g.FunnelPreview = { ensure: ensure, retry: retry, compute: compute,
+    isReady: function () { return state === 'ready'; } };
 })(typeof window !== 'undefined' ? window : globalThis);
