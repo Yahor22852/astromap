@@ -41,7 +41,7 @@
   function addScript(src) {
     return new Promise(function (resolve, reject) {
       var s = document.createElement('script');
-      s.src = src;
+      s.src = src + (g.ASTROMAP_V ? '?v=' + g.ASTROMAP_V : '');
       s.async = false;          /* порядок важен: engine ждёт Astronomy */
       s.onload = function () { resolve(); };
       s.onerror = function () { reject(new Error(src)); };

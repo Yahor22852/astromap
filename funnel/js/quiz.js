@@ -202,7 +202,7 @@
     (function next(i) {
       if (i >= files.length) { readingState = window.READING ? 'ready' : 'failed'; cb(readingState === 'ready'); return; }
       var s = document.createElement('script');
-      s.src = files[i]; s.async = false;
+      s.src = files[i] + (window.ASTROMAP_V ? '?v=' + window.ASTROMAP_V : ''); s.async = false;
       s.onload = function () { next(i + 1); };
       s.onerror = function () { readingState = 'failed'; cb(false); };
       document.head.appendChild(s);

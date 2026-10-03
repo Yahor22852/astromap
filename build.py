@@ -10,6 +10,24 @@ out.mkdir(exist_ok=True)
 shutil.copytree(root / 'funnel', out, dirs_exist_ok=True, ignore=shutil.ignore_patterns('.DS_Store', 'README.md'))
 shutil.copytree(root / 'product', out / 'product', dirs_exist_ok=True, ignore=shutil.ignore_patterns('.DS_Store', 'README.md'))
 
+# ВЕРСИЯ НА ССЫЛКАХ. GitHub Pages отдаёт файлы с max-age=600, а встроенные
+# браузеры приложений (TikTok, Telegram, Instagram) держат кэш ещё дольше:
+# после выкладки человек видел новый index.html со старыми CSS и JS. Теперь
+# к каждой ссылке на свои .js/.css дописывается ?v=<хэш содержимого> —
+# изменился любой файл, изменились и адреса, и браузер берёт новые.
+# В исходниках версии нет: она ставится только в собранном dist/.
+import hashlib, re
+_h = hashlib.sha1()
+for f in sorted(list(out.rglob('*.js')) + list(out.rglob('*.css'))):
+    _h.update(f.read_bytes())
+VER = _h.hexdigest()[:10]
+for page in out.rglob('*.html'):
+    t = page.read_text()
+    t = re.sub(r'((?:src|href)=")((?![a-z]+:|//)[^"?#]+\.(?:js|css))"', r'\1\2?v=' + VER + '"', t)
+    t = t.replace('.js"><\\/script>', '.js?v=' + VER + '"><\\/script>')
+    t = t.replace('<head>', '<head>\n<script>window.ASTROMAP_V = ' + repr(VER) + ';</script>', 1)
+    page.write_text(t)
+
 class Links(HTMLParser):
     def handle_starttag(self, tag, attrs):
         for key, value in attrs:
