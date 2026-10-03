@@ -565,7 +565,12 @@ var STATS_CSS = [
   '.empty{color:var(--ink2)}',
   'h3{font-size:15px;color:var(--ink2);font-weight:600;margin:18px 0 0;text-transform:uppercase;letter-spacing:.04em}',
   '.drop{color:var(--s8);font-weight:650}',
-  'section .lead{background:var(--bg);font-size:16px}'
+  'section .lead{background:var(--bg);font-size:16px}',
+  'section .tiles{margin:12px 0 14px}',
+  '.src.opt .name{font-weight:500;color:var(--ink2)}',
+  '.old{margin:0 0 16px}.old>summary{padding:14px 18px;background:var(--card);border:1px solid var(--line);border-radius:14px;list-style:none}',
+  '.old>summary::-webkit-details-marker{display:none}.old>summary::before{content:"▸ ";color:var(--muted)}',
+  '.old[open]>summary::before{content:"▾ "}.old[open]>summary{margin-bottom:12px}'
 ].join('');
 
 /* Подпись под графиком: какой день выбран и из чего он сложился.
@@ -656,8 +661,8 @@ async function stats(url, env) {
     if (!ccSince || r.since < ccSince) { ccSince = r.since; }
   });
   var byCountry = Object.keys(countries).map(function (k) { return countries[k]; })
-    .filter(function (c) { return c.visits || c.steps.s1; })
-    .sort(function (a, b) { return (b.visits + b.steps.s1) - (a.visits + a.steps.s1); });
+    .filter(function (c) { return c.visits || c.steps.s1 || c.steps.q2_goal; })
+    .sort(function (a, b) { return (b.visits + b.steps.s1 + b.steps.q2_goal) - (a.visits + a.steps.s1 + a.steps.q2_goal); });
 
   if (url.searchParams.get('format') === 'json') {
     return new Response(JSON.stringify({ days: days, total: all, bySource: bySource, byDay: rows, funnel: funnel,
@@ -844,45 +849,169 @@ function funnelSection(f, opt) {
     '</section>';
 }
 
-/* Эксперимент: A против квиза v2 в одной таблице. Старт A — экран даты
-   (s1), старт v2 — экран цели (q2_goal). Числа — вкладки, а не люди, и на
-   малых выборках разница между вариантами ничего не доказывает: сводка это
-   и пишет. */
-var Q2_ROUTE = ['q2_goal', 'q2_ctx', 'q2_dob', 'q2_sun', 'q2_tk', 'q2_time', 'q2_place', 'q2_core',
-  'q2_extra', 'q2_start', 'q2_pask', 'q2_pdate', 'q2_preview', 'q2_bridge', 'q2_pay', 'q2_pay_m',
-  'q2_year', 'q2_pay_y', 'q2_reading', 'q2_paid_m', 'q2_paid_y'];
-var Q2_SIDE = ['q2_tk_no', 'q2_pask_no', 'q2_err_date', 'q2_place_nf', 'q2_pv_fail', 'q2_pv_tab'];
-function experimentSection(f) {
-  if (!f.q2_goal) { return ''; }
-  var aStart = f.s1, bStart = f.q2_goal;
-  var line = function (name, a, b) {
-    return '<tr><td>' + esc(name) + '</td><td class="r">' + a + ' <span style="color:var(--muted)">' + pct(a, aStart) +
-      '</span></td><td class="r">' + b + ' <span style="color:var(--muted)">' + pct(b, bStart) + '</span></td></tr>';
+/* --- КВИЗ v2: основная воронка -----------------------------------------
+   Шаг засчитывается, когда вкладка ОТКРЫЛА экран (один раз на вкладку),
+   поэтому «ушли» на шаге — это открыли предыдущий экран и не открыли
+   этот. Необязательные экраны (время, пара) видят не все: в потери они не
+   входят, а следующий обязательный шаг сравнивается с предыдущим
+   обязательным. */
+var QUIZ_PHASES = [
+  { title: 'Фокус', steps: [
+    { k: 'q2_goal', name: 'Начали квиз', hint: 'открыли первый экран — выбор цели' },
+    { k: 'q2_ctx', name: 'Уточнение цели' } ] },
+  { title: 'Данные рождения', steps: [
+    { k: 'q2_dob', name: 'Дата рождения' },
+    { k: 'q2_sun', name: 'Увидели своё Солнце', hint: 'первый результат после даты' },
+    { k: 'q2_tk', name: 'Знают ли время рождения' },
+    { k: 'q2_time', name: 'Время рождения', opt: 'только тем, кто знает время' },
+    { k: 'q2_place', name: 'Место рождения' },
+    { k: 'q2_core', name: 'Основа карты', hint: 'Солнце, Луна, асцендент' } ] },
+  { title: 'Превью', steps: [
+    { k: 'q2_extra', name: 'Дополнительные темы' },
+    { k: 'q2_start', name: 'С чего начать' },
+    { k: 'q2_pask', name: 'Предложили добавить пару', opt: 'только «Отношения → конкретная связь»' },
+    { k: 'q2_pdate', name: 'Дата пары', opt: 'только тем, кто решил добавить' },
+    { k: 'q2_preview', name: 'Превью карты' },
+    { k: 'q2_bridge', name: '«Карта остаётся, небо меняется»' } ] },
+  { title: 'Оплата', steps: [
+    { k: 'q2_pay', name: 'Пейвол', hint: 'месячный план' },
+    { k: 'q2_pay_m', name: 'Нажали «оплатить» — месяц', opt: 'из открывших пейвол', base: 'q2_pay', color: 's2' },
+    { k: 'q2_year', name: 'Открыли годовой план', opt: 'из открывших пейвол', base: 'q2_pay', color: 's4' },
+    { k: 'q2_pay_y', name: 'Нажали «оплатить» — год', opt: 'из открывших годовой план', base: 'q2_year', color: 's4' },
+    { k: 'wallet', name: 'Нажали Apple Pay / Google Pay', opt: 'кнопка в окне оплаты внутри TikTok', base: 'q2_payclicks', color: 's2' },
+    { k: 'q2_reading', name: 'Ушли в бесплатный обзор', opt: 'ссылка на годовом плане', color: 'more' } ] }
+];
+
+function quizSection(f, opt) {
+  opt = opt || {};
+  f = Object.assign({}, f);
+  f.wallet = (f.wallet_m || 0) + (f.wallet_y || 0);
+  f.q2_payclicks = (f.q2_pay_m || 0) + (f.q2_pay_y || 0);
+  f.q2_paid = (f.q2_paid_m || 0) + (f.q2_paid_y || 0);
+  var top = f.q2_goal;
+  var countries = (opt.byCountry || []).filter(function (c) { return c.steps.q2_goal; });
+  var chips = countries.length ? '<nav class="period" style="flex-wrap:wrap;margin:10px 0 4px">' +
+    '<a href="?key=' + opt.key + '&days=' + opt.days + '"' + (opt.cc ? '' : ' class="on"') + '>Все страны</a>' +
+    countries.slice(0, 6).map(function (c) {
+      return '<a href="?key=' + opt.key + '&days=' + opt.days + '&cc=' + c.cc + '"' + (c.cc === opt.cc ? ' class="on"' : '') + '>' +
+        countryFlag(c.cc) + esc(countryName(c.cc)) + '</a>';
+    }).join('') + '</nav>' : '';
+  var head = '<section id="quiz"><h2>Квиз: где отваливаются' +
+    (opt.cc ? ': ' + countryFlag(opt.cc) + esc(countryName(opt.cc)) : '') + '</h2>' + chips;
+  if (!top) {
+    return head + '<p class="empty">Квиз ещё никто не начинал за этот период' + (opt.cc ? ' из этой страны' : '') +
+      '. Шаги считаются с момента выкладки квиза; тестовые проходы (?src=test, localhost) не считаются.</p></section>';
+  }
+
+  /* Обязательные шаги подряд — для потерь и самого большого отвала. */
+  var main = [];
+  QUIZ_PHASES.forEach(function (ph) { ph.steps.forEach(function (st) { if (!st.opt) { main.push(st); } }); });
+  var prevOf = {}, worst = null;
+  for (var i = 1; i < main.length; i++) {
+    prevOf[main[i].k] = main[i - 1];
+    var a = f[main[i - 1].k], lost = Math.max(0, a - f[main[i].k]);
+    if (a && lost && (!worst || lost / a > worst.share)) {
+      worst = { from: main[i - 1], to: main[i], a: a, lost: lost, share: lost / a };
+    }
+  }
+
+  var paid = (f.q2_paid_m || 0) + (f.q2_paid_y || 0);
+  var allPaid = (f.paid_m || 0) + (f.paid_y || 0);
+  var clicks = f.q2_payclicks;
+  var tiles = '<div class="tiles qt">' +
+    '<div class="tile"><div class="k">Начали квиз</div><div class="v">' + top + '</div>' +
+      '<div class="s">вкладок открыли первый экран</div></div>' +
+    '<div class="tile"><div class="k">Дошли до оплаты</div><div class="v">' + pct(f.q2_pay, top) + '</div>' +
+      '<div class="s">' + f.q2_pay + ' из ' + top + '</div></div>' +
+    (opt.cc
+      ? '<div class="tile"><div class="k">Нажали «оплатить»</div><div class="v">' + clicks + '</div>' +
+        '<div class="s">оплаты по странам не видны</div></div>'
+      : '<div class="tile"><div class="k">Оплатили</div><div class="v">' + paid + '</div>' +
+        '<div class="s">' + clicks + ' ' + plural(clicks, 'нажатие', 'нажатия', 'нажатий') + ' «оплатить»' +
+        (allPaid > paid ? '; всего в Gumroad ' + allPaid : '') + '</div></div>') +
+    '</div>';
+
+  var lead = '';
+  if (worst) {
+    lead = 'Больше всего уходят между экранами «' + esc(worst.from.name) + '» и «' + esc(worst.to.name) +
+      '»: из ' + worst.a + ' дальше не пошли <b>' + worst.lost + '</b> (' + pct(worst.lost, worst.a) + ').';
+  }
+
+  function row(st) {
+    var n = f[st.k] || 0;
+    var base = st.base ? f[st.base] : top;
+    var p = prevOf[st.k];
+    var lost = p ? Math.max(0, f[p.k] - n) : 0;
+    var isWorst = worst && worst.to.k === st.k;
+    var share = st.base ? pct(n, base) + ' ' + (st.base === 'q2_pay' ? 'от пейвола' : st.base === 'q2_year' ? 'от годового' : 'от нажавших') :
+      pct(n, top) + ' от начала';
+    return '<div class="src' + (st.opt ? ' opt' : '') + '"><div class="row"><div class="name">' + esc(st.name) + '</div>' +
+      '<div class="num"><b>' + n + '</b><span>' + share + '</span></div></div>' +
+      (st.opt || st.hint ? '<div class="hint">' + esc(st.opt || st.hint) + '</div>' : '') +
+      '<div class="bar" style="width:calc((100% - 18px) * ' + Math.min(1, base ? n / base : 0).toFixed(3) +
+        ');background:var(--' + (st.color || (st.opt ? 'more' : 's1')) + ')"></div>' +
+      (p ? '<div class="part"><span>не пошли дальше</span><span' + (isWorst ? ' class="drop"' : '') + '>' +
+        (lost ? '−' + lost + ' (' + pct(lost, f[p.k]) + ')' : '0') + '</span></div>' : '') +
+      '</div>';
+  }
+
+  var body = QUIZ_PHASES.map(function (ph) {
+    return '<h3>' + esc(ph.title) + '</h3>' + ph.steps.map(row).join('');
+  }).join('');
+  if (!opt.cc) {
+    body += row({ k: 'q2_paid', name: 'Оплатили', hint: 'по уведомлению Gumroad, без продлений и тестовых: месяц — ' +
+      (f.q2_paid_m || 0) + ', год — ' + (f.q2_paid_y || 0), base: 'q2_payclicks', color: 's3' });
+  }
+
+  var sig = [
+    ['Не знают время рождения', f.q2_tk_no, f.q2_tk, 'от ответивших на вопрос о времени'],
+    ['Пару пропустили', f.q2_pask_no, f.q2_pask, 'от тех, кому предложили'],
+    ['Выбрали «моего места нет в списке»', f.q2_place_nf, f.q2_place, 'от открывших экран места'],
+    ['Дата скорректирована', f.q2_err_date, f.q2_dob, '31 февраля, будущая дата и т.п.'],
+    ['Превью не загрузилось', f.q2_pv_fail, f.q2_preview, 'сбой загрузки расчёта'],
+    ['Переключали вкладки превью', f.q2_pv_tab, f.q2_preview, 'интерес к превью']
+  ];
+  var signals = '<h3>Сигналы</h3><table>' + sig.map(function (r) {
+    return '<tr><td>' + esc(r[0]) + '<div class="hint" style="margin-left:0">' + esc(r[3]) + '</div></td>' +
+      '<td class="r"><b>' + (r[1] || 0) + '</b> <span style="color:var(--muted)">' + pct(r[1] || 0, r[2]) + '</span></td></tr>';
+  }).join('') + '</table>';
+
+  var ctable = '';
+  var list = countries.slice(0, 10);
+  if (list.length) {
+    ctable = '<h3>По странам</h3><table><tr><th>Страна</th><th class="r">Начали</th><th class="r">До пейвола</th>' +
+      '<th class="r">«Оплатить»</th></tr>' + list.map(function (c) {
+        var g = c.steps;
+        return '<tr><td><a href="?key=' + opt.key + '&days=' + opt.days + '&cc=' + c.cc + '"' +
+          (c.cc === opt.cc ? ' style="font-weight:650"' : '') + '>' + countryFlag(c.cc) + esc(countryName(c.cc)) + '</a></td>' +
+          '<td class="r">' + g.q2_goal + '</td><td class="r">' + g.q2_pay + ' <span style="color:var(--muted)">' +
+          pct(g.q2_pay, g.q2_goal) + '</span></td><td class="r">' + (g.q2_pay_m + g.q2_pay_y) + '</td></tr>';
+      }).join('') + '</table>';
+  }
+
+  return head +
+    '<p class="sub">Сколько вкладок открыли каждый экран квиза' + (f.since ? ', с ' + dateLong(f.since) : '') +
+      '. Вернувшийся назад или сменивший язык считается один раз.</p>' +
+    tiles + (lead ? '<p class="lead">' + lead + '</p>' : '') + body + signals + ctable +
+    '<p class="note">Числа — вкладки, а не люди: переход из TikTok в Safari даёт две вкладки. ' +
+      'На малых числах доли сильно прыгают от одного человека.</p></section>';
+}
+
+/* Прежняя воронка рядом с квизом — «до/после», а не тест: за это время
+   меняются трафик и креативы. */
+function oldCompare(f) {
+  if (!f.q2_goal || !f.s1) { return ''; }
+  var line = function (name, a, b, base1, base2) {
+    return '<tr><td>' + esc(name) + '</td><td class="r">' + a + ' <span style="color:var(--muted)">' + pct(a, base1) +
+      '</span></td><td class="r">' + b + ' <span style="color:var(--muted)">' + pct(b, base2) + '</span></td></tr>';
   };
-  return '<section id="experiment"><h2>Квиз v2 (основная воронка) и прежняя воронка до переключения</h2>' +
-    '<p class="sub">Это не A/B-тест: столбец A — прежняя воронка до переключения, сравнение «до/после». Доли — от старта своей воронки. Оплаты считаются по метке на ссылке чекаута; ' +
-    'продажи без метки (прямая ссылка, старая вкладка) есть только в общей строке «Оплатили».</p>' +
-    '<table><tr><th></th><th class="r">A</th><th class="r">v2</th></tr>' +
-    line('Старт', aStart, bStart) +
-    line('Пейвол (месяц)', f.s6, f.q2_pay) +
-    line('Нажали «оплатить»', f.pay_m + f.pay_y, f.q2_pay_m + f.q2_pay_y) +
-    line('Оплатили', f.a_paid_m + f.a_paid_y, f.q2_paid_m + f.q2_paid_y) +
-    '</table>' +
-    '<p class="note">Пока покупок единицы, разница между столбцами — шум; кроме того, за это время меняются трафик и креативы.</p>' +
-    '<h3>Шаги квиза v2</h3><table><tr><th>Шаг</th><th class="r">Дошли</th><th class="r">Ушли с предыдущего</th></tr>' +
-    Q2_ROUTE.map(function (k, i) {
-      var prev = i ? f[Q2_ROUTE[i - 1]] : null;
-      var optional = k === 'q2_time' || k === 'q2_pask' || k === 'q2_pdate' || k === 'q2_year' || k === 'q2_pay_y' ||
-        k === 'q2_reading' || k === 'q2_pay_m' || /paid/.test(k);
-      return '<tr><td>' + esc(FUNNEL_STEPS[k]) + '</td><td class="r">' + f[k] + ' <span style="color:var(--muted)">' +
-        pct(f[k], bStart) + '</span></td><td class="r">' + (prev != null && !optional && prev ? '−' + Math.max(0, prev - f[k]) : '') +
-        '</td></tr>';
-    }).join('') + '</table>' +
-    '<h3>Сигналы v2</h3><table>' + Q2_SIDE.map(function (k) {
-      return '<tr><td>' + esc(FUNNEL_STEPS[k]) + '</td><td class="r">' + f[k] + '</td></tr>';
-    }).join('') + '</table>' +
-    '<p class="note">Необязательные шаги (время, пара, годовой план) проходят не все — потерю на них не считаем. ' +
-    'Тестовые проходы (?src=test…, localhost) воронка в шаги не отправляет.</p></section>';
+  return '<section><h2>Квиз и прежняя воронка</h2><p class="sub">Сравнение «до/после», не A/B-тест. ' +
+    'Доли — от старта своей воронки.</p><table><tr><th></th><th class="r">Прежняя</th><th class="r">Квиз</th></tr>' +
+    line('Начали', f.s1, f.q2_goal, f.s1, f.q2_goal) +
+    line('Дошли до пейвола', f.s6, f.q2_pay, f.s1, f.q2_goal) +
+    line('Нажали «оплатить»', f.pay_m + f.pay_y, f.q2_pay_m + f.q2_pay_y, f.s1, f.q2_goal) +
+    line('Оплатили (по метке)', f.a_paid_m + f.a_paid_y, f.q2_paid_m + f.q2_paid_y, f.s1, f.q2_goal) +
+    '</table></section>';
 }
 
 function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
@@ -980,8 +1109,8 @@ function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
         '<div class="s">' + tiktok + ' из ' + real + ' ' + visitsWord(real) + ' за период</div></div>' +
     '</div>';
 
-  html += funnelSection(ccFunnel, { cc: cc, byCountry: byCountry, key: key, days: days });
-  if (!cc) { html += experimentSection(funnel); }
+  /* Квиз — основная воронка, прежняя — свёрнутым архивом ниже. */
+  html += quizSection(ccFunnel, { cc: cc, byCountry: byCountry, key: key, days: days });
 
   /* Откуда приходят. */
   var maxV = list.length ? list[0].visits : 1;
@@ -1003,6 +1132,10 @@ function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
     '</section>';
 
   html += countriesSection(byCountry, ccSince);
+  html += '<details class="old"' + (ccFunnel.q2_goal ? '' : ' open') + '><summary>Прежняя воронка (до квиза) — ' +
+    ccFunnel.s1 + ' ' + plural(ccFunnel.s1, 'старт', 'старта', 'стартов') + ' за период</summary>' +
+    funnelSection(ccFunnel, { cc: cc, byCountry: byCountry, key: key, days: days }) +
+    (cc ? '' : oldCompare(funnel)) + '</details>';
 
   /* По дням: столбики, разбитые по каналам. */
   var maxDay = daysList.reduce(function (m, d) { return Math.max(m, d.n); }, 0) || 1;
