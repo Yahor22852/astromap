@@ -1085,44 +1085,58 @@ body.kb-lift .scr.is-active { padding-bottom: calc(152px + 100vh + env(safe-area
 
 /* --- барабаны: дата и время --------------------------------------------- */
 .dpick { margin-top: 18px; }
+/* Выбранное значение крупно, золотом, когда оно подтверждено колонками. */
 .q-readout {
-  font-family: var(--serif); font-size: 34px; font-weight: 600; line-height: 1.1; text-align: center;
-  color: var(--ink-faint); font-variant-numeric: lining-nums tabular-nums;
+  font-family: var(--serif); font-size: 46px; font-weight: 600; line-height: 1.05; text-align: center;
+  color: var(--ink-faint); font-variant-numeric: lining-nums tabular-nums; letter-spacing: .01em;
 }
-.q-readout.is-set { color: var(--ink); }
-.q-pick { margin: 6px 0 0; text-align: center; font-size: 13px; color: var(--ink-dim); }
-.dpick__cols { display: flex; margin-top: 14px; }
+.q-readout.is-set { color: var(--gold); text-shadow: 0 0 24px rgba(232,197,127,.25); }
+.q-pick { margin: 8px 0 0; text-align: center; font-size: 13px; color: var(--ink-dim); }
+.dpick__cols { display: flex; margin-top: 16px; }
 .dpick__cols .wheel { flex: 1 1 0; min-width: 0; }
 .dpick__cols .wheel--year { flex-grow: 1.3; }
 .dpick__cols .wheel + .wheel { margin-left: 8px; }
-.wheel__lab { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); text-align: center; }
+.wheel__lab { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim); text-align: center; }
+/* Строка 52px, видно пять: две сверху, выбранная, две снизу. ROW в
+   quiz.js должен совпадать с высотой строки. */
 .wheel__win {
-  position: relative; margin-top: 6px; height: 220px; border-radius: var(--radius-sm);
-  border: 1px solid var(--card-line); background: var(--card); overflow: hidden;
+  position: relative; margin-top: 8px; height: 260px; border-radius: var(--radius);
+  border: 1px solid var(--card-line);
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.06) 50%, rgba(255,255,255,.02));
+  overflow: hidden;
 }
 .wheel__win:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .wheel__list {
   height: 100%; overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: y mandatory;
-  padding: 88px 0; box-sizing: border-box; scrollbar-width: none; -webkit-overflow-scrolling: touch;
-  /* Соседние строки гаснут к краям — центр читается как выбор. */
-  -webkit-mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
-          mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+  padding: 104px 0; box-sizing: border-box; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+          mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
 }
 .wheel__list::-webkit-scrollbar { display: none; }
+/* Соседние строки меньше и тусклее, центральная — крупная и яркая.
+   Масштаб, а не font-size: так строка не меняет высоту и привязка не
+   сбивается. */
 .wheel__it {
-  height: 44px; line-height: 44px; text-align: center; scroll-snap-align: center;
-  font-size: 18px; color: var(--ink-dim); cursor: pointer; user-select: none;
-  font-variant-numeric: tabular-nums;
+  height: 52px; line-height: 52px; text-align: center; scroll-snap-align: center;
+  font-family: var(--serif); font-size: 30px; font-weight: 600; color: var(--ink-faint);
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+  font-variant-numeric: lining-nums tabular-nums;
+  transform: scale(.6); opacity: .45;
+  transition: transform .12s ease, opacity .12s ease, color .12s ease;
 }
-.wheel__it.on { color: var(--ink); font-weight: 600; }
-.wheel__it.off { color: var(--ink-faint); opacity: .35; cursor: default; text-decoration: line-through; }
+.wheel__it.n2 { transform: scale(.66); opacity: .55; }
+.wheel__it.n1 { transform: scale(.78); opacity: .8; color: var(--ink-dim); }
+.wheel__it.on { transform: scale(1); opacity: 1; color: var(--ink); }
+.wheel__it.off { opacity: .2; text-decoration: line-through; cursor: default; }
 .wheel__mark {
-  position: absolute; left: 6px; right: 6px; top: 88px; height: 44px; pointer-events: none;
-  border-top: 1px solid var(--gold-line); border-bottom: 1px solid var(--gold-line); border-radius: 8px;
+  position: absolute; left: 6px; right: 6px; top: 104px; height: 52px; pointer-events: none;
+  border-top: 1px solid var(--gold-line); border-bottom: 1px solid var(--gold-line); border-radius: 12px;
   background: var(--gold-soft);
 }
-.wheel--unset .wheel__it.on, .wheel--unset .wheel__it { color: var(--ink-faint); font-weight: 400; }
+.wheel:not(.wheel--unset) .wheel__it.on { color: var(--gold); }
+.wheel--unset .wheel__it.on { color: var(--ink-dim); }
 .wheel--unset .wheel__mark { border-style: dashed; background: transparent; }
+@media (prefers-reduced-motion: reduce) { .wheel__it { transition: none; } }
 .dpick__dec { display: flex; flex-wrap: wrap; margin-top: 12px; }
 .dpick__dec .chip { margin: 0 6px 6px 0; min-height: 44px; padding: 0 12px; font-size: 13px; }
 
@@ -1172,3 +1186,18 @@ body.kb-lift .scr.is-active { padding-bottom: calc(152px + 100vh + env(safe-area
    рамка вокруг него не нужна, это не интерактивный элемент. */
 .q .h1:focus { outline: none; }
 .top__row .top__brand { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Поиск места с открытой клавиатурой: только поле и результаты. */
+.q-searching .h1, .q-searching > .hint, .q-searching > .field__lab { display: none; }
+.q-searching .citypick__input { margin-top: 4px; }
+.q-searching .q-results { max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
+body.q-kb .dock { display: none; }
+
+/* Ссылки на документы внизу каждого экрана квиза. */
+.q-docs { margin: 28px 0 0; text-align: center; font-size: 12px; color: var(--ink-faint); }
+.q-docs a { color: var(--ink-dim); }
+.q-docs a + a { margin-left: 14px; }
+/* В квизе отступ под док несёт блок ссылок, а не сам экран: иначе ссылки
+   оказались бы на 150px ниже содержимого. */
+html[data-variant="q2"] .scr.q.is-active { padding-bottom: 0; }
+html[data-variant="q2"] .q-docs { padding-bottom: calc(152px + env(safe-area-inset-bottom, 0px)); }

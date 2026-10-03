@@ -194,7 +194,7 @@
 
     pay: {
       features: 'Pour ton focus',
-      cta: 'M’abonner — {price} par mois',
+      cta: 'Obtenir ma carte complète',
       key: 'Après le paiement, Gumroad t’envoie une clé de licence par e-mail. Tu la saisis une fois et tu choisis un mot de passe.',
       seeYear: 'Voir le plan annuel',
       backPrev: 'Revenir à l’aperçu'
@@ -205,7 +205,7 @@
       sub: 'La même app, payée une fois par an.',
       renew: 'par an, renouvelé automatiquement',
       equiv: 'Environ $2.50 par mois, facturés $29.99 une fois par an plus TVA.',
-      cta: 'M’abonner — {price} par an',
+      cta: 'Obtenir ma carte complète',
       back: 'Revenir au plan mensuel',
       backPrev: 'Revenir à l’aperçu',
       free: 'Lire l’aperçu gratuit'

@@ -399,6 +399,9 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
      воркера инструкция не ждёт: пока человек жмёт «•••», запрос успеет. */
   function startWalletHandoff(plan) {
     var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
+    /* Сколько людей нажали кнопку Apple Pay / Google Pay в окне оплаты
+       TikTok — строка «Нажали Apple Pay / Google Pay» на /stats. */
+    track(plan === 'yearly' ? 'wallet_y' : 'wallet_m');
     var link = handoffUrl(plan);
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {

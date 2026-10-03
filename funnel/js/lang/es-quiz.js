@@ -194,7 +194,7 @@
 
     pay: {
       features: 'Para tu enfoque',
-      cta: 'Suscribirme — {price} al mes',
+      cta: 'Obtén tu carta completa',
       key: 'Tras el pago, Gumroad te envía por correo una clave de licencia. La introduces una vez y creas una contraseña.',
       seeYear: 'Ver el plan anual',
       backPrev: 'Volver a la vista previa'
@@ -205,7 +205,7 @@
       sub: 'La misma app, con un pago al año.',
       renew: 'al año, se renueva automáticamente',
       equiv: 'Unos $2.50 al mes, cobrados como $29.99 una vez al año más IVA.',
-      cta: 'Suscribirme — {price} al año',
+      cta: 'Obtén tu carta completa',
       back: 'Volver al plan mensual',
       backPrev: 'Volver a la vista previa',
       free: 'Leer el resumen gratuito'

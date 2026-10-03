@@ -195,7 +195,7 @@
 
     pay: {
       features: 'Dla Twojego fokusu',
-      cta: 'Subskrybuj — {price} miesięcznie',
+      cta: 'Odbierz pełną mapę',
       key: 'Po płatności Gumroad wyśle klucz licencyjny e-mailem. Wpisujesz go raz i ustawiasz hasło.',
       seeYear: 'Zobacz plan roczny',
       backPrev: 'Wróć do podglądu'
@@ -206,7 +206,7 @@
       sub: 'Ta sama aplikacja, płatność raz w roku.',
       renew: 'rocznie, odnawia się automatycznie',
       equiv: 'Około $2.50 miesięcznie, pobierane jako $29.99 raz w roku plus VAT.',
-      cta: 'Subskrybuj — {price} rocznie',
+      cta: 'Odbierz pełną mapę',
       back: 'Wróć do planu miesięcznego',
       backPrev: 'Wróć do podglądu',
       free: 'Przeczytaj darmowy przegląd'

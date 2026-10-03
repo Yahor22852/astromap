@@ -194,7 +194,7 @@
 
     pay: {
       features: 'Para o seu foco',
-      cta: 'Assinar — {price} por mês',
+      cta: 'Receber meu mapa completo',
       key: 'Depois do pagamento, o Gumroad envia uma chave de licença por e-mail. Você a digita uma vez e cria uma senha.',
       seeYear: 'Ver o plano anual',
       backPrev: 'Voltar à prévia'
@@ -205,7 +205,7 @@
       sub: 'O mesmo app, pago uma vez por ano.',
       renew: 'por ano, renova automaticamente',
       equiv: 'Cerca de $2.50 por mês, cobrados como $29.99 uma vez por ano mais IVA.',
-      cta: 'Assinar — {price} por ano',
+      cta: 'Receber meu mapa completo',
       back: 'Voltar ao plano mensal',
       backPrev: 'Voltar à prévia',
       free: 'Ler a visão geral gratuita'

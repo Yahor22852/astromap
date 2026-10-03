@@ -385,6 +385,16 @@
   }
   function go(id) { show(id); }
 
+  /* Политика конфиденциальности и условия — внизу каждого экрана квиза, а
+     не только в строке согласия на пейволле: человек отдаёт дату, время и
+     место рождения уже на третьем шаге. Адреса — те же константы flow.js. */
+  function docsHtml() {
+    var link = function (url, t) {
+      return url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(t) + '</a>' : '';
+    };
+    return '<p class="q-docs">' + link(window.PRIVACY_URL, C.paywall.privacy) + link(window.TERMS_URL, C.paywall.terms) + '</p>';
+  }
+
   /* --- карточки ----------------------------------------------------------- */
   function cards(name, items, selected, multi) {
     return '<div class="tiles q-cards" role="' + (multi ? 'group' : 'radiogroup') +
@@ -410,7 +420,30 @@
      не ответ: колонка «не тронута», пока её не прокрутили, не нажали
      строку или не тронули стрелками. Для клавиатуры и скринридера это
      spinbutton: стрелки, PageUp/PageDown, Home/End. */
-  var ROW = 44;
+  var ROW = 52;
+
+  /* Лёгкий «щелчок» при прокрутке барабана на каждую строку. Android:
+     navigator.vibrate. iPhone: Safari не даёт вибрацию сайтам, но с iOS 18
+     системный переключатель (<input type=checkbox switch>) щёлкает
+     тактильно при нажатии — нажимаем невидимый. Не поддерживается —
+     ничего не происходит; на выбор это не влияет. Не чаще раза в 45 мс. */
+  var tickAt = 0, tickSwitch = null;
+  function haptic() {
+    var now = Date.now();
+    if (now - tickAt < 45) { return; }
+    tickAt = now;
+    try {
+      if (navigator.vibrate) { navigator.vibrate(6); return; }
+      if (!tickSwitch) {
+        tickSwitch = document.createElement('label');
+        tickSwitch.setAttribute('aria-hidden', 'true');
+        tickSwitch.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0';
+        tickSwitch.innerHTML = '<input type="checkbox" switch tabindex="-1">';
+        document.body.appendChild(tickSwitch);
+      }
+      tickSwitch.click();
+    } catch (e) { /* без вибрации */ }
+  }
   function Wheel(opts) {
     var w = { value: opts.value, touched: opts.value != null, items: [] };
     var root = document.createElement('div');
@@ -439,7 +472,7 @@
         win.removeAttribute('aria-valuenow');
         win.setAttribute('aria-valuetext', '—');
       }
-      all('.wheel__it', list).forEach(function (n, k) { n.classList.toggle('on', k === i); });
+      if (i >= 0) { paintLive(i); }
     }
     /* Колонка строится до вставки в страницу и на скрытом ещё экране —
        там прокрутка не применяется, поэтому положение ставится в
@@ -465,9 +498,28 @@
       root.classList.remove('wheel--unset');
       scrollTo(i, smooth);
       aria();
+      if (changed) { haptic(); }
       if (changed && opts.onChange) { opts.onChange(w.value); }
     }
+    /* Строка в центре подсвечивается прямо во время прокрутки, соседние —
+       по убыванию (n1, n2), и на каждой новой строке — щелчок. Значение
+       при этом не меняется: оно фиксируется, когда прокрутка встала. */
+    var live = -1;
+    function paintLive(i) {
+      all('.wheel__it', list).forEach(function (n, k) {
+        var d = Math.abs(k - i);
+        n.classList.toggle('on', d === 0);
+        n.classList.toggle('n1', d === 1);
+        n.classList.toggle('n2', d === 2);
+      });
+    }
     list.addEventListener('scroll', function () {
+      var i = Math.round(list.scrollTop / ROW);
+      if (i !== live) {
+        live = i;
+        paintLive(i);
+        if (user && w.items[i] && !w.items[i].off) { haptic(); }
+      }
       if (!user) { return; }
       clearTimeout(timer);
       timer = setTimeout(function () { user = false; commit(Math.round(list.scrollTop / ROW), true); }, 120);
@@ -911,14 +963,41 @@
       } else {
         st.city = FC.toObject(r);
       }
-      if (window.astromapDropLift) { window.astromapDropLift(); }
+      document.body.classList.remove('q-kb');
       invalidate(); persist();
       RENDER.place(s);
       var b = el('qPlaceChange'); if (b) { b.focus(); }
     }
+    /* РЕЖИМ ПОИСКА. Раньше поле поднималось общим приёмом прежней воронки
+       (astromapLiftField: прокрутка несколько раз за время анимации
+       клавиатуры + запас места снизу). На iPhone это давало обратное:
+       страница уезжала, поле «сползало», и приходилось листать вверх.
+       Теперь страницу двигать не нужно вовсе: пока курсор в поле,
+       заголовок и подпись свёрнуты, поле стоит сразу под шапкой, док с
+       кнопкой (она всё равно выключена до выбора) спрятан, и мы только
+       возвращаем окно в начало, если браузер сам его прокрутил. */
+    function searching(on) {
+      s.classList.toggle('q-searching', on);
+      document.body.classList.toggle('q-kb', on);
+      if (on) { pinTop(); }
+    }
+    function pinTop() {
+      [0, 80, 250, 500].forEach(function (t) {
+        setTimeout(function () {
+          if (document.activeElement === input && window.pageYOffset) { window.scrollTo(0, 0); }
+        }, t);
+      });
+    }
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function () {
+        if (document.activeElement === input) { pinTop(); }
+      });
+    }
     input.addEventListener('input', search);
-    input.addEventListener('focus', function () { if (window.astromapLiftField) { window.astromapLiftField(input); } });
-    input.addEventListener('blur', function () { if (window.astromapDropLift) { window.astromapDropLift(); } });
+    input.addEventListener('focus', function () { searching(true); });
+    input.addEventListener('blur', function () { setTimeout(function () {
+      if (document.activeElement !== input) { searching(false); }
+    }, 150); });
     input.addEventListener('keydown', function (ev) {
       if (ev.key === 'ArrowDown' && results.length) { ev.preventDefault(); active = (active + 1) % results.length; draw(); }
       else if (ev.key === 'ArrowUp' && results.length) { ev.preventDefault(); active = active <= 0 ? results.length - 1 : active - 1; draw(); }
@@ -1183,9 +1262,10 @@
      Цена, период, НДС, автопродление и отмена — те же строки COPY.billing,
      что у прежней воронки. «Не сейчас» называется тем, что делает:
      «Посмотреть годовой план». */
-  function priceOf(line) { var i = line.indexOf(' + '); return i > 0 ? line.slice(0, i) : line; }
-  function payCta() { return Q.pay.cta.replace('{price}', priceOf(C.billing.priceLine)); }
-  function yearCta() { return Q.year.cta.replace('{price}', priceOf(C.billing.yearPrice)); }
+  /* Кнопка говорит, что человек получает; сумма, период, НДС и
+     автопродление — строкой прямо под ней (dockNote) и в условиях выше. */
+  function payCta() { return Q.pay.cta; }
+  function yearCta() { return Q.year.cta; }
   RENDER.pay = function (s) {
     var n = natal();
     var opens = (GOAL_OPENS[st.goal] || [0, 1, 2]).map(function (i) { return C.pw.opens[i]; });
@@ -1289,6 +1369,10 @@
      Перезагрузка и смена языка возвращают на тот же шаг (sessionStorage
      этой вкладки). Новая вкладка начинает с начала, но прежние ответы уже
      отмечены. */
+  /* Один блок под всеми экранами квиза: экраны с карточками
+     перерисовываются целиком при выборе, и ссылки внутри них пропадали бы. */
+  main.insertAdjacentHTML('afterend', docsHtml());
+
   var want = 'goal';
   try { want = sessionStorage.getItem('astromap.q2.step') || 'goal'; } catch (e) {}
   window.AstroQuiz = { trackCurrent: function () { if (cur) { F.track('q2_' + cur); } } };

@@ -194,7 +194,7 @@
 
     pay: {
       features: 'Odağın için',
-      cta: 'Abone ol — aylık {price}',
+      cta: 'Tam haritanı al',
       key: 'Ödemeden sonra Gumroad e-postayla bir lisans anahtarı gönderir. Bir kez girer ve bir şifre belirlersin.',
       seeYear: 'Yıllık planı gör',
       backPrev: 'Önizlemeye dön'
@@ -205,7 +205,7 @@
       sub: 'Aynı uygulama, yılda bir kez ödeme.',
       renew: 'yıllık, otomatik olarak yenilenir',
       equiv: 'Ayda yaklaşık $2.50; yılda bir kez $29.99 artı KDV olarak tahsil edilir.',
-      cta: 'Abone ol — yıllık {price}',
+      cta: 'Tam haritanı al',
       back: 'Aylık plana dön',
       backPrev: 'Önizlemeye dön',
       free: 'Ücretsiz özeti oku'

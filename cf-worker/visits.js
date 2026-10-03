@@ -141,6 +141,8 @@ var FUNNEL_STEPS = {
   pay_m:   'Нажали «оплатить» за месяц',
   s7:      'Отказались → годовой план',
   pay_y:   'Нажали «оплатить» за год',
+  wallet_m: 'Нажали Apple Pay / Google Pay (месяц)',
+  wallet_y: 'Нажали Apple Pay / Google Pay (год)',
   reading: 'Ушли в бесплатное чтение',
   paid_m:  'Оплатили месяц',
   paid_y:  'Оплатили год',
@@ -829,6 +831,8 @@ function funnelSection(f, opt) {
     row('pay_m', f.pay_m, f.s6, { color: 's2', lostLabel: 'не нажали' }) +
     row('s7', f.s7, f.s6, { color: 's4', hint: 'нажали «не сейчас» на месячном — показали годовой', lostLabel: 'не отказывались' }) +
     row('pay_y', f.pay_y, f.s7, { color: 's4', lostLabel: 'не нажали' }) +
+    row('wallet', f.wallet_m + f.wallet_y, null, { name: 'Нажали Apple Pay / Google Pay', color: 's2',
+      hint: 'кнопка в окне оплаты внутри TikTok, уводит оплату в Safari/Chrome: месяц — ' + f.wallet_m + ', год — ' + f.wallet_y }) +
     row('reading', f.reading, null, { color: 'more', hint: 'ссылка на бесплатный разбор вместо покупки' }) +
     (opt.cc ? '<p class="note">Оплаты по странам не видны: о продаже сообщает Gumroad, а не страница, ' +
       'и страну покупателя он не передаёт. Сколько оплатили всего — в «Все страны».</p>' :

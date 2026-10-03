@@ -205,7 +205,7 @@
 
     pay: {
       features: 'For your focus',
-      cta: 'Subscribe — {price}/month',
+      cta: 'Get your full map',
       key: 'After payment Gumroad emails you a license key. Enter it once and set a password.',
       seeYear: 'See the annual plan',
       backPrev: 'Back to the preview'
@@ -216,7 +216,7 @@
       sub: 'The same app, paid once a year.',
       renew: 'per year, renews automatically',
       equiv: 'About $2.50 a month, charged as $29.99 once a year plus VAT.',
-      cta: 'Subscribe — {price}/year',
+      cta: 'Get your full map',
       back: 'Back to the monthly plan',
       backPrev: 'Back to the preview',
       free: 'Read the free overview'
