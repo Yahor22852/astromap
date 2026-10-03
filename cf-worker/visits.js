@@ -22,7 +22,8 @@
    секрет STATS_KEY. Таблицу воркер создаёт сам при первом заходе.
 
    Сводка: https://astromap-visits.<аккаунт>.workers.dev/stats?key=<STATS_KEY>
-     &days=30 — сколько дней показать (по умолчанию 30, максимум 90).
+     &days=30 — последние N дней (по умолчанию 30, максимум 90);
+     &from=2026-10-01&to=2026-10-03 — любой период до года.
      &format=json — то же самое данными, а не таблицей.
 
    ПОЧЕМУ D1, А НЕ KV. Первая версия держала день в одном ключе KV. KV
@@ -567,6 +568,13 @@ var STATS_CSS = [
   '.drop{color:var(--s8);font-weight:650}',
   'section .lead{background:var(--bg);font-size:16px}',
   'section .tiles{margin:12px 0 14px}',
+  '.period{flex-wrap:wrap;margin:14px 0 8px}',
+  '.range{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 18px;font-size:14px;color:var(--ink2)}',
+  '.range label{display:flex;align-items:center;gap:6px}',
+  '.range input[type=date]{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 8px;min-height:36px}',
+  '.range button{font:inherit;padding:7px 14px;border-radius:999px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer;min-height:36px}',
+  '.range.on input[type=date]{border-color:var(--ink)}',
+  '.range__now{flex-basis:100%;color:var(--muted);font-size:13px}',
   '.src.opt .name{font-weight:500;color:var(--ink2)}',
   '.old{margin:0 0 16px}.old>summary{padding:14px 18px;background:var(--card);border:1px solid var(--line);border-radius:14px;list-style:none}',
   '.old>summary::-webkit-details-marker{display:none}.old>summary::before{content:"▸ ";color:var(--muted)}',
@@ -599,6 +607,25 @@ var STATS_JS = [
   '})();'
 ].join('');
 
+/* Период сводки. ?from=ГГГГ-ММ-ДД&to=ГГГГ-ММ-ДД — любые даты (до года
+   назад от конца периода, конец — не позже сегодня, перепутанные местами
+   меняются); иначе ?days=N — последние N дней, по умолчанию 30. День — по
+   UTC, как и в базе. pq — тот же период кусочком адреса для ссылок. */
+function addDays(d, n) { return new Date(Date.parse(d + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10); }
+function periodOf(url) {
+  var t = today(), re = /^\d{4}-\d{2}-\d{2}$/;
+  var from = url.searchParams.get('from') || '', to = url.searchParams.get('to') || '';
+  if (re.test(from) && !isNaN(Date.parse(from))) {
+    if (!re.test(to) || isNaN(Date.parse(to)) || to > t) { to = t; }
+    if (from > to) { var x = from; from = to; to = x; }
+    if (from < addDays(to, -365)) { from = addDays(to, -365); }
+    var n = Math.round((Date.parse(to) - Date.parse(from)) / 86400000) + 1;
+    return { from: from, to: to, days: n, custom: true, pq: 'from=' + from + '&to=' + to };
+  }
+  var days = Math.min(90, Math.max(1, parseInt(url.searchParams.get('days') || '30', 10) || 30));
+  return { from: addDays(t, -(days - 1)), to: t, days: days, custom: false, pq: 'days=' + days };
+}
+
 async function stats(url, env) {
   if (!env || !env.DB || !env.STATS_KEY) {
     return new Response('not configured', { status: 503 });
@@ -606,14 +633,17 @@ async function stats(url, env) {
   if (url.searchParams.get('key') !== env.STATS_KEY) {
     return new Response('forbidden', { status: 403 });
   }
-  var days = Math.min(90, Math.max(1, parseInt(url.searchParams.get('days') || '30', 10) || 30));
+  var P = periodOf(url);
+  var days = P.days;
+  /* От последнего дня периода назад к первому — тот же порядок, что был
+     у «последних N дней»: rows[0] — последний день. */
   var dates = [];
   for (var i = 0; i < days; i++) {
-    dates.push(new Date(Date.now() - i * 86400000).toISOString().slice(0, 10));
+    dates.push(new Date(Date.parse(P.to + 'T00:00:00Z') - i * 86400000).toISOString().slice(0, 10));
   }
   var res = await run(env, function () {
-    return env.DB.prepare('SELECT day, label, n FROM visits WHERE day >= ?1')
-      .bind(dates[dates.length - 1]).all();
+    return env.DB.prepare('SELECT day, label, n FROM visits WHERE day >= ?1 AND day <= ?2')
+      .bind(P.from, P.to).all();
   });
   var byDate = {};
   (res.results || []).forEach(function (r) {
@@ -633,8 +663,8 @@ async function stats(url, env) {
   var all = bySource.reduce(function (s, r) { return s + r.visits; }, 0);
 
   var stepRes = await run(env, function () {
-    return env.DB.prepare('SELECT step, SUM(n) AS n, MIN(day) AS since FROM steps WHERE day >= ?1 GROUP BY step')
-      .bind(dates[dates.length - 1]).all();
+    return env.DB.prepare('SELECT step, SUM(n) AS n, MIN(day) AS since FROM steps WHERE day >= ?1 AND day <= ?2 GROUP BY step')
+      .bind(P.from, P.to).all();
   }, STEPS_SCHEMA);
   var funnel = { since: null };
   Object.keys(FUNNEL_STEPS).forEach(function (k) { funnel[k] = 0; });
@@ -646,7 +676,7 @@ async function stats(url, env) {
 
   var ccRes = await run(env, function () {
     return env.DB.prepare('SELECT kind, key, cc, SUM(n) AS n, MIN(day) AS since FROM by_country ' +
-      'WHERE day >= ?1 GROUP BY kind, key, cc').bind(dates[dates.length - 1]).all();
+      'WHERE day >= ?1 AND day <= ?2 GROUP BY kind, key, cc').bind(P.from, P.to).all();
   }, CC_SCHEMA);
   var countries = {}, ccSince = null;
   (ccRes.results || []).forEach(function (r) {
@@ -665,12 +695,12 @@ async function stats(url, env) {
     .sort(function (a, b) { return (b.visits + b.steps.s1 + b.steps.q2_goal) - (a.visits + a.steps.s1 + a.steps.q2_goal); });
 
   if (url.searchParams.get('format') === 'json') {
-    return new Response(JSON.stringify({ days: days, total: all, bySource: bySource, byDay: rows, funnel: funnel,
+    return new Response(JSON.stringify({ days: days, from: P.from, to: P.to, total: all, bySource: bySource, byDay: rows, funnel: funnel,
       byCountry: byCountry, countriesSince: ccSince }), {
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }
     });
   }
-  return new Response(statsPage(url, days, rows, bySource, funnel, byCountry, ccSince), {
+  return new Response(statsPage(url, P, rows, bySource, funnel, byCountry, ccSince), {
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }
   });
 }
@@ -767,7 +797,7 @@ function countryFunnelTable(byCountry, key, days, cc) {
     '<th class="r">«Оплатить»</th><th>Где больше всего уходят</th></tr>' +
     list.map(function (c) {
       var f = c.steps, w = worstDrop(f), pay = f.pay_m + f.pay_y;
-      return '<tr><td><a href="?key=' + key + '&days=' + days + '&cc=' + c.cc + '"' + (c.cc === cc ? ' style="font-weight:650"' : '') + '>' +
+      return '<tr><td><a href="?key=' + key + '&' + days + '&cc=' + c.cc + '"' + (c.cc === cc ? ' style="font-weight:650"' : '') + '>' +
         countryFlag(c.cc) + esc(countryName(c.cc)) + '</a></td>' +
         '<td class="r">' + f.s1 + '</td><td class="r">' + f.s6 + ' <span style="color:var(--muted)">' + pct(f.s6, f.s1) + '</span></td>' +
         '<td class="r">' + pay + '</td>' +
@@ -782,9 +812,9 @@ function funnelSection(f, opt) {
   var top = f.s1;
   var countries = (opt.byCountry || []).filter(function (c) { return c.steps.s1; });
   var chips = countries.length ? '<nav class="period" style="flex-wrap:wrap;margin:10px 0 4px">' +
-    '<a href="?key=' + opt.key + '&days=' + opt.days + '"' + (opt.cc ? '' : ' class="on"') + '>Все страны</a>' +
+    '<a href="?key=' + opt.key + '&' + opt.pq + '"' + (opt.cc ? '' : ' class="on"') + '>Все страны</a>' +
     countries.slice(0, 6).map(function (c) {
-      return '<a href="?key=' + opt.key + '&days=' + opt.days + '&cc=' + c.cc + '"' + (c.cc === opt.cc ? ' class="on"' : '') + '>' +
+      return '<a href="?key=' + opt.key + '&' + opt.pq + '&cc=' + c.cc + '"' + (c.cc === opt.cc ? ' class="on"' : '') + '>' +
         countryFlag(c.cc) + esc(countryName(c.cc)) + '</a>';
     }).join('') + '</nav>' : '';
   var head = '<section id="funnel"><h2>Где отваливаются' + (opt.cc ? ': ' + countryFlag(opt.cc) + esc(countryName(opt.cc)) : '') +
@@ -845,7 +875,7 @@ function funnelSection(f, opt) {
       hint: 'по уведомлению Gumroad, без продлений: месяц — ' + f.paid_m + ', год — ' + f.paid_y }) +
     '<p class="note">«Оплатили» приходит от Gumroad и включает тех, кто оплатил по старой вкладке или прямой ссылке, ' +
       'поэтому в первые дни может быть больше нажатий. Шаг «Дата партнёра» засчитывается, даже если его пропустили.</p>') +
-    countryFunnelTable(countries, opt.key, opt.days, opt.cc) +
+    countryFunnelTable(countries, opt.key, opt.pq, opt.cc) +
     '</section>';
 }
 
@@ -890,9 +920,9 @@ function quizSection(f, opt) {
   var top = f.q2_goal;
   var countries = (opt.byCountry || []).filter(function (c) { return c.steps.q2_goal; });
   var chips = countries.length ? '<nav class="period" style="flex-wrap:wrap;margin:10px 0 4px">' +
-    '<a href="?key=' + opt.key + '&days=' + opt.days + '"' + (opt.cc ? '' : ' class="on"') + '>Все страны</a>' +
+    '<a href="?key=' + opt.key + '&' + opt.pq + '"' + (opt.cc ? '' : ' class="on"') + '>Все страны</a>' +
     countries.slice(0, 6).map(function (c) {
-      return '<a href="?key=' + opt.key + '&days=' + opt.days + '&cc=' + c.cc + '"' + (c.cc === opt.cc ? ' class="on"' : '') + '>' +
+      return '<a href="?key=' + opt.key + '&' + opt.pq + '&cc=' + c.cc + '"' + (c.cc === opt.cc ? ' class="on"' : '') + '>' +
         countryFlag(c.cc) + esc(countryName(c.cc)) + '</a>';
     }).join('') + '</nav>' : '';
   var head = '<section id="quiz"><h2>Квиз: где отваливаются' +
@@ -981,7 +1011,7 @@ function quizSection(f, opt) {
     ctable = '<h3>По странам</h3><table><tr><th>Страна</th><th class="r">Начали</th><th class="r">До пейвола</th>' +
       '<th class="r">«Оплатить»</th></tr>' + list.map(function (c) {
         var g = c.steps;
-        return '<tr><td><a href="?key=' + opt.key + '&days=' + opt.days + '&cc=' + c.cc + '"' +
+        return '<tr><td><a href="?key=' + opt.key + '&' + opt.pq + '&cc=' + c.cc + '"' +
           (c.cc === opt.cc ? ' style="font-weight:650"' : '') + '>' + countryFlag(c.cc) + esc(countryName(c.cc)) + '</a></td>' +
           '<td class="r">' + g.q2_goal + '</td><td class="r">' + g.q2_pay + ' <span style="color:var(--muted)">' +
           pct(g.q2_pay, g.q2_goal) + '</span></td><td class="r">' + (g.q2_pay_m + g.q2_pay_y) + '</td></tr>';
@@ -1013,7 +1043,42 @@ function oldCompare(f) {
     '</table></section>';
 }
 
-function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
+/* Выбор периода: быстрые кнопки и два поля дат (родной календарь
+   браузера). Форма отправляет GET на ту же страницу с key и cc. */
+function periodNav(P, key, cc) {
+  var t = today(), y = addDays(t, -1);
+  var m0 = t.slice(0, 8) + '01';
+  var pm1 = addDays(m0, -1), pm0 = pm1.slice(0, 8) + '01';
+  var href = function (q) { return '?key=' + key + '&' + q + (cc ? '&cc=' + cc : ''); };
+  var presets = [
+    ['Сегодня', 'from=' + t + '&to=' + t, t, t],
+    ['Вчера', 'from=' + y + '&to=' + y, y, y],
+    ['7 дней', 'days=7', addDays(t, -6), t],
+    ['30 дней', 'days=30', addDays(t, -29), t],
+    ['90 дней', 'days=90', addDays(t, -89), t],
+    ['Этот месяц', 'from=' + m0 + '&to=' + t, m0, t],
+    ['Прошлый месяц', 'from=' + pm0 + '&to=' + pm1, pm0, pm1]
+  ];
+  var anyOn = false;
+  var links = presets.map(function (p) {
+    var on = P.from === p[2] && P.to === p[3];
+    if (on) { anyOn = true; }
+    return '<a href="' + href(p[1]) + '"' + (on ? ' class="on"' : '') + '>' + p[0] + '</a>';
+  }).join('');
+  var range = P.from === P.to ? dateLong(P.from) : dateLong(P.from) + ' — ' + dateLong(P.to);
+  return '<nav class="period">' + links + '</nav>' +
+    '<form class="range' + (anyOn ? '' : ' on') + '" method="get" action="">' +
+      '<input type="hidden" name="key" value="' + esc(decodeURIComponent(key)) + '">' +
+      (cc ? '<input type="hidden" name="cc" value="' + esc(cc) + '">' : '') +
+      '<label>с <input type="date" name="from" value="' + P.from + '" max="' + t + '" required></label>' +
+      '<label>по <input type="date" name="to" value="' + P.to + '" max="' + t + '" required></label>' +
+      '<button type="submit">Показать</button>' +
+      '<span class="range__now">Сейчас: ' + esc(range) + ' (' + P.days + ' ' + plural(P.days, 'день', 'дня', 'дней') + ', по UTC)</span>' +
+    '</form>';
+}
+
+function statsPage(url, P, rows, bySource, funnel, byCountry, ccSince) {
+  var days = P.days;
   var key = encodeURIComponent(url.searchParams.get('key'));
   /* ?cc=PL — воронка только по этой стране. Шаги по странам считаются
      позже общих (с обновления воркера), поэтому «Все страны» берёт общую
@@ -1057,16 +1122,19 @@ function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
   daysList = daysList.slice(first);
   var started = first > 0 && real > 0;
 
-  var today = rows[0], yesterday = rows[1];
-  var todayN = daysList.length ? daysList[daysList.length - 1].n : 0;
-  var yesterdayN = daysList.length > 1 ? daysList[daysList.length - 2].n : 0;
+  var todayStr = today(), yStr = addDays(todayStr, -1);
+  var toToday = P.to === todayStr;
+  var dayN = function (d) { var f = daysList.filter(function (x) { return x.date === d; })[0]; return f ? f.n : 0; };
+  var todayN = dayN(todayStr), yesterdayN = dayN(yStr);
+  var busiest = daysList.reduce(function (b, d) { return !b || d.n > b.n ? d : b; }, null);
   var week = daysList.slice(-7), weekN = week.reduce(function (s, d) { return s + d.n; }, 0);
   var tiktok = channels.tiktok ? channels.tiktok.visits : 0;
-  var since = daysList.length ? daysList[0].date : today.date;
+  var since = daysList.length ? daysList[0].date : P.to;
+  var range = P.from === P.to ? dateLong(P.from) : dateLong(P.from) + ' — ' + dateLong(P.to);
 
   function label(d) {
-    if (d === today.date) { return 'Сегодня'; }
-    if (yesterday && d === yesterday.date) { return 'Вчера'; }
+    if (d === todayStr) { return 'Сегодня'; }
+    if (d === yStr) { return 'Вчера'; }
     return dateLong(d);
   }
 
@@ -1075,7 +1143,7 @@ function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
   if (!real) {
     lead = 'За этот период заходов на сайт не было.';
   } else {
-    lead = (started ? 'С ' + dateLong(since) : 'За последние ' + days + ' ' + plural(days, 'день', 'дня', 'дней')) +
+    lead = (P.custom ? 'За ' + range : started ? 'С ' + dateLong(since) : 'За последние ' + days + ' ' + plural(days, 'день', 'дня', 'дней')) +
       ' сайт открыли <b>' + real + '</b> ' + plural(real, 'раз', 'раза', 'раз') + '.';
     var top = list.filter(function (c) { return c.ch.key !== 'direct'; })[0];
     if (top) {
@@ -1085,7 +1153,7 @@ function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
       lead += ' Ещё ' + channels.direct.visits + ' (' + pct(channels.direct.visits, real) + ') — без источника: ' +
         'по ним не видно, откуда человек пришёл (подробнее внизу).';
     }
-    lead += ' Сегодня — ' + todayN + ' ' + visitsWord(todayN) + '.';
+    if (toToday) { lead += ' Сегодня — ' + todayN + ' ' + visitsWord(todayN) + '.'; }
   }
 
   var html = '<!doctype html><html lang="ru"><meta charset="utf-8">' +
@@ -1094,22 +1162,23 @@ function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
     '<title>AstroMap: заходы и воронка</title><style>' + STATS_CSS + '</style><main>' +
     '<h1>Сколько людей заходит на astromap.me</h1>' +
     '<p class="sub">Считается каждое открытие сайта по любой ссылке. Обновите страницу, чтобы увидеть свежие цифры.</p>' +
-    '<nav class="period">' + [7, 30, 90].map(function (d) {
-      return '<a href="?key=' + key + '&days=' + d + (cc ? '&cc=' + cc : '') + '"' + (d === days ? ' class="on"' : '') + '>' + d + ' ' +
-        plural(d, 'день', 'дня', 'дней') + '</a>';
-    }).join('') + '</nav>' +
+    periodNav(P, key, cc) +
     '<p class="lead">' + lead + '</p>' +
-    '<div class="tiles">' +
-      '<div class="tile"><div class="k">Сегодня</div><div class="v">' + todayN + '</div>' +
-        '<div class="s">вчера было ' + yesterdayN + '</div></div>' +
-      '<div class="tile"><div class="k">За последние 7 дней</div><div class="v">' + weekN + '</div>' +
-        '<div class="s">в среднем ' + Math.round(weekN / Math.max(1, week.length)) + ' в день</div></div>' +
+    '<div class="tiles">' + (toToday && !P.custom
+      ? '<div class="tile"><div class="k">Сегодня</div><div class="v">' + todayN + '</div>' +
+          '<div class="s">вчера было ' + yesterdayN + '</div></div>' +
+        '<div class="tile"><div class="k">За последние 7 дней</div><div class="v">' + weekN + '</div>' +
+          '<div class="s">в среднем ' + Math.round(weekN / Math.max(1, week.length)) + ' в день</div></div>'
+      : '<div class="tile"><div class="k">За период</div><div class="v">' + real + '</div>' +
+          '<div class="s">' + esc(range) + ', в среднем ' + Math.round(real / Math.max(1, days)) + ' в день</div></div>' +
+        '<div class="tile"><div class="k">Самый активный день</div><div class="v">' + (busiest ? busiest.n : 0) + '</div>' +
+          '<div class="s">' + (busiest && busiest.n ? esc(label(busiest.date)) : 'заходов не было') + '</div></div>') +
       '<div class="tile"><div class="k">Из TikTok</div><div class="v">' + pct(tiktok, real) + '</div>' +
         '<div class="s">' + tiktok + ' из ' + real + ' ' + visitsWord(real) + ' за период</div></div>' +
     '</div>';
 
   /* Квиз — основная воронка, прежняя — свёрнутым архивом ниже. */
-  html += quizSection(ccFunnel, { cc: cc, byCountry: byCountry, key: key, days: days });
+  html += quizSection(ccFunnel, { cc: cc, byCountry: byCountry, key: key, days: days, pq: P.pq });
 
   /* Откуда приходят. */
   var maxV = list.length ? list[0].visits : 1;
@@ -1133,7 +1202,7 @@ function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
   html += countriesSection(byCountry, ccSince);
   html += '<details class="old"' + (ccFunnel.q2_goal ? '' : ' open') + '><summary>Прежняя воронка (до квиза) — ' +
     ccFunnel.s1 + ' ' + plural(ccFunnel.s1, 'старт', 'старта', 'стартов') + ' за период</summary>' +
-    funnelSection(ccFunnel, { cc: cc, byCountry: byCountry, key: key, days: days }) +
+    funnelSection(ccFunnel, { cc: cc, byCountry: byCountry, key: key, days: days, pq: P.pq }) +
     (cc ? '' : oldCompare(funnel)) + '</details>';
 
   /* По дням: столбики, разбитые по каналам. */
@@ -1163,7 +1232,7 @@ function statsPage(url, days, rows, bySource, funnel, byCountry, ccSince) {
     }).join('') + '</div>' +
     '<div class="xl">' + daysList.map(function (d, i) {
       var show = few || i % step === 0 || i === daysList.length - 1;
-      return '<span>' + (show ? (d.date === today.date ? 'сегодня' : dateShort(d.date)) : '') + '</span>';
+      return '<span>' + (show ? (d.date === todayStr ? 'сегодня' : dateShort(d.date)) : '') + '</span>';
     }).join('') + '</div>' +
     '<div class="readout" id="readout" aria-live="polite"></div>' +
     '<details style="margin-top:14px"><summary>Таблица по дням</summary><table><tr><th>День</th>' +
