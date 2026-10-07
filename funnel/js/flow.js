@@ -317,6 +317,15 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
        «Назад» с оплаты. Второе «оплатить» в TikTok тогда приводило в
        воронку, а не на оплату. Теперь проверяем при каждой загрузке и
        ещё раз — когда вкладка снова становится видимой (watchTikTokReturn). */
+    /* Уже вошёл в продукт в этом браузере (оплатил и задал пароль) —
+       ожидающая оплата из TikTok ему больше не нужна: запись на воркере
+       живёт ещё до 30 минут, и без этой проверки ссылка из профиля
+       снова открыла бы чекаут. */
+    try {
+      var acc = JSON.parse(localStorage.getItem('astromap.access') || 'null');
+      if (acc && acc.email && acc.token) { fallback(); return; }
+    } catch (e) {}
+
     var note = function (what) {
       try {
         localStorage.setItem('astromap.dbg.take', JSON.stringify({
@@ -350,6 +359,10 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     ttWatching = true;
     var recheck = function () {
       if (document.hidden || Date.now() - ttLastCheck < 2000) { return; }
+      try {
+        var acc = JSON.parse(localStorage.getItem('astromap.access') || 'null');
+        if (acc && acc.email && acc.token) { return; }
+      } catch (e) {}
       ttLastCheck = Date.now();
       apiPost('/handoff/take', { fp: deviceFp(), coarse: coarseFp() }, 3500).then(function (r) {
         if (r && r.ok && (r.plan === 'monthly' || r.plan === 'yearly')) { finishHandoff(r, T); return; }

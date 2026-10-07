@@ -227,8 +227,8 @@ async function stepHit(request, env) {
    практически исключено. IPv6 сравнивается по первым 64 битам: телефон
    меняет вторую половину адреса сам.
 
-   Что хранится: ответы квиза и план, не дольше HANDOFF_TTL_MS, и запись
-   удаляется при первом же чтении. IP и отпечаток — только хэшами.
+   Что хранится: ответы квиза и план, не дольше HANDOFF_TTL_MS. Запись
+   отдаётся повторно в течение этого времени (см. take ниже). IP и отпечаток — только хэшами.
 
    Если IP в Safari другой (Частный узел iCloud, или одно приложение ходит
    через IPv6, а другое через IPv4), запись не отдаётся, а ответ говорит
@@ -331,7 +331,6 @@ async function handoff(request, env, action) {
         .bind(t, coarseHash, since).first();
     }, HANDOFF_SCHEMA);
     if (!claimed) { return jsonReply({ ok: false }); }
-    await env.DB.prepare('DELETE FROM handoff2 WHERE id = ?1').bind(claimed.id).run();
     return jsonReply({ ok: true, plan: claimed.plan, data: claimed.data });
   }
 
@@ -340,8 +339,13 @@ async function handoff(request, env, action) {
     return env.DB.prepare('SELECT plan, data FROM handoff2 WHERE id = ?1 AND created >= ?2')
       .bind(id, since).first();
   }, HANDOFF_SCHEMA);
+  /* Запись НЕ удаляется при чтении. Человек закрывает оплату в Safari,
+     возвращается в TikTok — инструкция там всё ещё открыта — и снова жмёт
+     «••• → Открыть в браузере», не нажимая «оплатить» заново. Новой записи
+     при этом нет, и раньше его встречала воронка с начала. Теперь запись
+     живёт свои 30 минут (HANDOFF_TTL_MS) и отдаётся при каждом заходе;
+     вошедших в продукт страница сюда уже не спрашивает. */
   if (row) {
-    await env.DB.prepare('DELETE FROM handoff2 WHERE id = ?1').bind(id).run();
     return jsonReply({ ok: true, plan: row.plan, data: row.data });
   }
   var near = await env.DB.prepare('SELECT token FROM handoff2 WHERE coarse = ?1 AND created >= ?2 LIMIT 2')
