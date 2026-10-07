@@ -14,45 +14,43 @@
   var TZ = window.TZ;
 
   var KEY = 'astromap.app';
-  /* --- гейт доступа (оплата на Gumroad) -----------------------------------
-     Продукт целиком закрыт лицензионным ключом: пока не подтверждён через
-     воркер license-verify.js (см. cf-worker/), показывается только #gate —
-     #shell со всем приложением остаётся [hidden]. Оба URL ниже пустые до
-     настройки: LICENSE_API — обязателен (без него разблокировать нечем),
-     GATE_CHECKOUT_URL — необязателен, просто прячет ссылку «ещё нет
-     доступа», если её некуда вести. */
+  /* --- гейт доступа (оплата в Stripe) --------------------------------------
+     Продукт целиком закрыт входом: пока воркер license-verify.js (см.
+     cf-worker/) не подтвердит живую подписку, показывается только #gate —
+     #shell со всем приложением остаётся [hidden]. LICENSE_API обязателен
+     (без него проверять нечем), GATE_CHECKOUT_URL — необязателен, просто
+     прячет ссылку «ещё нет доступа», если её некуда вести.
+
+     Как человек попадает внутрь:
+       ?session_id=cs_… — Stripe вернул его сюда после оплаты (redirect в
+         настройках Payment Link): почта из оплаты, придумать пароль;
+       ?reset=<токен>   — ссылка из письма «создайте пароль» / «сброс»;
+       почта + пароль   — все остальные разы. */
   var LICENSE_API = 'https://astromap-license-verify.egorrut3030.workers.dev';
-  var GATE_CHECKOUT_URL = 'https://astromap.gumroad.com/l/astromap?monthly=true&wanted=true';
-  /* Управление подпиской для тех, у кого доступ уже есть (раздел #settings).
-     Это НЕ чекаут: у Gumroad это отдельный адрес, где отменяют и меняют
-     карту. Пока пусто, кнопки нет, а вместо неё строка о том, где искать
-     ссылку, — мёртвая кнопка «управлять подпиской» хуже её отсутствия. */
-  var MANAGE_URL = ''; /* TODO: ссылка на управление подпиской Gumroad */
-  /* Юридические документы и адрес поддержки. Ссылки стоят на гейте (человек
-     вводит ключ до того, как увидит продукт) и в настройках. Те же адреса
-     лежат в funnel/js/flow.js — меняешь здесь, меняй и там. */
+  var GATE_CHECKOUT_URL = ''; /* TODO: https://buy.stripe.com/… — тот же месячный Payment Link, что CHECKOUT_URL в funnel/js/flow.js */
+  /* Юридические документы и адрес поддержки. Ссылки стоят на гейте и в
+     настройках. Те же адреса лежат в funnel/js/flow.js — меняешь здесь,
+     меняй и там. */
   var TERMS_URL = 'https://docs.google.com/document/d/1GuEKF2tU3MG_ZUZqJnA7B27-OxGCoWB95aGkWyI8u9I/edit?usp=sharing';
   var PRIVACY_URL = 'https://docs.google.com/document/d/1J_HDyOfxye2w8JvKNG8ytiDkBXFHsuDFKQYHbj4ALh0/edit?usp=sharing';
   var SUPPORT_EMAIL = 'hello@astromap.me';
   var ACCESS_KEY = 'astromap.access';
   var ACCESS_REVALIDATE_MS = 24 * 3600 * 1000; /* не чаще раза в сутки дёргаем воркер повторно на уже открытой сессии */
-  /* Режим «только что оплатил». Воронка перед уходом на Gumroad кладёт в
-     CHECKOUT_MARK_KEY отметку { plan, at } (см. funnel/js/flow.js); ссылка
-     из контента товара Gumroad ведёт на /product/?paid=1. В обоих случаях
-     гейт первым и крупно показывает, что ключ пришёл на почту, — у человека
-     его ещё нет в руках. Окно в трое суток: дольше отметка ничего не значит. */
+  /* Режим «только что оплатил». Воронка перед уходом на Stripe кладёт в
+     CHECKOUT_MARK_KEY отметку { plan, at } (см. funnel/js/flow.js). Если
+     человек пришёл сюда без ?session_id (закрыл вкладку оплаты, вернулся
+     позже), гейт первым и крупно показывает, что ссылка для входа в почте.
+     Окно в трое суток: дольше отметка ничего не значит. */
   var CHECKOUT_MARK_KEY = 'astromap.checkout';
   var PAID_WINDOW_MS = 72 * 3600 * 1000;
   /* Почта последнего входа — только чтобы подставить её в форму после выхода
-     или окончания подписки. Ключ здесь не хранится. */
+     или окончания подписки. */
   var EMAIL_KEY = 'astromap.email';
-  /* Формат ключа Gumroad: четыре блока по восемь шестнадцатеричных знаков. */
-  var KEY_RE = /[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}-[A-F0-9]{8}/i;
   /* Обход гейта для разработки: открыть product/?dev=<DEV_WORD> один раз —
      флаг ляжет в localStorage, параметр из адреса уберётся, и дальше продукт
      открывается по обычной ссылке на этом браузере. Снять: ?dev=off.
      Это НЕ защита (весь гейт клиентский и обходится через devtools) — просто
-     чтобы не упираться в форму, пока Gumroad и воркер не настроены. */
+     чтобы не упираться в форму, пока Stripe и воркер не настроены. */
   var DEV_WORD = 'zodiac-dev-7714';
   var DEV_KEY = 'astromap.dev';
   /* Языки, где принят десятичная запятая вместо точки (все добавленные,
@@ -3219,28 +3217,13 @@
 
   /* --- настройки: доступ и подписка -----------------------------------------
 
-     До этого раздела ключ можно было ввести ровно один раз — на гейте — и
-     после этого он исчезал из интерфейса навсегда. Нельзя было ни увидеть,
-     на какую почту открыт доступ, ни выйти на чужом компьютере, ни
-     проверить, жива ли подписка, ни сменить ключ, не чистя localStorage
-     руками. Для продукта по подписке это дыра, а не мелочь.
-
-     Ключ показывается замаскированным, с последними четырьмя знаками:
-     этого хватает, чтобы сверить его с письмом, и недостаточно, чтобы его
-     подсмотрели через плечо. Полностью — по кнопке.
+     Почта, тариф, когда последний раз проверяли подписку; управление
+     подпиской (Stripe Customer Portal), ручная проверка и выход.
 
      Выход в два нажатия, как удаление данных в профиле: он запирает
-     продукт до повторного ввода ключа, и случайное касание не должно этого
-     делать. Данные карты при этом не трогаются — они к лицензии
+     продукт до повторного входа, и случайное касание не должно этого
+     делать. Данные карты при этом не трогаются — они к подписке
      отношения не имеют. */
-  function maskKey(k) {
-    var s = String(k || '');
-    if (s.length <= 4) { return s; }
-    return new Array(Math.min(s.length - 4, 20) + 1).join('•') + s.slice(-4);
-  }
-
-  var setKeyShown = false;
-
   views.settings = function () {
     var blocks = [];
 
@@ -3257,33 +3240,24 @@
     }
 
     var a = loadAccess();
-    if (a && a.email && a.licenseKey) {
+    if (a && a.email && a.token) {
       var checked = a.verifiedAt ? fmtDateTime(new Date(a.verifiedAt)) : T.set.checkedNever;
+      var plan = a.plan === 'yearly' ? T.set.planYearly : (a.plan === 'monthly' ? T.set.planMonthly : '');
       var body =
         '<div class="kv"><span>' + T.set.emailLabel + '</span><b class="set__mono">' +
           esc(a.email) + '</b></div>' +
-        '<div class="kv"><span>' + T.set.keyLabel + '</span><b class="set__mono" id="setKey">' +
-          esc(setKeyShown ? a.licenseKey : maskKey(a.licenseKey)) + '</b></div>' +
+        (plan ? '<div class="kv"><span>' + T.set.planLabel + '</span><b>' + plan + '</b></div>' : '') +
         '<div class="kv"><span>' + T.set.checkedLabel + '</span><b>' + checked + '</b></div>' +
         '<p class="set__status" id="setStatus" role="status" aria-live="polite" hidden></p>' +
         '<div class="acts">' +
-          '<button type="button" class="act" id="setReveal" aria-pressed="' + setKeyShown + '">' +
-            (setKeyShown ? T.set.keyHide : T.set.keyShow) + '</button>' +
+          '<button type="button" class="act" id="setManage">' + T.set.manage + '</button>' +
           '<button type="button" class="act" id="setCheck">' + T.set.checkNow + '</button>' +
-          (MANAGE_URL
-            ? '<a class="act" href="' + MANAGE_URL + '" target="_blank" rel="noopener">' +
-              T.set.manage + '</a>'
-            : '') +
           '<button type="button" class="act act--warn" id="setOut" data-armed="0">' +
             T.set.signOut + '</button>' +
         '</div>' +
-        (MANAGE_URL ? '' : '<p class="note">' + T.set.manageOff + '</p>') +
         '<p class="note">' + T.set.signOutNote + '</p>';
       blocks.push(card(T.set.accessTitle, body, T.set.privacyNote));
     } else if (!devBypassActive() && LICENSE_API) {
-      /* «Ключа нет» имеет смысл только когда гейт включён. При пустом
-         LICENSE_API карточка выше уже всё объяснила, и вторая строка о том,
-         что ключа нет, звучала бы как поломка. */
       blocks.push(card(T.set.accessTitle, '<p class="empty">' + T.set.noAccess + '</p>'));
     }
 
@@ -3306,9 +3280,25 @@
       });
     }
 
-    var reveal = el('setReveal');
-    if (reveal) {
-      reveal.addEventListener('click', function () { setKeyShown = !setKeyShown; route(); });
+    /* Управление подпиской — Stripe Customer Portal (отмена, карта, чеки).
+       Ссылка одноразовая, поэтому берётся у воркера в момент нажатия. */
+    var manage = el('setManage');
+    if (manage) {
+      manage.addEventListener('click', function () {
+        var a = loadAccess();
+        if (!a || !a.token) { return; }
+        manage.disabled = true;
+        setSetStatus(T.ui.gateChecking, false);
+        api({ action: 'portal', token: a.token }).then(function (r) {
+          if (r && r.ok && r.url) { location.href = r.url; return; }
+          manage.disabled = false;
+          if (r && r.reason === 'bad_session') { clearAccess(); showGateOnly(T.ui.gateErrorSession); return; }
+          setSetStatus(T.set.manageErr, true);
+        }).catch(function () {
+          manage.disabled = false;
+          setSetStatus(T.ui.gateErrorNetwork, true);
+        });
+      });
     }
 
     var check = el('setCheck');
@@ -3811,9 +3801,9 @@
   function clearAccess() {
     try { localStorage.removeItem(ACCESS_KEY); } catch (e) { /* игнор */ }
   }
-  /* Живой запрос к воркеру при каждой (ре)проверке — никакого состояния
-     подписки нигде не кэшируется на сервере, поэтому отменённая/просроченная
-     подписка отражается сразу на следующей проверке, без вебхуков. */
+  /* Живой запрос к воркеру при каждой (ре)проверке — состояние подписки на
+     сервере не кэшируется, воркер каждый раз спрашивает Stripe, поэтому
+     отменённая подписка отражается на следующей же проверке. */
   function api(body) {
     return fetch(LICENSE_API, {
       method: 'POST',
@@ -3821,18 +3811,8 @@
       body: JSON.stringify(body)
     }).then(function (r) { return r.json(); });
   }
-  /* Старая проверка «почта + ключ» без аккаунта. Нужна двум случаям:
-     браузерам, где вошли до появления паролей (у них в доступе нет token),
-     и запасному пути, пока в воркере не настроено хранилище аккаунтов. */
-  function verifyAccess(email, licenseKey) {
-    return api({ email: email, licenseKey: licenseKey });
-  }
-  /* Перепроверка уже открытого доступа: по токену сессии, если он есть,
-     иначе по ключу. Ответ приводится к одному виду: res + новый объект
-     доступа, который надо сохранить при active. */
   function recheckAccess(a) {
-    var req = a.token ? api({ action: 'session', token: a.token }) : verifyAccess(a.email, a.licenseKey);
-    return req.then(function (res) {
+    return api({ action: 'session', token: a.token }).then(function (res) {
       return { res: res, access: res && res.active ? accessFrom(res, a) : null };
     });
   }
@@ -3840,45 +3820,42 @@
     prev = prev || {};
     return {
       email: res.email || prev.email,
-      licenseKey: res.licenseKey || prev.licenseKey,
+      plan: res.plan || prev.plan || null,
       token: res.token || prev.token || null,
       verifiedAt: Date.now()
     };
   }
   function gateErrorText(reason) {
-    if (reason === 'subscription_ended' || reason === 'refunded' || reason === 'disputed') {
-      return T.ui.gateErrorInactive;
-    }
-    if (reason === 'email_mismatch') { return T.ui.gateErrorEmail; }
-    if (reason === 'not_found') { return T.ui.gateErrorKey; }
+    if (reason === 'subscription_ended') { return T.ui.gateErrorInactive; }
+    if (reason === 'not_found') { return T.ui.gateErrorNotFound; }
     if (reason === 'no_account') { return T.ui.gateErrorNoAccount; }
     if (reason === 'bad_password') { return T.ui.gateErrorPassword; }
     if (reason === 'too_many') { return T.ui.gateErrorTooMany; }
     if (reason === 'weak_password') { return T.ui.gateErrorShort; }
     if (reason === 'bad_session') { return T.ui.gateErrorSession; }
+    if (reason === 'bad_link') { return T.ui.gateErrorLink; }
+    if (reason === 'session_used') { return T.ui.gateErrorUsed; }
+    if (reason === 'not_paid') { return T.ui.gateErrorNotPaid; }
     if (reason === 'not_configured') { return T.ui.gateErrorNotReady; }
     return T.ui.gateErrorInvalid;
   }
-  /* Ключ часто копируют с хвостом — пробелом, переносом, а то и целым
-     абзацем письма. Если в тексте есть что-то похожее на ключ, берём ровно
-     его; иначе просто чистим пробелы. Регистр у Gumroad не важен, но в
-     письме ключ заглавными — так его и сверять глазами. */
-  function normalizeKey(raw) {
-    var s = String(raw || '');
-    var m = s.match(KEY_RE);
-    return m ? m[0].toUpperCase() : s.replace(/\s+/g, '');
-  }
-  function paidModeRequested() {
-    var paid = false;
+  /* Забирает параметр из адреса и стирает его из истории: ни session_id,
+     ни токен сброса не должны оставаться в адресной строке, закладках и
+     истории браузера. */
+  function takeParam(name) {
+    var v = null;
     try {
       var u = new URL(window.location.href);
-      if (u.searchParams.has('paid')) {
-        paid = true;
-        u.searchParams.delete('paid');
+      if (u.searchParams.has(name)) {
+        v = u.searchParams.get(name) || '';
+        u.searchParams.delete(name);
         window.history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
       }
     } catch (e) {}
-    if (paid) { return true; }
+    return v;
+  }
+  function paidModeRequested() {
+    if (takeParam('paid') !== null) { return true; }
     try {
       var mark = JSON.parse(localStorage.getItem(CHECKOUT_MARK_KEY) || 'null');
       return !!(mark && mark.at && Date.now() - mark.at < PAID_WINDOW_MS);
@@ -3888,10 +3865,10 @@
     var gate = el('gate');
     if (gate) { gate.classList.toggle('gate--paid', !!paid); }
     var t = el('gateMailTitle');
-    if (t) { t.textContent = paid ? T.ui.gateMailTitlePaid : T.ui.gateMailTitle; }
+    if (t) { t.textContent = paid === 'sent' ? T.ui.gateMailTitle : T.ui.gateMailTitlePaid; }
     var notPaid = el('gateNotPaid');
     if (notPaid) {
-      if (paid && GATE_CHECKOUT_URL) { notPaid.href = GATE_CHECKOUT_URL; notPaid.hidden = false; }
+      if (paid === true && GATE_CHECKOUT_URL) { notPaid.href = GATE_CHECKOUT_URL; notPaid.hidden = false; }
       else { notPaid.hidden = true; }
     }
     /* «Ещё нет доступа? Купить» рядом с «не завершили оплату?» — две ссылки
@@ -3899,18 +3876,21 @@
     var buy = el('gateBuy');
     if (buy && GATE_CHECKOUT_URL) { buy.hidden = !!paid; }
   }
-  /* Режим формы: login (почта + пароль), activate (почта + ключ + новый
-     пароль, первый вход) и reset (то же, «забыли пароль»). Видимость полей и
-     ссылок — в CSS по data-mode, здесь тексты и autocomplete: менеджеру
-     паролей важно отличать вход от создания нового пароля. */
+  /* Режим формы: login (почта + пароль), link (только почта — прислать
+     ссылку), claim (после оплаты: новый пароль) и reset (по ссылке из
+     письма: новый пароль). Видимость полей и ссылок — в CSS по data-mode,
+     здесь тексты и autocomplete: менеджеру паролей важно отличать вход от
+     создания нового пароля. */
   var gateFormMode = 'login';
+  var gateSecret = null;   /* session_id (claim) или токен из письма (reset) */
   function setFormMode(mode) {
     gateFormMode = mode;
     var gate = el('gate');
     if (gate) { gate.setAttribute('data-mode', mode); }
     var titles = {
       login: [T.ui.gateLoginTitle, T.ui.gateLoginSub, T.ui.gateLoginSubmit],
-      activate: [T.ui.gateActivateTitle, T.ui.gateActivateSub, T.ui.gateActivateSubmit],
+      link: [T.ui.gateLinkTitle, T.ui.gateLinkSub, T.ui.gateLinkSubmit],
+      claim: [T.ui.gateClaimTitle, T.ui.gateClaimSub, T.ui.gateClaimSubmit],
       reset: [T.ui.gateResetTitle, T.ui.gateResetSub, T.ui.gateResetSubmit]
     }[mode];
     el('gateTitle').textContent = titles[0];
@@ -3920,6 +3900,8 @@
     var pw = el('gatePassword');
     pw.setAttribute('autocomplete', mode === 'login' ? 'current-password' : 'new-password');
     pw.value = '';
+    /* В claim и reset почту задаёт оплата или письмо, её не правят. */
+    el('gateEmail').readOnly = mode === 'claim' || mode === 'reset';
     setGateStatus('', false);
   }
   function setGateStatus(text, isError) {
@@ -3946,25 +3928,11 @@
   function showGateOnly(message, paid, mode) {
     var gate = el('gate'), shell = el('shell');
     setGateMode(paid);
-    setFormMode(mode || (paid ? 'activate' : 'login'));
+    setFormMode(mode || (paid ? 'link' : 'login'));
     var emailInput = el('gateEmail');
     if (emailInput && !emailInput.value) {
       try { emailInput.value = localStorage.getItem(EMAIL_KEY) || ''; } catch (e) {}
     }
-    /* Оплата прошла в окне внутри TikTok: воронка узнала о ней по Gumroad
-       Ping и положила почту и ключ сюда (funnel/js/flow.js, purchaseDone).
-       Подставляем их — человеку остаётся придумать пароль. Живёт 2 часа. */
-    try {
-      var pre = JSON.parse(localStorage.getItem('astromap.prefill') || 'null');
-      if (pre && pre.at && Date.now() - pre.at < 2 * 3600 * 1000) {
-        var form = el('gateForm');
-        if (pre.email && emailInput) { emailInput.value = pre.email; }
-        if (pre.licenseKey && form && form.gateLicense) { form.gateLicense.value = normalizeKey(pre.licenseKey); }
-        setTimeout(function () { var pw = el('gatePassword'); if (pw) { pw.focus(); } }, 60);
-      } else if (pre) {
-        localStorage.removeItem('astromap.prefill');
-      }
-    } catch (e) {}
     if (shell) { shell.hidden = true; }
     if (gate) { gate.hidden = false; }
     if (message) { setGateStatus(message, true); }
@@ -3974,6 +3942,16 @@
     return '<a href="' + TERMS_URL + '"' + ext + '>' + T.ui.legalTerms + '</a>' +
       ' · <a href="' + PRIVACY_URL + '"' + ext + '>' + T.ui.legalPrivacy + '</a>' +
       ' · <a href="mailto:' + SUPPORT_EMAIL + '">' + SUPPORT_EMAIL + '</a>';
+  }
+  function granted(access) {
+    saveAccess(access);
+    try {
+      localStorage.setItem(EMAIL_KEY, access.email);
+      localStorage.removeItem(CHECKOUT_MARK_KEY);
+    } catch (e) {}
+    el('gatePassword').value = '';
+    setGateStatus('', false);
+    enterApp();
   }
   function bindGate() {
     var form = el('gateForm');
@@ -3985,27 +3963,6 @@
     }
     var legal = el('gateLegal');
     if (legal) { legal.innerHTML = legalLinksHtml(); }
-    var keyInput = form.gateLicense;
-    keyInput.addEventListener('paste', function (ev) {
-      var text = ev.clipboardData && ev.clipboardData.getData('text');
-      if (!text) { return; }
-      ev.preventDefault();
-      keyInput.value = normalizeKey(text);
-    });
-    keyInput.addEventListener('blur', function () { keyInput.value = normalizeKey(keyInput.value); });
-    /* Кнопка «Вставить» — для телефона, где долгое нажатие в поле неудобно.
-       clipboard.readText есть только в защищённом контексте и не везде;
-       нет API — нет кнопки. */
-    var pasteBtn = el('gatePaste');
-    if (pasteBtn && navigator.clipboard && navigator.clipboard.readText) {
-      pasteBtn.hidden = false;
-      pasteBtn.addEventListener('click', function () {
-        navigator.clipboard.readText().then(function (text) {
-          if (text) { keyInput.value = normalizeKey(text); }
-          keyInput.focus();
-        }).catch(function () { keyInput.focus(); });
-      });
-    }
     var pwInput = form.gatePassword;
     var showPw = el('gateShowPw');
     function syncShowPw() {
@@ -4020,33 +3977,24 @@
     });
     syncShowPw();
 
-    el('gateToActivate').addEventListener('click', function () { setFormMode('activate'); form.gateLicense.focus(); });
-    el('gateForgot').addEventListener('click', function () { setFormMode('reset'); form.gateLicense.focus(); });
-    el('gateToLogin').addEventListener('click', function () { setFormMode('login'); pwInput.focus(); });
-
-    function granted(access) {
-      saveAccess(access);
-      try {
-        localStorage.setItem(EMAIL_KEY, access.email);
-        localStorage.removeItem(CHECKOUT_MARK_KEY);
-      } catch (e) {}
-      pwInput.value = '';
-      form.gateLicense.value = '';
-      setGateStatus('', false);
-      enterApp();
-    }
+    el('gateToLink').addEventListener('click', function () { setFormMode('link'); form.gateEmail.focus(); });
+    el('gateToLogin').addEventListener('click', function () {
+      gateSecret = null;
+      setGateMode(false);
+      setFormMode('login');
+      (form.gateEmail.value ? pwInput : form.gateEmail).focus();
+    });
 
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
       var mode = gateFormMode;
       var email = form.gateEmail.value.trim();
       var password = pwInput.value;
-      var licenseKey = normalizeKey(form.gateLicense.value);
-      form.gateLicense.value = licenseKey;
-      if (!email) { form.gateEmail.focus(); return; }
-      if (mode !== 'login' && !licenseKey) { form.gateLicense.focus(); return; }
-      if (!password) { pwInput.focus(); return; }
-      if (mode !== 'login' && password.length < 8) {
+      /* В claim и reset почта воркеру не нужна (её знает оплата или
+         письмо), поэтому без неё форма тоже отправляется. */
+      if (!email && (mode === 'login' || mode === 'link')) { form.gateEmail.focus(); return; }
+      if (mode !== 'link' && !password) { pwInput.focus(); return; }
+      if ((mode === 'claim' || mode === 'reset') && password.length < 8) {
         setGateStatus(T.ui.gateErrorShort, true); pwInput.focus(); return;
       }
 
@@ -4055,38 +4003,41 @@
       setGateStatus(T.ui.gateChecking, false);
       var done = function () { submitBtn.disabled = false; };
 
-      var req = mode === 'login'
-        ? api({ action: 'login', email: email, password: password })
-        : api({ action: 'activate', email: email, licenseKey: licenseKey, password: password });
+      if (mode === 'link') {
+        api({ action: 'reset_request', email: email, lang: window.APP_LANG || 'en' }).then(function (res) {
+          done();
+          if (res && res.ok) {
+            try { localStorage.setItem(EMAIL_KEY, email); } catch (e) {}
+            /* Показываем, что искать в почте, а форма остаётся — чтобы
+               отправить ещё раз или вернуться ко входу. */
+            setGateMode('sent');
+            setGateStatus(T.ui.gateLinkSent, false);
+            return;
+          }
+          setGateStatus(gateErrorText(res && res.reason), true);
+        }).catch(function () { done(); setGateStatus(T.ui.gateErrorNetwork, true); });
+        return;
+      }
+
+      var req = mode === 'login' ? api({ action: 'login', email: email, password: password })
+        : mode === 'claim' ? api({ action: 'claim', sessionId: gateSecret, password: password })
+        : api({ action: 'reset', token: gateSecret, password: password });
 
       req.then(function (res) {
-        if (res && res.ok && res.active) { done(); granted(accessFrom(res)); return; }
-        var reason = res && res.reason;
-
-        /* Хранилище аккаунтов в воркере ещё не настроено. Активацию не
-           роняем: ключ проверяется старым путём, и человек входит как раньше.
-           Пароль просто не сохраняется — при следующем входе его попросят
-           создать уже по-настоящему. */
-        if (reason === 'not_configured' && mode !== 'login') {
-          return verifyAccess(email, licenseKey).then(function (old) {
-            done();
-            if (old && old.ok && old.active) {
-              granted({ email: old.email || email, licenseKey: licenseKey, token: null, verifiedAt: Date.now() });
-            } else {
-              setGateStatus(gateErrorText(old && old.reason), true);
-            }
-          });
-        }
         done();
-        /* Аккаунта ещё нет (или пароли не включены) — это не ошибка
-           человека: он просто первый раз. Переводим в активацию, почту
-           оставляем. */
-        if (mode === 'login' && (reason === 'no_account' || reason === 'not_configured')) {
-          setFormMode('activate');
+        if (res && res.ok && res.active) { gateSecret = null; granted(accessFrom(res)); return; }
+        var reason = res && res.reason;
+        /* Пароля для этой почты ещё нет — это не ошибка человека: он
+           первый раз. Сразу переводим на «прислать ссылку», почту оставляем. */
+        if (mode === 'login' && reason === 'no_account') {
+          setFormMode('link');
           setGateStatus(gateErrorText(reason), true);
-          form.gateLicense.focus();
           return;
         }
+        /* Ссылка из письма протухла или session_id уже использован —
+           предлагаем то, что поможет: новую ссылку или вход. */
+        if (reason === 'bad_link') { gateSecret = null; setFormMode('link'); setGateStatus(gateErrorText(reason), true); return; }
+        if (reason === 'session_used') { gateSecret = null; setFormMode('login'); setGateStatus(gateErrorText(reason), true); return; }
         setGateStatus(gateErrorText(reason), true);
       }).catch(function () {
         done();
@@ -4094,8 +4045,45 @@
       });
     });
   }
-  /* Раз в сутки на уже открытой сессии тихо перепроверяем ключ в фоне: если
-     Gumroad теперь говорит active:false явно (не сетевая ошибка) — запираем
+  /* Пришёл со ссылкой (?session_id после оплаты или ?reset из письма):
+     узнаём у воркера почту и показываем форму «придумайте пароль». */
+  function openWithSecret(mode, secret) {
+    gateSecret = secret;
+    showGateOnly('', false, mode);
+    var form = el('gateForm');
+    setGateStatus(T.ui.gateChecking, false);
+    el('gateSubmit').disabled = true;
+    var tries = 0;
+    var ask = function () {
+      api(mode === 'claim' ? { action: 'claim_info', sessionId: secret } : { action: 'reset_info', token: secret })
+        .then(function (r) {
+          /* Stripe иногда отдаёт сессию «ещё не завершена» пару секунд после
+             редиректа — подождём, прежде чем пугать человека. */
+          if (r && r.ok && r.ready === false && tries++ < 5) { setTimeout(ask, 2000); return; }
+          el('gateSubmit').disabled = false;
+          if (r && r.ok && r.ready) {
+            form.gateEmail.value = r.email || '';
+            if (r.used) { gateSecret = null; setFormMode('login'); setGateStatus(T.ui.gateErrorUsed, false); return; }
+            setGateStatus('', false);
+            form.gatePassword.focus();
+            return;
+          }
+          gateSecret = null;
+          if (r && r.ok && r.ready === false) { setGateMode(true); setFormMode('link'); setGateStatus(T.ui.gateErrorNotPaid, true); return; }
+          setFormMode('link');
+          setGateStatus(gateErrorText(r && r.reason), true);
+        }).catch(function () {
+          /* Сеть: форма остаётся рабочей — пароль можно задать и без почты
+             на экране, session_id/токен уже у нас в gateSecret. */
+          el('gateSubmit').disabled = false;
+          setGateStatus(T.ui.gateErrorNetwork, true);
+          form.gatePassword.focus();
+        });
+    };
+    ask();
+  }
+  /* Раз в сутки на уже открытой сессии тихо перепроверяем подписку в фоне:
+     если воркер говорит active:false явно (не сетевая ошибка) — запираем
      обратно на #gate. Сетевую ошибку игнорируем: не отбираем уже открытый
      доступ из-за обрыва связи, следующий заход попробует снова. */
   function revalidateInBackground(access) {
@@ -4134,18 +4122,10 @@
       enterApp();
       return;
     }
-    /* ГЕЙТ БЕЗ ВОРКЕРА НЕ ЗАЩИЩАЕТ, А ЛОМАЕТ. Пока LICENSE_API пуст,
-       проверять ключ нечем: verifyAccess ушёл бы fetch'ем в пустую строку и
-       упал, то есть форма не принимала бы НИКАКОЙ ключ, включая настоящий.
-       Значит, она не отделяла покупателей от чужих — она не пускала никого,
-       и единственным входом оставался dev-обход, живущий в localStorage
-       одного браузера.
-
-       Поэтому при пустом LICENSE_API продукт открывается. Это осознанный
-       размен: пока воркера нет, продукт доступен любому, кто знает адрес.
-       Как только URL вписан, гейт включается сам — ни здесь, ни где-либо
-       ещё править для этого ничего не нужно. Раздел настроек показывает
-       это состояние открытым текстом, чтобы про него нельзя было забыть. */
+    /* ГЕЙТ БЕЗ ВОРКЕРА НЕ ЗАЩИЩАЕТ, А ЛОМАЕТ: при пустом LICENSE_API форма
+       не пускала бы никого, включая купивших. Поэтому без воркера продукт
+       открыт — осознанный размен до настройки; раздел настроек говорит об
+       этом открытым текстом. Как только URL вписан, гейт включается сам. */
     if (!LICENSE_API) {
       console.warn('astromap: LICENSE_API не задан в js/app.js — гейт выключен, ' +
         'продукт открыт всем. Впишите URL воркера license-verify.js, и гейт включится сам.');
@@ -4153,11 +4133,16 @@
       return;
     }
     bindGate();
+    var sessionId = takeParam('session_id');
+    var resetToken = takeParam('reset');
     var access = loadAccess();
-    if (access && access.email && access.licenseKey) {
+    /* Ссылка из письма или возврат с оплаты важнее уже открытого доступа:
+       человек пришёл именно задать пароль (например, на новом устройстве). */
+    if (resetToken) { paidModeRequested(); openWithSecret('reset', resetToken); return; }
+    if (sessionId) { paidModeRequested(); openWithSecret('claim', sessionId); return; }
+    if (access && access.email && access.token) {
       /* Доступ уже есть — ?paid из адреса просто убираем, отметка чекаута
-         больше не нужна. Почту запоминаем для формы на случай выхода: у тех,
-         кто вошёл до появления EMAIL_KEY, её там ещё нет. */
+         больше не нужна. */
       paidModeRequested();
       try {
         localStorage.removeItem(CHECKOUT_MARK_KEY);
@@ -4168,6 +4153,9 @@
         revalidateInBackground(access);
       }
     } else {
+      /* Старый доступ времён Gumroad (почта + ключ, без токена) больше не
+         действует — убираем его, чтобы воронка не уводила сюда по кругу. */
+      if (access) { clearAccess(); }
       showGateOnly('', paidModeRequested());
     }
   }

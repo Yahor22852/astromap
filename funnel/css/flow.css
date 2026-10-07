@@ -889,9 +889,9 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   .chip, .tile, .rc__chip { min-height: 44px; }
 }
 
-/* --- ключ доступа приходит на почту (пейволл, экран годового плана) ------
-   Крупный блок, а не сноска: после оплаты человек уходит с Gumroad и должен
-   заранее знать, что искать — письмо с лицензионным ключом. */
+/* --- как устроен вход после оплаты (пейволл, экран годового плана) -------
+   Крупный блок, а не сноска: человек заранее знает, что после оплаты
+   придумает пароль, а ссылка для входа придёт и на почту. */
 .keynote {
   display: flex; align-items: flex-start; gap: 14px;
   margin-top: 14px; padding: 16px 18px;
@@ -916,91 +916,79 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 }
 
 /* --- оплата из встроенного браузера TikTok ---------------------------------
-   Чекаут Gumroad в iframe на весь экран (см. openEmbeddedCheckout в
-   flow.js). Сверху — «назад» и «уже оплачено», снизу — запасной путь
-   через копирование ссылки. Выше шапки и дока: это модальное окно. */
-.paybox {
-  position: fixed; inset: 0; z-index: 60;
-  display: flex; flex-direction: column;
-  background: var(--bg-0);
-  padding-top: env(safe-area-inset-top, 0px);
-}
-.paybox__bar {
-  flex: none; display: flex; align-items: center;
-  padding: 4px calc(var(--pad) - 6px);
-  background: #fff; border-bottom: 1px solid #ececec;
-}
-.paybox__close {
-  min-height: 44px; padding: 0 6px; border: 0; background: transparent; cursor: pointer;
-  font-family: var(--sans); font-size: 16px; font-weight: 600; color: #000;
-}
-.paybox__paid { padding: 0 6px; font-size: 14px; color: #555; text-decoration: underline; text-underline-offset: 3px; }
-.paybox__close:focus-visible { outline: 2px solid #000; outline-offset: 2px; border-radius: 6px; }
-.paybox__paid:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 6px; }
-/* Белая подложка под iframe: чекаут Gumroad светлый, и пока он грузится,
-   тёмная рамка вокруг белой страницы мигала бы. */
-.paybox__frame { position: relative; flex: 1 1 auto; min-height: 0; background: #fff; }
-.paybox__frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+   Полноэкранная инструкция «••• → Открыть в браузере» (showBrowserHandoff в
+   flow.js). Стрелка — в правый верхний угол, где у TikTok кнопка «•••».
+   Выше шапки и дока: это модальное окно. */
 .paybox__spin {
-  position: absolute; top: 50%; left: 50%; width: 36px; height: 36px; margin: -18px 0 0 -18px;
+  width: 36px; height: 36px;
   border: 3px solid rgba(0, 0, 0, .12); border-top-color: #000; border-radius: 50%;
   animation: paybox-spin .8s linear infinite;
 }
-.paybox__spin[hidden] { display: none; }
 @keyframes paybox-spin { to { transform: rotate(360deg); } }
-.paybox__help {
-  flex: none; padding: 10px var(--pad) calc(12px + env(safe-area-inset-bottom, 0px));
-  background: #fff; border-top: 1px solid #ececec; text-align: center;
-}
-/* Кнопка кошелька — по образцу родных Apple Pay / Google Pay: чёрная на
-   белом, во всю ширину, высота 56px, скругление как у системной кнопки
-   iOS, логотип и «Pay» системным шрифтом. Стоит на белой полосе над
-   белым же чекаутом Gumroad — вместе это читается как одна страница
-   оплаты, а кнопка — как обычный способ оплаты, а не реклама. */
-.paybox__walletrow {
-  flex: none; padding: 12px var(--pad) 10px; background: #fff;
-}
-.paybox__wallet {
-  display: flex; align-items: center; justify-content: center; gap: 2px;
-  width: 100%; height: 56px; padding: 0 16px;
-  border: 0; border-radius: 12px; background: #000; color: #fff; cursor: pointer;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Roboto, Arial, sans-serif;
-  font-size: 24px; font-weight: 600; letter-spacing: -.01em; line-height: 1;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform .12s ease, opacity .12s ease;
-}
-.paybox__wallet:active { transform: scale(.985); opacity: .9; }
-.paybox__wallet:focus-visible { outline: 3px solid #0a84ff; outline-offset: 2px; }
-.paybox__apple { font-size: 27px; margin-top: -3px; }
-.paybox__g { width: 24px; height: 24px; margin-right: 6px; }
 .paybox__spin--light { position: static; margin: 0 auto 14px; border-color: rgba(255, 246, 251, .2); border-top-color: var(--gold); }
 
-/* Инструкция «как открыть в браузере»: поверх окна оплаты, стрелка — в
-   правый верхний угол, где у TikTok кнопка «•••». */
 .whelp {
   position: fixed; inset: 0; z-index: 70;
   background: rgba(20, 4, 24, .86);
   display: flex; align-items: center; justify-content: center;
   padding: 72px var(--pad) calc(24px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
 }
+.whelp--pay {
+  background:
+    radial-gradient(120% 60% at 100% 0%, rgba(214, 92, 170, .35), transparent 60%),
+    linear-gradient(180deg, rgba(34, 8, 42, .94), rgba(20, 4, 24, .97));
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  animation: whelp-in .28s ease-out both;
+  padding-top: calc(96px + env(safe-area-inset-top, 0px));
+}
+@keyframes whelp-in { from { opacity: 0; } to { opacity: 1; } }
 .whelp__arrow {
-  position: absolute; top: calc(4px + env(safe-area-inset-top, 0px)); right: 14px;
-  display: flex; align-items: center; gap: 6px;
-  font-size: 40px; line-height: 1; color: var(--gold);
-  animation: whelp-nudge 1.1s ease-in-out infinite;
+  position: absolute; top: calc(6px + env(safe-area-inset-top, 0px)); right: 10px;
+  display: flex; align-items: flex-start; gap: 0;
+  color: var(--gold);
+  animation: whelp-nudge 1.2s ease-in-out infinite;
 }
-.whelp__arrow span {
-  font-size: 18px; font-weight: 700; letter-spacing: .1em; padding: 4px 10px;
-  border: 2px solid var(--gold); border-radius: 999px;
+.whelp__arrowsvg { width: 64px; height: 64px; margin-top: 14px; }
+.whelp__dots {
+  font-size: 18px; font-weight: 800; letter-spacing: .12em; line-height: 1;
+  padding: 8px 12px; border-radius: 999px;
+  background: var(--gold); color: var(--on-gold);
+  box-shadow: 0 0 0 6px rgba(248, 211, 236, .18), 0 0 28px rgba(248, 211, 236, .55);
 }
-@keyframes whelp-nudge { 50% { transform: translate(4px, -4px); } }
-@media (prefers-reduced-motion: reduce) { .whelp__arrow { animation: none; } }
+@keyframes whelp-nudge { 50% { transform: translate(3px, -4px); } }
+@media (prefers-reduced-motion: reduce) { .whelp__arrow, .whelp--pay, .whelp__card--pay { animation: none; } }
 .whelp__card {
+  position: relative;
   width: 100%; max-width: 420px; padding: 24px 20px 20px;
   background: var(--bg-0); border: 1px solid var(--card-line-2); border-radius: 22px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
 }
-.whelp__t { margin: 0 0 16px; font-family: var(--serif); font-size: 26px; font-weight: 700; line-height: 1.15; color: var(--ink); }
+.whelp__card--pay {
+  overflow: hidden;
+  padding: 28px 22px 22px;
+  background: linear-gradient(180deg, rgba(122, 36, 112, .55) 0%, rgba(58, 15, 63, .96) 38%, #2b0b31 100%);
+  border: 1px solid rgba(248, 211, 236, .28);
+  border-radius: 28px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .12);
+  animation: whelp-up .38s cubic-bezier(.2, .8, .2, 1) both;
+}
+@keyframes whelp-up { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: none; } }
+.whelp__glow {
+  position: absolute; top: -120px; left: 50%; width: 280px; height: 220px; margin-left: -140px;
+  background: radial-gradient(closest-side, rgba(248, 211, 236, .35), transparent);
+  pointer-events: none;
+}
+.whelp__badge {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 6px;
+  margin: 0 0 14px; padding: 6px 12px 6px 10px; border-radius: 999px;
+  border: 1px solid var(--gold-line); background: rgba(248, 211, 236, .08);
+  font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold);
+}
+.whelp__badge svg { width: 15px; height: 15px; }
+.whelp__t { position: relative; margin: 0 0 16px; font-family: var(--serif); font-size: 26px; font-weight: 700; line-height: 1.15; color: var(--ink); }
+.whelp__card--pay .whelp__t { margin-bottom: 8px; font-size: 32px; line-height: 1.08; }
 .whelp__steps { list-style: none; margin: 0 0 20px; padding: 0; }
 .whelp__steps li { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; font-size: 17px; line-height: 1.35; color: var(--ink); }
 .whelp__steps li + li { border-top: 1px solid var(--card-line-2); }
@@ -1009,8 +997,28 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--gold); color: var(--on-gold); font-size: 15px;
 }
+.whelp__steps--pay { position: relative; margin-bottom: 14px; }
+.whelp__steps--pay li {
+  align-items: center; padding: 12px 12px; margin-bottom: 8px;
+  border: 1px solid var(--card-line); border-radius: 16px; background: rgba(255, 255, 255, .05);
+}
+.whelp__steps--pay li + li { border-top: 1px solid var(--card-line); }
+.whelp__txt { flex: 1 1 auto; font-size: 16px; font-weight: 600; }
+.whelp__vis {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  min-width: 44px; height: 32px; padding: 0 10px; border-radius: 10px;
+  background: rgba(248, 211, 236, .12); color: var(--gold);
+  font-size: 14px; font-weight: 800; letter-spacing: .08em;
+}
+.whelp__vis svg { width: 20px; height: 20px; }
+.whelp__vis--wallet {
+  background: #000; color: #fff; letter-spacing: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Roboto, Arial, sans-serif;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.whelp__saved { position: relative; margin: 0 0 16px; font-size: 13px; line-height: 1.45; color: var(--ink-faint); text-align: center; }
 .whelp__busy { margin: 0; text-align: center; font-size: 16px; color: var(--ink); }
-.whelp__p { margin: 0 0 20px; font-size: 16px; line-height: 1.45; color: var(--ink-dim); }
+.whelp__p { position: relative; margin: 0 0 20px; font-size: 16px; line-height: 1.45; color: var(--ink-dim); }
 .whelp--done .whelp__ok { text-decoration: none; }
 
 /* Safari/Chrome: оплата из TikTok ждёт, но IP другой — кнопка возьмёт

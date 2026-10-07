@@ -128,7 +128,7 @@ async function hit(request, env) {
 
    Чтобы видеть, где отваливаются. Воронка шлёт POST /step { step } один раз
    за вкладку на каждый экран, до которого человек дошёл, и на нажатия
-   «оплатить»; оплату (paid_m, paid_y) прибавляет сам воркер по Gumroad Ping.
+   «оплатить»; оплату (paid_m, paid_y) прибавляет сам воркер по вебхуку Stripe.
    Таблица steps(day, step, n) — то же устройство, что у visits: день,
    шаг, счётчик. Имена шагов — только из списка ниже, иначе 400: таблицу
    не забить мусором. */
@@ -142,15 +142,15 @@ var FUNNEL_STEPS = {
   pay_m:   'Нажали «оплатить» за месяц',
   s7:      'Отказались → годовой план',
   pay_y:   'Нажали «оплатить» за год',
-  wallet_m: 'Нажали Apple Pay / Google Pay (месяц)',
-  wallet_y: 'Нажали Apple Pay / Google Pay (год)',
+  wallet_m: 'TikTok: показали «открыть в браузере» (месяц)',
+  wallet_y: 'TikTok: показали «открыть в браузере» (год)',
   reading: 'Ушли в бесплатное чтение',
   paid_m:  'Оплатили месяц',
   paid_y:  'Оплатили год',
 
   /* Эксперимент: прежняя воронка ('a', шаги выше) против квиза v2 ('q2').
-     Оплаты по вариантам — по метке astro_v на ссылке чекаута, которую
-     Gumroad возвращает в Ping (см. gumroadPing). */
+     Оплаты по вариантам — по client_reference_id на ссылке чекаута,
+     которую Stripe возвращает в вебхуке (см. stripeWebhook). */
   a_paid_m:  'A: оплатили месяц',
   a_paid_y:  'A: оплатили год',
   q2_goal:    'v2: цель',
@@ -200,7 +200,7 @@ async function stepHit(request, env) {
   var data = {};
   try { data = JSON.parse(await request.text()); } catch (e) { data = {}; }
   var step = String(data.step || '');
-  /* Оплату присылает только Gumroad, не страница. */
+  /* Оплату присылает только Stripe, не страница. */
   if (!FUNNEL_STEPS[step] || /(^|_)paid_/.test(step)) { return new Response(null, { status: 400 }); }
   await addStep(env, step);
   await addCountry(env, 'step', step, countryOf(request));
@@ -353,76 +353,60 @@ async function handoff(request, env, action) {
   return jsonReply({ ok: false, hint: !!hint });
 }
 
-/* --- оплата внутри окна в TikTok: как странице узнать, что она прошла ---
+/* --- оплаты: вебхук Stripe ---------------------------------------------
 
-   После оплаты в окне (iframe) Gumroad пытается увести ВСЮ страницу на
-   страницу доступа, браузер это без нажатия не пускает, и в окне остаётся
-   «Sorry, something went wrong». Поэтому страница узнаёт об оплате сама:
+   О новой подписке сообщает Stripe, а не страница: Developers → Webhooks →
+   Add endpoint https://astromap-visits.<аккаунт>.workers.dev/stripe/webhook,
+   событие checkout.session.completed. Секрет подписи (whsec_…) — в
+   переменную STRIPE_WEBHOOK_SECRET этого воркера (тип Secret).
 
-   - к ссылке чекаута в окне добавлен одноразовый номер astro_sid (UUID,
-     его знает только эта страница);
-   - Gumroad Ping (Gumroad → Settings → Advanced → Ping endpoint =
-     https://astromap-visits.<аккаунт>.workers.dev/gumroad/ping) присылает
-     о продаже почту, лицензионный ключ и параметры ссылки — среди них
-     url_params[astro_sid];
-   - страница раз в несколько секунд спрашивает POST /purchase/status
-     { sid } и, получив paid, закрывает окно и предлагает войти с уже
-     вписанными почтой и ключом.
+   checkout.session.completed приходит один раз — на первую оплату через
+   Payment Link; продления подписки идут другими событиями и сюда не
+   попадают. Тестовые оплаты (livemode=false) не считаются.
 
-   Подписи у Gumroad Ping нет. Поддельный ping с чужим sid ничего не даёт:
-   sid знает только открывшая его страница, а ключ всё равно проверяет
-   license-verify при входе. Если задан GUMROAD_SELLER_ID, ping от другого
-   продавца отбрасывается. Записи живут PURCHASE_TTL_MS. */
-var PURCHASE_TTL_MS = 2 * 3600 * 1000;
-var PURCHASE_SCHEMA = 'CREATE TABLE IF NOT EXISTS purchase (' +
-  'sid TEXT PRIMARY KEY, email TEXT NOT NULL, license TEXT NOT NULL, created INTEGER NOT NULL)';
-
-async function gumroadPing(request, env) {
-  if (!env || !env.DB) { return new Response('not configured', { status: 503 }); }
-  var form = new URLSearchParams(await request.text());
-  if (env.GUMROAD_SELLER_ID && form.get('seller_id') !== env.GUMROAD_SELLER_ID) {
-    return new Response('ok');
-  }
-  /* Новая продажа — шаг воронки «оплатили». Продления подписки
-     (is_recurring_charge) и тестовые покупки не считаются. Ping приходит
-     на каждую продажу, а не только на оплаченные в окне TikTok, поэтому
-     считаем до проверки astro_sid. */
-  if (form.get('is_recurring_charge') !== 'true' && form.get('test') !== 'true') {
-    var per = /year/i.test(form.get('recurrence') || '') ? 'y' : 'm';
-    await addStep(env, 'paid_' + per);
-    /* Вариант эксперимента — метка astro_v на ссылке чекаута. Без метки
-       (прямая ссылка, старая вкладка) продажа в варианты не попадает. */
-    var variant = form.get('url_params[astro_v]') || '';
-    if (variant === 'q2' || variant === 'a') { await addStep(env, variant + '_paid_' + per); }
-  }
-  var sid = form.get('url_params[astro_sid]') || '';
-  if (!/^[0-9a-f-]{20,64}$/i.test(sid)) { return new Response('ok'); }
-  var email = String(form.get('email') || '').slice(0, 200);
-  var license = String(form.get('license_key') || '').slice(0, 100);
-  var now = Date.now();
-  await run(env, async function () {
-    await env.DB.prepare('DELETE FROM purchase WHERE created < ?1').bind(now - PURCHASE_TTL_MS).run();
-    await env.DB.prepare(
-      'INSERT INTO purchase (sid, email, license, created) VALUES (?1, ?2, ?3, ?4) ' +
-      'ON CONFLICT (sid) DO UPDATE SET email = ?2, license = ?3, created = ?4'
-    ).bind(sid, email, license, now).run();
-  }, PURCHASE_SCHEMA);
-  return new Response('ok');
+   Вариант эксперимента и план воронка кладёт в client_reference_id:
+   <вариант>_<m|y>_<язык>_<uuid> (см. checkoutUrl в funnel/js/flow.js).
+   Без него (прямая ссылка) оплата считается в общие paid_m/paid_y по
+   интервалу из metadata.plan ссылки, если он там есть, иначе — месяц. */
+async function stripeSignatureOk(secret, header, raw) {
+  var t = null, sigs = [];
+  String(header || '').split(',').forEach(function (part) {
+    var kv = part.split('=');
+    if (kv[0] === 't') { t = kv[1]; }
+    if (kv[0] === 'v1') { sigs.push(kv[1]); }
+  });
+  if (!t || !sigs.length) { return false; }
+  if (Math.abs(Date.now() / 1000 - parseInt(t, 10)) > 300) { return false; }
+  var key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  var mac = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(t + '.' + raw)));
+  var hex = Array.prototype.map.call(mac, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  return sigs.some(function (s) {
+    if (s.length !== hex.length) { return false; }
+    var d = 0;
+    for (var i = 0; i < s.length; i++) { d |= s.charCodeAt(i) ^ hex.charCodeAt(i); }
+    return d === 0;
+  });
 }
 
-async function purchaseStatus(request, env) {
-  if (request.headers.get('Origin') !== ALLOWED_ORIGIN) { return jsonReply({ ok: false }, 403); }
-  if (!env || !env.DB) { return jsonReply({ ok: false, reason: 'not_configured' }, 503); }
-  var body = {};
-  try { body = JSON.parse(await request.text()); } catch (e) { body = {}; }
-  var sid = String(body.sid || '');
-  if (!/^[0-9a-f-]{20,64}$/i.test(sid)) { return jsonReply({ ok: false }, 400); }
-  var row = await run(env, function () {
-    return env.DB.prepare('SELECT email, license FROM purchase WHERE sid = ?1 AND created >= ?2')
-      .bind(sid, Date.now() - PURCHASE_TTL_MS).first();
-  }, PURCHASE_SCHEMA);
-  if (!row) { return jsonReply({ ok: true, paid: false }); }
-  return jsonReply({ ok: true, paid: true, email: row.email, licenseKey: row.license });
+async function stripeWebhook(request, env) {
+  if (!env || !env.DB || !env.STRIPE_WEBHOOK_SECRET) { return new Response('not configured', { status: 503 }); }
+  var raw = await request.text();
+  if (!(await stripeSignatureOk(env.STRIPE_WEBHOOK_SECRET, request.headers.get('Stripe-Signature'), raw))) {
+    return new Response('bad signature', { status: 400 });
+  }
+  var event;
+  try { event = JSON.parse(raw); } catch (e) { return new Response('bad json', { status: 400 }); }
+  if (event.type !== 'checkout.session.completed' || !event.livemode) { return new Response('ok'); }
+  var s = (event.data && event.data.object) || {};
+  if (s.mode && s.mode !== 'subscription') { return new Response('ok'); }
+  var ref = String(s.client_reference_id || '').split('_');
+  var plan = ref[1] || (s.metadata && /^y/i.test(s.metadata.plan || '') ? 'y' : 'm');
+  var per = plan === 'y' ? 'y' : 'm';
+  await addStep(env, 'paid_' + per);
+  var variant = ref[0] || '';
+  if (variant === 'q2' || variant === 'a') { await addStep(env, variant + '_paid_' + per); }
+  return new Response('ok');
 }
 
 function esc(t) {
@@ -451,7 +435,8 @@ var CHANNELS = {
   youtube:   { name: 'YouTube', hint: 'перешли по ссылке с YouTube', color: 's6' },
   vk:        { name: 'ВКонтакте', hint: 'перешли по ссылке из ВКонтакте', color: 's7' },
   facebook:  { name: 'Facebook', hint: 'перешли по ссылке из Facebook', color: 's8' },
-  gumroad:   { name: 'Gumroad', hint: 'вернулись на сайт со страницы оплаты Gumroad', color: 'more' },
+  stripe:    { name: 'Stripe', hint: 'вернулись на сайт со страницы оплаты Stripe', color: 'more' },
+  gumroad:   { name: 'Gumroad', hint: 'старые заходы со страницы оплаты Gumroad (до перехода на Stripe)', color: 'more' },
   other:     { name: 'Прочее', hint: 'за день набралось больше 200 разных меток, лишние сложены сюда', color: 'more' },
   direct:    { name: 'Без источника', hint: 'по ссылке без метки: набрали адрес сами, открыли из закладки, ' +
     'заметок или мессенджера, который не сообщает, откуда человек пришёл. Сюда же попадают ваши собственные заходы', color: 'direct' }
@@ -473,6 +458,7 @@ var RULES = [
   ['youtube',   /^(yt|youtube)$|(^|\.)(youtube\.com|youtu\.be)$/],
   ['vk',        /^vk$|(^|\.)vk\.(com|ru)$/],
   ['facebook',  /^(fb|facebook)$|(^|\.)facebook\.com$/],
+  ['stripe',    /(^|\.)stripe\.com$/],
   ['gumroad',   /(^|\.)gumroad\.com$/],
   ['other',     /^other$/],
   ['direct',    /^direct$/]
@@ -866,14 +852,14 @@ function funnelSection(f, opt) {
     row('pay_m', f.pay_m, f.s6, { color: 's2', lostLabel: 'не нажали' }) +
     row('s7', f.s7, f.s6, { color: 's4', hint: 'нажали «не сейчас» на месячном — показали годовой', lostLabel: 'не отказывались' }) +
     row('pay_y', f.pay_y, f.s7, { color: 's4', lostLabel: 'не нажали' }) +
-    row('wallet', f.wallet_m + f.wallet_y, null, { name: 'Нажали Apple Pay / Google Pay', color: 's2',
-      hint: 'кнопка в окне оплаты внутри TikTok, уводит оплату в Safari/Chrome: месяц — ' + f.wallet_m + ', год — ' + f.wallet_y }) +
+    row('wallet', f.wallet_m + f.wallet_y, null, { name: 'TikTok: инструкция «открыть в браузере»', color: 's2',
+      hint: 'нажали «оплатить» внутри TikTok, оплата уходит в Safari/Chrome: месяц — ' + f.wallet_m + ', год — ' + f.wallet_y }) +
     row('reading', f.reading, null, { color: 'more', hint: 'ссылка на бесплатный разбор вместо покупки' }) +
-    (opt.cc ? '<p class="note">Оплаты по странам не видны: о продаже сообщает Gumroad, а не страница, ' +
-      'и страну покупателя он не передаёт. Сколько оплатили всего — в «Все страны».</p>' :
+    (opt.cc ? '<p class="note">Оплаты по странам не видны: о продаже сообщает Stripe, а не страница, ' +
+      'и страну покупателя вебхук сюда не передаёт. Сколько оплатили всего — в «Все страны».</p>' :
     row('paid', paidN, payN, { name: 'Оплатили', color: 's3', lostLabel: 'нажали «оплатить», но не оплатили',
-      hint: 'по уведомлению Gumroad, без продлений: месяц — ' + f.paid_m + ', год — ' + f.paid_y }) +
-    '<p class="note">«Оплатили» приходит от Gumroad и включает тех, кто оплатил по старой вкладке или прямой ссылке, ' +
+      hint: 'по вебхуку Stripe, без продлений и тестовых: месяц — ' + f.paid_m + ', год — ' + f.paid_y }) +
+    '<p class="note">«Оплатили» приходит от Stripe и включает тех, кто оплатил по старой вкладке или прямой ссылке, ' +
       'поэтому в первые дни может быть больше нажатий. Шаг «Дата партнёра» засчитывается, даже если его пропустили.</p>') +
     countryFunnelTable(countries, opt.key, opt.pq, opt.cc) +
     '</section>';
@@ -908,7 +894,7 @@ var QUIZ_PHASES = [
     { k: 'q2_pay_m', name: 'Нажали «оплатить» — месяц', opt: 'из открывших пейвол', base: 'q2_pay', color: 's2' },
     { k: 'q2_year', name: 'Открыли годовой план', opt: 'из открывших пейвол', base: 'q2_pay', color: 's4' },
     { k: 'q2_pay_y', name: 'Нажали «оплатить» — год', opt: 'из открывших годовой план', base: 'q2_year', color: 's4' },
-    { k: 'wallet', name: 'Нажали Apple Pay / Google Pay', opt: 'кнопка в окне оплаты внутри TikTok', base: 'q2_payclicks', color: 's2' } ] }
+    { k: 'wallet', name: 'TikTok: инструкция «открыть в браузере»', opt: 'нажали «оплатить» внутри TikTok', base: 'q2_payclicks', color: 's2' } ] }
 ];
 
 function quizSection(f, opt) {
@@ -957,7 +943,7 @@ function quizSection(f, opt) {
         '<div class="s">оплаты по странам не видны</div></div>'
       : '<div class="tile"><div class="k">Оплатили</div><div class="v">' + paid + '</div>' +
         '<div class="s">' + clicks + ' ' + plural(clicks, 'нажатие', 'нажатия', 'нажатий') + ' «оплатить»' +
-        (allPaid > paid ? '; всего в Gumroad ' + allPaid : '') + '</div></div>') +
+        (allPaid > paid ? '; всего в Stripe ' + allPaid : '') + '</div></div>') +
     '</div>';
 
   var lead = '';
@@ -988,7 +974,7 @@ function quizSection(f, opt) {
     return '<h3>' + esc(ph.title) + '</h3>' + ph.steps.map(row).join('');
   }).join('');
   if (!opt.cc) {
-    body += row({ k: 'q2_paid', name: 'Оплатили', hint: 'по уведомлению Gumroad, без продлений и тестовых: месяц — ' +
+    body += row({ k: 'q2_paid', name: 'Оплатили', hint: 'по вебхуку Stripe, без продлений и тестовых: месяц — ' +
       (f.q2_paid_m || 0) + ', год — ' + (f.q2_paid_y || 0), base: 'q2_payclicks', color: 's3' });
   }
 
@@ -1281,8 +1267,7 @@ export default {
     if (request.method === 'POST' && url.pathname === '/handoff/put') { return handoff(request, env, 'put'); }
     if (request.method === 'POST' && url.pathname === '/handoff/take') { return handoff(request, env, 'take'); }
     if (request.method === 'POST' && url.pathname === '/handoff/claim') { return handoff(request, env, 'claim'); }
-    if (request.method === 'POST' && url.pathname === '/gumroad/ping') { return gumroadPing(request, env); }
-    if (request.method === 'POST' && url.pathname === '/purchase/status') { return purchaseStatus(request, env); }
+    if (request.method === 'POST' && url.pathname === '/stripe/webhook') { return stripeWebhook(request, env); }
     if (request.method === 'POST' && url.pathname === '/handoff/whoami') { return handoff(request, env, 'whoami'); }
     if (request.method === 'GET' && url.pathname === '/stats') { return stats(url, env); }
     return new Response('not found', { status: 404 });

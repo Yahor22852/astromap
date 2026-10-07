@@ -194,7 +194,7 @@
     pay: {
       features: 'Pour ton focus',
       cta: 'Obtenir ma carte complète',
-      key: 'Après le paiement, Gumroad t’envoie une clé de licence par e-mail. Tu la saisis une fois et tu choisis un mot de passe.',
+      key: 'Après le paiement, tu crées ici un mot de passe — c’est ton accès sur tous tes appareils.',
       seeYear: 'Voir le plan annuel',
       backPrev: 'Revenir à l’aperçu'
     },

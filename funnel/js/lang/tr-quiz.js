@@ -194,7 +194,7 @@
     pay: {
       features: 'Odağın için',
       cta: 'Tam haritanı al',
-      key: 'Ödemeden sonra Gumroad e-postayla bir lisans anahtarı gönderir. Bir kez girer ve bir şifre belirlersin.',
+      key: 'Ödemeden sonra şifreni burada oluşturursun — her cihazdan girişin bu olur.',
       seeYear: 'Yıllık planı gör',
       backPrev: 'Önizlemeye dön'
     },

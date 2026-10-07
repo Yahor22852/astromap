@@ -211,10 +211,10 @@
     access: {
       s1Q: 'Masz już dostęp?',
       s1Link: 'Zaloguj się',
-      keyTitle: 'Klucz dostępu przyjdzie e-mailem',
-      keyText: 'Zaraz po płatności Gumroad wyśle klucz licencyjny na adres podany przy zakupie. Wpisujesz go raz i tworzysz hasło — potem logujesz się e-mailem i hasłem na każdym urządzeniu.',
-      paidQ: 'Masz już klucz?',
-      paidLink: 'Wpisz go tutaj'
+      keyTitle: 'Po płatności: utwórz hasło',
+      keyText: 'Zaraz po płatności wracasz tutaj i tworzysz hasło — to Twoje logowanie na każdym urządzeniu. Na wszelki wypadek wyślemy też link do logowania e-mailem.',
+      paidQ: 'Masz już subskrypcję?',
+      paidLink: 'Zaloguj się'
     },
 
     paywall: {
@@ -231,6 +231,11 @@
         wStep2: 'Wybierz „Otwórz w przeglądarce”',
         wStep3: 'Płatność otworzy się sama — Twoje odpowiedzi i plan są zapisane',
         wOk: 'Rozumiem',
+        pBadge: 'Bezpieczna płatność',
+        pTitle: 'Dokończ płatność w przeglądarce',
+        pSub: 'TikTok nie pozwala płacić w aplikacji. W przeglądarce zajmie to kilka sekund — przez {w} lub kartą.',
+        pStep3: 'Płatność otworzy się sama — zapłać jednym stuknięciem',
+        pSaved: 'Twoje odpowiedzi i wybrany plan są zapisane — nie trzeba zaczynać od nowa.',
         opening: 'Otwieramy płatność…',
         cont: 'Dokończ płatność rozpoczętą w TikToku',
         contBtn: 'Kontynuuj płatność',
@@ -276,13 +281,13 @@
     /* ------------------------------------------------ биллинг */
     billing: {
       /* Модель: месячная подписка без вводного периода.
-         ЦЕНА В ДОЛЛАРАХ, как на чекауте Gumroad. Раньше здесь стояли злотые —
+         ЦЕНА В ДОЛЛАРАХ, как на чекауте Stripe. Раньше здесь стояли злотые —
          пересчёт с прежних 9,99 USD, которого платёжка не списывала: на
          экране одна сумма, на оплате другая. Цифры — те же, что в английском
          блоке ниже; меняешь там — меняй и здесь. */
       price: '$7.99',
       period: 'miesięcznie',
-      /* «+ VAT» стоит в самой цене, а не только в disclaimer: Gumroad
+      /* «+ VAT» стоит в самой цене, а не только в disclaimer: Stripe (Stripe Tax)
          добавляет налог на чекауте, и без этой приписки человек видит одну
          сумму на экране и другую при оплате. Строка выросла до 14 знаков —
          при 30px в контентном блоке 327px это укладывается в одну строку. */
@@ -525,10 +530,10 @@
     access: {
       s1Q: 'Already have access?',
       s1Link: 'Log in',
-      keyTitle: 'Your access key comes by email',
-      keyText: 'Right after payment, Gumroad emails a license key to the address you enter at checkout. Enter it once and create a password — after that you log in with your email and password on any device.',
-      paidQ: 'Already have a key?',
-      paidLink: 'Enter it here'
+      keyTitle: 'After payment: create a password',
+      keyText: 'Right after checkout you come back here and create a password — that’s your login on any device. We also email you a sign-in link, just in case.',
+      paidQ: 'Already subscribed?',
+      paidLink: 'Log in'
     },
 
     paywall: {
@@ -545,6 +550,11 @@
         wStep2: 'Choose “Open in browser”',
         wStep3: 'The payment opens by itself — your answers and plan are saved',
         wOk: 'Got it',
+        pBadge: 'Secure checkout',
+        pTitle: 'Finish payment in your browser',
+        pSub: 'TikTok doesn’t allow payments inside the app. In your browser it takes a few seconds — with {w} or a card.',
+        pStep3: 'Payment opens by itself — pay in one tap',
+        pSaved: 'Your answers and chosen plan are saved — you won’t need to start over.',
         opening: 'Opening payment…',
         cont: 'Finish the payment you started in TikTok',
         contBtn: 'Continue payment',
@@ -584,7 +594,7 @@
     billing: {
       price: '$7.99',
       period: 'per month',
-      /* Gumroad adds VAT at checkout, so the price on screen has to say so:
+      /* Stripe Tax adds VAT at checkout, so the price on screen has to say so:
          without it the card promises 7.99 and the checkout charges more.
          Every other locale carries its own translation of these strings
          with the same amounts (js/lang/*.js) — change a price here, change it

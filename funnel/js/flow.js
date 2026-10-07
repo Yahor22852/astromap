@@ -15,24 +15,15 @@
    а в консоль идёт предупреждение. */
 /* Те же две ссылки продублированы в <head> index.html (передача из
    встроенного браузера TikTok) — меняешь здесь, меняй и там. */
-var CHECKOUT_URL = 'https://astromap.gumroad.com/l/astromap?monthly=true&wanted=true';
-                                  /* подписка: месячный план, $9.99/мес.
-                                     ?wanted=true открывает чекаут сразу, минуя
-                                     страницу товара — человек уже принял решение
-                                     на пейволле, второй экран с той же ценой
-                                     только отдаёт его обратно в раздумья. */
-var CHECKOUT_URL_YEAR = 'https://astromap.gumroad.com/l/astromap?yearly=true&wanted=true';
-                                  /* годовой план, $29.99/год с автопродлением.
-                                     Это НЕ отдельный товар, а вариант списания
-                                     того же membership-товара (тир Full access):
-                                     ?monthly=true / ?yearly=true выбирают
-                                     периодичность. Отдельным товаром его делать
-                                     нельзя: ?wanted=true кладёт товар в
-                                     серверную корзину Gumroad, и два разных
-                                     товара там складываются — человек платит
-                                     за оба плана сразу. Один товар в корзине
-                                     лежит одной позицией, и повторный заход
-                                     лишь переключает её периодичность. */
+/* Оплата — Stripe Payment Links (Stripe → Payment links → New): по ссылке
+   на месячную и на годовую цену одного товара AstroMap. В настройках
+   каждой ссылки, вкладка After payment → «Don't show confirmation page» →
+   redirect на
+     https://astromap.me/product/?session_id={CHECKOUT_SESSION_ID}
+   — оттуда гейт продукта сразу предлагает придумать пароль (см.
+   product/js/app.js и cf-worker/license-verify.js). */
+var CHECKOUT_URL = '';            /* TODO: https://buy.stripe.com/… — месяц, $7.99 */
+var CHECKOUT_URL_YEAR = '';       /* TODO: https://buy.stripe.com/… — год, $29.99 */
 var TERMS_URL = 'https://docs.google.com/document/d/1GuEKF2tU3MG_ZUZqJnA7B27-OxGCoWB95aGkWyI8u9I/edit?usp=sharing';
                                   /* Terms of Use (Google Docs) */
 var PRIVACY_URL = 'https://docs.google.com/document/d/1J_HDyOfxye2w8JvKNG8ytiDkBXFHsuDFKQYHbj4ALh0/edit?usp=sharing';
@@ -122,7 +113,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   }
 
   /* Отметка «ушёл на оплату». По ней следующий заход на astromap.me ведёт
-     не в квиз, а на гейт продукта в режиме «ключ пришёл на почту» (см.
+     не в квиз, а на гейт продукта в режиме «ссылка для входа на почте» (см.
      скрипт в <head> index.html и paidModeRequested() в product/js/app.js).
      Гейт стирает отметку после успешного входа. sessionStorage — метка этой
      вкладки: возврат «Назад» с чекаута на гейт не уводит. */
@@ -134,25 +125,18 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   }
 
   /* --- оплата из встроенного браузера TikTok --------------------------
-     TikTok не пускает свой браузер на платёжные страницы: переход на
-     gumroad.com заканчивался его экраном «Открой ссылку в своём браузере».
-     Оттуда два выхода, и оба плохие: «••• → Открыть в браузере» отдаёт
-     Safari ИСХОДНУЮ ссылку из профиля (проверено на телефоне — ни подмена
-     адреса, ни перезагрузка на другом адресе её не меняют), то есть
-     человек начинает квиз заново; а схемы x-safari-https:// и intent://
-     TikTok глушит молча.
+     TikTok не пускает свой браузер на платёжные страницы, а Apple Pay и
+     Google Pay внутри него не работают вовсе. Поэтому кнопка «оплатить»
+     внутри TikTok не ведёт на Stripe, а показывает инструкцию: «••• →
+     Открыть в браузере» (showBrowserHandoff ниже). Оплата идёт уже в
+     Safari/Chrome.
 
-     Поэтому внутри TikTok чекаут открывается не переходом, а окном поверх
-     страницы — тем же iframe, которым пользуется официальный overlay
-     Gumroad (gumroad.js: тот же адрес товара с overlay=true). TikTok
-     блокирует переходы всей страницы, а не содержимое iframe; заголовков,
-     запрещающих встраивание, Gumroad не ставит. Человек остаётся на
-     astromap.me, и его ответы — тоже.
-
-     Если окно всё же не загрузится, внизу запасной путь: «Скопировать
-     ссылку». В ней ответы квиза (?go=<план>&h=...), и открытая в
-     Safari/Chrome она восстанавливает их и сразу ведёт на чекаут — это
-     делает скрипт в <head> index.html. */
+     «Открыть в браузере» отдаёт Safari ИСХОДНУЮ ссылку из профиля
+     (проверено на телефоне — ни подмена адреса, ни перезагрузка на другом
+     адресе её не меняют), поэтому ответы квиза и выбранный план едут через
+     воркер (/handoff/put → /handoff/take по отпечатку устройства, см.
+     arrivalFromTikTok), а запасной путь — ссылка в буфере обмена
+     (?go=<план>&h=<ответы>), её разбирает скрипт в <head> index.html. */
   function handoffUrl(plan) {
     var f = null;
     try { f = JSON.parse(localStorage.getItem('astromap.funnel') || 'null'); } catch (e) { f = null; }
@@ -238,169 +222,17 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     } catch (e) { /* приватный режим — без счётчика */ }
   }
 
-  function openEmbeddedCheckout(plan, url) {
+  /* Внутри TikTok по кнопке «оплатить»: пока у нас есть нажатие —
+     ссылка с ответами в буфер обмена (запасной путь, если в браузере
+     окажется другой IP), ответы и план на воркер и полноэкранная
+     инструкция, как открыть страницу в браузере. Ответа воркера она не
+     ждёт: пока человек жмёт «•••», запрос успеет. */
+  function showBrowserHandoff(plan) {
     var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
+    var TE = window.COPY_ALL.en.paywall.inapp;
     markCheckout(plan);
-    var old = el('paybox');
-    if (old) { old.parentNode.removeChild(old); }
-    var box = document.createElement('div');
-    box.id = 'paybox';
-    box.className = 'paybox';
-    box.setAttribute('role', 'dialog');
-    box.setAttribute('aria-modal', 'true');
-    box.innerHTML =
-      '<div class="paybox__bar">' +
-        '<button type="button" class="paybox__close" id="payClose"></button>' +
-      '</div>' +
-      '<div class="paybox__walletrow">' +
-        '<button type="button" class="paybox__wallet" id="payWallet"></button>' +
-      '</div>' +
-      '<div class="paybox__frame">' +
-        '<div class="paybox__spin" id="paySpin" aria-hidden="true"></div>' +
-        '<iframe id="payFrame" title="Gumroad checkout" allow="payment *"></iframe>' +
-      '</div>' +
-      '<div class="paybox__help"><a class="paybox__paid" id="payPaid" href="product/?paid=1"></a></div>';
-    document.body.appendChild(box);
-    document.body.style.overflow = 'hidden';
-    el('payClose').textContent = '← ' + T.close;
-    /* Кнопка в виде настоящих Apple Pay / Google Pay: на iPhone логотип —
-       системный символ U+F8FF, его рисует сама iOS тем же шрифтом, что и в
-       родной кнопке; на Android — цветная «G». Надпись не переводится, как
-       и у оригинальных кнопок; для скринридера — подпись на языке воронки. */
-    el('payWallet').innerHTML = WALLET === 'Apple Pay'
-      ? '<span class="paybox__apple" aria-hidden="true">\uF8FF</span><span aria-hidden="true">Pay</span>'
-      : '<svg class="paybox__g" viewBox="0 0 48 48" aria-hidden="true">' +
-          '<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>' +
-          '<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>' +
-          '<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>' +
-          '<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>' +
-        '</svg><span aria-hidden="true">Pay</span>';
-    el('payWallet').setAttribute('aria-label', T.wallet.replace('{w}', WALLET));
-    el('payPaid').textContent = T.paid;
-    var frame = el('payFrame');
-    /* «Continue shopping» и подобные ссылки Gumroad ведут туда, откуда
-       пришёл покупатель, — на astromap.me, и открывают его ВНУТРИ окна:
-       воронка оказывалась вложенной сама в себя, док и шапка наезжали друг
-       на друга. Чужой (gumroad.com) документ прочитать нельзя — обращение к
-       его адресу бросает исключение; если адрес читается, значит, в окне
-       уже наш сайт, и окно закрывается: человек и так на нужной странице. */
-    frame.addEventListener('load', function () {
-      el('paySpin').hidden = true;
-      var ours = false, path = '';
-      try {
-        ours = frame.contentWindow.location.origin === location.origin;
-        path = frame.contentWindow.location.pathname;
-      } catch (e) { ours = false; }
-      if (!ours) { return; }
-      closePaybox();
-      /* Ссылка из квитанции после оплаты ведёт в продукт. Перейти туда сами
-         мы не можем — TikTok блокирует переходы без нажатия, — поэтому
-         крупная кнопка: переход по нажатию он пропускает. */
-      /* Адрес — явно с ?paid=1: продукт к моменту load уже стёр его из
-         своей адресной строки, а без него гейт не в режиме «ключ на почте». */
-      if (/^\/product\//.test(path)) { showAccessButton('product/?paid=1'); }
-    });
-    window.addEventListener('message', function onMsg(ev) {
-      if (ev.origin !== location.origin || ev.data !== 'astromap:close-pay') { return; }
-      window.removeEventListener('message', onMsg);
-      closePaybox();
-    });
-    function showAccessButton(target) {
-      var bar = document.createElement('div');
-      bar.className = 'ttcont';
-      bar.innerHTML = '<a class="cta ttcont__b"></a>';
-      var link = bar.querySelector('a');
-      link.href = target;
-      link.textContent = T.paid;
-      document.body.appendChild(bar);
-      link.focus();
-    }
-    function closePaybox() {
-      var b = el('paybox');
-      if (b) { b.parentNode.removeChild(b); }
-      document.body.style.overflow = '';
-    }
-    /* Одноразовый номер покупки: Gumroad вернёт его в Ping (url_params), и
-       воркер по нему скажет этой странице «оплачено» — см. watchPurchase. */
-    var sid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
-      : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function () { return (Math.random() * 16 | 0).toString(16); });
-    frame.src = withVariant(url) + '&overlay=true&astro_sid=' + sid;
-    watchPurchase(sid);
-
-    el('payWallet').addEventListener('click', function () { startWalletHandoff(plan); });
-    el('payClose').addEventListener('click', function () {
-      closePaybox();
-      el('cta').focus();
-    });
-    el('payClose').focus();
-    document.dispatchEvent(new CustomEvent('funnel:inapp', { detail: { plan: plan } }));
-  }
-
-  /* После оплаты в окне Gumroad пытается увести всю страницу на страницу
-     доступа; без нажатия браузер это блокирует, и в окне остаётся «Sorry,
-     something went wrong». Поэтому спрашиваем воркер, пришёл ли от Gumroad
-     Ping с нашим номером покупки, — раз в 3 секунды, пока страница открыта,
-     но не дольше 30 минут. Окно оплаты можно и закрыть: если оплата прошла
-     в нём, экран «Оплата прошла» всё равно появится. */
-  var purchaseTimer = null;
-  function watchPurchase(sid) {
-    if (purchaseTimer) { clearInterval(purchaseTimer); }
-    var started = Date.now(), busy = false, finished = false;
-    var check = function () {
-      if (finished) { return; }
-      if (Date.now() - started > 30 * 60 * 1000) { clearInterval(purchaseTimer); return; }
-      if (busy) { return; }
-      busy = true;
-      apiPost('/purchase/status', { sid: sid }, 5000).then(function (r) {
-        busy = false;
-        if (!r || !r.paid || finished) { return; }
-        finished = true;
-        clearInterval(purchaseTimer);
-        purchaseDone(r);
-      }).catch(function () { busy = false; });
-    };
-    purchaseTimer = setInterval(check, 3000);
-    /* Вернулся на страницу (например, из почты) — проверяем сразу. */
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) { check(); } });
-  }
-
-  function purchaseDone(r) {
-    var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
-    try {
-      /* Продукт подставит их в форму входа (product/js/app.js, showGateOnly). */
-      localStorage.setItem('astromap.prefill', JSON.stringify({
-        email: r.email || '', licenseKey: r.licenseKey || '', at: Date.now()
-      }));
-    } catch (e) {}
-    document.dispatchEvent(new CustomEvent('funnel:purchase', { detail: { inapp: true } }));
-    var box = el('paybox');
-    if (box) { box.parentNode.removeChild(box); }
-    var help = el('walletHelp');
-    if (help) { help.parentNode.removeChild(help); }
-    document.body.style.overflow = '';
-    var d = document.createElement('div');
-    d.className = 'whelp whelp--done';
-    d.setAttribute('role', 'dialog');
-    d.setAttribute('aria-modal', 'true');
-    d.innerHTML = '<div class="whelp__card"><h2 class="whelp__t"></h2><p class="whelp__p"></p>' +
-      '<a class="cta whelp__ok" href="product/?paid=1"></a></div>';
-    document.body.appendChild(d);
-    d.querySelector('.whelp__t').textContent = T.doneTitle;
-    d.querySelector('.whelp__p').textContent = T.doneText;
-    var go = d.querySelector('.whelp__ok');
-    go.textContent = T.doneBtn;
-    go.focus();
-  }
-
-  /* Кнопка «Оплатить через Apple Pay» внутри TikTok. Три вещи сразу, пока
-     у нас есть нажатие: ссылка с ответами — в буфер обмена (запасной путь,
-     если в браузере окажется другой IP), ответы и план — на воркер, и
-     крупная инструкция, как открыть страницу в браузере. Ждать ответа
-     воркера инструкция не ждёт: пока человек жмёт «•••», запрос успеет. */
-  function startWalletHandoff(plan) {
-    var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
-    /* Сколько людей нажали кнопку Apple Pay / Google Pay в окне оплаты
-       TikTok — строка «Нажали Apple Pay / Google Pay» на /stats. */
+    /* Сколько людей увидели инструкцию в TikTok — строки «Инструкция
+       „открыть в браузере“» на /stats. */
     track(plan === 'yearly' ? 'wallet_y' : 'wallet_m');
     var link = handoffUrl(plan);
     try {
@@ -410,34 +242,57 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     } catch (e) { fallbackCopy(link); }
     apiPost('/handoff/put', { fp: deviceFp(), coarse: coarseFp(), plan: plan, data: handoffData() })
       .catch(function () { /* остаётся буфер обмена */ });
-    document.dispatchEvent(new CustomEvent('funnel:wallet', { detail: { plan: plan, wallet: WALLET } }));
+    document.dispatchEvent(new CustomEvent('funnel:inapp', { detail: { plan: plan } }));
 
     var old = el('walletHelp');
     if (old) { old.parentNode.removeChild(old); }
     var h = document.createElement('div');
     h.id = 'walletHelp';
-    h.className = 'whelp';
+    h.className = 'whelp whelp--pay';
     h.setAttribute('role', 'dialog');
     h.setAttribute('aria-modal', 'true');
     h.setAttribute('aria-labelledby', 'whelpT');
+    /* Стрелка — в правый верхний угол, где у TikTok кнопка «•••». */
     h.innerHTML =
-      '<div class="whelp__arrow" aria-hidden="true"><span>•••</span>↗</div>' +
-      '<div class="whelp__card">' +
+      '<div class="whelp__arrow" aria-hidden="true">' +
+        '<svg viewBox="0 0 64 64" class="whelp__arrowsvg"><path d="M10 54 C 22 30, 34 18, 52 10" fill="none" ' +
+          'stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="1 7"/>' +
+          '<path d="M40 8 L53 9.5 L48 22" fill="none" stroke="currentColor" stroke-width="3.2" ' +
+          'stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '<span class="whelp__dots">•••</span>' +
+      '</div>' +
+      '<div class="whelp__card whelp__card--pay">' +
+        '<div class="whelp__glow" aria-hidden="true"></div>' +
+        '<p class="whelp__badge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" ' +
+          'fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" ' +
+          'stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span id="whelpBadge"></span></p>' +
         '<h2 class="whelp__t" id="whelpT"></h2>' +
-        '<ol class="whelp__steps">' +
-          '<li><b>1</b><span id="whelp1"></span></li>' +
-          '<li><b>2</b><span id="whelp2"></span></li>' +
-          '<li><b>3</b><span id="whelp3"></span></li>' +
+        '<p class="whelp__p" id="whelpSub"></p>' +
+        '<ol class="whelp__steps whelp__steps--pay">' +
+          '<li><b>1</b><span class="whelp__txt" id="whelp1"></span><span class="whelp__vis whelp__vis--dots" aria-hidden="true">•••</span></li>' +
+          '<li><b>2</b><span class="whelp__txt" id="whelp2"></span><span class="whelp__vis" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/>' +
+            '<path d="M15.8 8.2 13.4 13.4 8.2 15.8 10.6 10.6Z" fill="currentColor"/></svg></span></li>' +
+          '<li><b>3</b><span class="whelp__txt" id="whelp3"></span><span class="whelp__vis whelp__vis--wallet" aria-hidden="true" id="whelpWallet"></span></li>' +
         '</ol>' +
+        '<p class="whelp__saved" id="whelpSaved"></p>' +
         '<button type="button" class="cta whelp__ok" id="whelpOk"></button>' +
       '</div>';
     document.body.appendChild(h);
-    el('whelpT').textContent = T.wTitle.replace('{w}', WALLET);
+    document.body.style.overflow = 'hidden';
+    el('whelpBadge').textContent = T.pBadge || TE.pBadge;
+    el('whelpT').textContent = T.pTitle || TE.pTitle;
+    el('whelpSub').textContent = (T.pSub || TE.pSub).replace('{w}', WALLET);
     el('whelp1').textContent = T.wStep1;
     el('whelp2').textContent = T.wStep2;
-    el('whelp3').textContent = T.wStep3;
+    el('whelp3').textContent = T.pStep3 || TE.pStep3;
+    el('whelpWallet').textContent = WALLET;
+    el('whelpSaved').textContent = T.pSaved || TE.pSaved;
     el('whelpOk').textContent = T.wOk;
-    el('whelpOk').addEventListener('click', function () { h.parentNode.removeChild(h); });
+    el('whelpOk').addEventListener('click', function () {
+      h.parentNode.removeChild(h);
+      document.body.style.overflow = '';
+    });
     el('whelpOk').focus();
   }
 
@@ -495,12 +350,14 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
         localStorage.setItem('astromap.lang', data.l);
       }
     } catch (e) {}
+    var url = r.plan === 'yearly' ? CHECKOUT_URL_YEAR : CHECKOUT_URL;
+    if (!url) { noCheckout(r.plan === 'yearly' ? 'CHECKOUT_URL_YEAR' : 'CHECKOUT_URL'); return; }
     showOpening(T.opening);
     markCheckout(r.plan);
     /* Вариант — тот, в котором человек проходил квиз в TikTok (он едет в
        ответах), а не тот, что выпал этому браузеру. */
     var v = data && data.f && data.f.v === 'q2' ? 'q2' : 'a';
-    location.replace(withVariant(r.plan === 'yearly' ? CHECKOUT_URL_YEAR : CHECKOUT_URL, v));
+    location.replace(checkoutUrl(url, r.plan, v));
   }
 
   /* Совпали IP и грубый отпечаток: запись почти наверняка этого человека,
@@ -596,19 +453,27 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     document.body.removeChild(ta);
   }
 
-  /* Метка варианта на ссылке чекаута. Gumroad возвращает параметры ссылки
-     в Ping как url_params[...] (так же доезжает astro_sid), и воркер по
-     astro_v раскладывает оплаты по вариантам эксперимента. На сумму, товар
-     и условия метка не влияет. */
-  function withVariant(url, v) {
-    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'astro_v=' + (v || (V2 ? 'q2' : 'a'));
+  /* Метка на ссылке чекаута: client_reference_id Payment Link'а
+     (буквы, цифры, «-» и «_», до 200 знаков). Stripe возвращает его в
+     вебхуке checkout.session.completed, и воркеры по нему раскладывают
+     оплату по вариантам эксперимента и плану (cf-worker/visits.js) и
+     выбирают язык письма «создайте пароль» (cf-worker/license-verify.js).
+     Формат: <вариант>_<m|y>_<язык>_<случайный id>. На сумму и условия
+     метка не влияет. Тот же формат собирает скрипт в <head> index.html. */
+  function checkoutUrl(url, plan, v) {
+    var rnd = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function () { return (Math.random() * 16 | 0).toString(16); });
+    var ref = (v || (V2 ? 'q2' : 'a')) + '_' + (plan === 'yearly' ? 'y' : 'm') + '_' +
+      (/^[a-z]{2}$/.test(window.LANG || '') ? window.LANG : 'en') + '_' + rnd;
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'client_reference_id=' + ref;
   }
 
-  /* Единая точка ухода на оплату. */
+  /* Единая точка ухода на оплату. Внутри TikTok — инструкция «открыть в
+     браузере», в обычном браузере — сразу Stripe. */
   function goCheckout(plan, url) {
-    if (window.ASTROMAP_INAPP) { openEmbeddedCheckout(plan, url); return; }
+    if (window.ASTROMAP_INAPP) { showBrowserHandoff(plan); return; }
     markCheckout(plan);
-    window.location.href = withVariant(url);
+    window.location.href = checkoutUrl(url, plan);
   }
 
   /* Оплата не подключена: пользователю — фраза на языке воронки,

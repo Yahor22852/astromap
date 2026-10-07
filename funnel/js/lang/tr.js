@@ -178,10 +178,10 @@
     access: {
       s1Q: 'Zaten erişimin var mı?',
       s1Link: 'Giriş yap',
-      keyTitle: 'Erişim anahtarın e-postayla gelir',
-      keyText: 'Ödemeden hemen sonra Gumroad, satın alırken girdiğin adrese bir lisans anahtarı gönderir. Onu bir kez girip bir şifre oluşturursun — sonra her cihazdan e-posta ve şifreyle giriş yaparsın.',
-      paidQ: 'Anahtarın var mı?',
-      paidLink: 'Buraya gir'
+      keyTitle: 'Ödemeden sonra: şifre oluştur',
+      keyText: 'Ödemeden hemen sonra buraya dönüp bir şifre oluşturursun — her cihazdan girişin bu olur. Ne olur ne olmaz, e-postana bir giriş bağlantısı da göndeririz.',
+      paidQ: 'Zaten abone misin?',
+      paidLink: 'Giriş yap'
     },
 
     paywall: {
@@ -198,6 +198,11 @@
         wStep2: '“Tarayıcıda aç”ı seç',
         wStep3: 'Ödeme kendiliğinden açılır — yanıtların ve planın kayıtlı',
         wOk: 'Anladım',
+        pBadge: 'Güvenli ödeme',
+        pTitle: 'Ödemeyi tarayıcında tamamla',
+        pSub: 'TikTok uygulama içinde ödemeye izin vermiyor. Tarayıcıda birkaç saniye sürer — {w} veya kartla.',
+        pStep3: 'Ödeme kendiliğinden açılır — tek dokunuşla öde',
+        pSaved: 'Cevapların ve seçtiğin plan kaydedildi — baştan başlaman gerekmez.',
         opening: 'Ödeme açılıyor…',
         cont: 'TikTok’ta başladığın ödemeyi tamamla',
         contBtn: 'Ödemeye devam et',
@@ -283,7 +288,7 @@
   };
 
   /* Цена, условия списания и согласие с документами — переведены.
-     Суммы и валюта те же, что в английском и на чекауте Gumroad ($7.99 в
+     Суммы и валюта те же, что в английском и на чекауте Stripe ($7.99 в
      месяц, $29.99 в год, плюс налог по ставке страны): меняется только язык,
      не цифры. Каждое утверждение английского текста сохранено — цена,
      период, автопродление, срок отмены (24 часа), способ отмены, ссылка на

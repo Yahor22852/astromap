@@ -205,7 +205,7 @@
     pay: {
       features: 'For your focus',
       cta: 'Get your full map',
-      key: 'After payment Gumroad emails you a license key. Enter it once and set a password.',
+      key: 'After payment you create a password right here — that’s your login on any device.',
       seeYear: 'See the annual plan',
       backPrev: 'Back to the preview'
     },

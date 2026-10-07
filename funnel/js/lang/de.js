@@ -173,10 +173,10 @@
     access: {
       s1Q: 'Schon Zugang?',
       s1Link: 'Anmelden',
-      keyTitle: 'Dein Zugangsschlüssel kommt per E-Mail',
-      keyText: 'Direkt nach der Zahlung schickt Gumroad einen Lizenzschlüssel an die Adresse, die du beim Kauf angibst. Du gibst ihn einmal ein und legst ein Passwort fest — danach meldest du dich auf jedem Gerät mit E-Mail und Passwort an.',
-      paidQ: 'Schon einen Schlüssel?',
-      paidLink: 'Hier eingeben'
+      keyTitle: 'Nach der Zahlung: Passwort festlegen',
+      keyText: 'Direkt nach dem Bezahlen kommst du hierher zurück und legst ein Passwort fest — damit meldest du dich auf jedem Gerät an. Zur Sicherheit schicken wir dir auch einen Login-Link per E-Mail.',
+      paidQ: 'Schon abonniert?',
+      paidLink: 'Anmelden'
     },
 
     paywall: {
@@ -193,6 +193,11 @@
         wStep2: 'Wähle „Im Browser öffnen“',
         wStep3: 'Die Zahlung öffnet sich von selbst – Antworten und Plan sind gespeichert',
         wOk: 'Verstanden',
+        pBadge: 'Sichere Zahlung',
+        pTitle: 'Bezahle in deinem Browser',
+        pSub: 'TikTok erlaubt keine Zahlungen in der App. Im Browser dauert es nur Sekunden — mit {w} oder Karte.',
+        pStep3: 'Die Zahlung öffnet sich von selbst — mit einem Tipp bezahlen',
+        pSaved: 'Deine Antworten und dein Plan sind gespeichert — du musst nicht von vorn anfangen.',
         opening: 'Zahlung wird geöffnet…',
         cont: 'Schließ die in TikTok begonnene Zahlung ab',
         contBtn: 'Zahlung fortsetzen',
@@ -278,7 +283,7 @@
   };
 
   /* Цена, условия списания и согласие с документами — переведены.
-     Суммы и валюта те же, что в английском и на чекауте Gumroad ($7.99 в
+     Суммы и валюта те же, что в английском и на чекауте Stripe ($7.99 в
      месяц, $29.99 в год, плюс налог по ставке страны): меняется только язык,
      не цифры. Каждое утверждение английского текста сохранено — цена,
      период, автопродление, срок отмены (24 часа), способ отмены, ссылка на

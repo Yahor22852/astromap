@@ -194,7 +194,7 @@
     pay: {
       features: 'Für deinen Fokus',
       cta: 'Deine vollständige Karte holen',
-      key: 'Nach der Zahlung schickt Gumroad dir einen Lizenzschlüssel per E-Mail. Du gibst ihn einmal ein und legst ein Passwort fest.',
+      key: 'Nach der Zahlung legst du hier ein Passwort fest — damit meldest du dich auf jedem Gerät an.',
       seeYear: 'Jahresplan ansehen',
       backPrev: 'Zurück zur Vorschau'
     },

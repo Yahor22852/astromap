@@ -194,7 +194,7 @@
     pay: {
       features: 'Para o seu foco',
       cta: 'Receber meu mapa completo',
-      key: 'Depois do pagamento, o Gumroad envia uma chave de licença por e-mail. Você a digita uma vez e cria uma senha.',
+      key: 'Depois do pagamento, você cria uma senha aqui mesmo — é o seu acesso em qualquer dispositivo.',
       seeYear: 'Ver o plano anual',
       backPrev: 'Voltar à prévia'
     },

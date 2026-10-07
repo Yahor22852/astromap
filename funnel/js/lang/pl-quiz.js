@@ -195,7 +195,7 @@
     pay: {
       features: 'Dla Twojego fokusu',
       cta: 'Odbierz pełną mapę',
-      key: 'Po płatności Gumroad wyśle klucz licencyjny e-mailem. Wpisujesz go raz i ustawiasz hasło.',
+      key: 'Po płatności tworzysz tu hasło — to Twoje logowanie na każdym urządzeniu.',
       seeYear: 'Zobacz plan roczny',
       backPrev: 'Wróć do podglądu'
     },

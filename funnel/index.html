@@ -9,8 +9,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <script>
-/* Страница открыта внутри нашего же окна оплаты (ссылка Gumroad «Continue
-   shopping» ведёт обратно на astromap.me прямо в iframe). Ничего не
+/* Страница открыта внутри iframe на нашем же origin (раньше так бывало с
+   окном оплаты Gumroad; сейчас окна оплаты нет, защита оставлена). Ничего не
    рисуем, ничего не считаем и просим окно закрыться — человек и так уже на
    этой странице, снаружи. Чужие сайты, встроившие нас, сюда не попадают:
    доступ к адресу родителя есть только при общем origin. */
@@ -27,16 +27,16 @@
 /* ВСТРОЕННЫЙ БРАУЗЕР TIKTOK И ПЕРЕДАЧА В НАСТОЯЩИЙ.
 
    Здесь две вещи. Первая — признак «мы внутри TikTok» (window.ASTROMAP_INAPP):
-   по нему flow.js открывает чекаут Gumroad окном поверх страницы, а не
-   переходом, который TikTok блокирует (см. openEmbeddedCheckout).
+   по нему flow.js вместо перехода на Stripe, который TikTok блокирует,
+   показывает инструкцию «••• → Открыть в браузере» (showBrowserHandoff).
 
-   Вторая — запасной путь из этого окна: ссылка «Скопировать»
+   Вторая — запасной путь: ссылка, которую инструкция кладёт в буфер
      astromap.me/?go=monthly&h=<ответы квиза>
    Вставленная в Safari/Chrome, она разбирается ниже: ответы квиза
    кладутся в localStorage (у встроенного браузера оно своё, и без этого
    продукт после оплаты попросил бы дату рождения заново), ставится отметка
-   «ушёл на оплату», адрес стирается и страница уходит на чекаут. В Gumroad
-   ответы не попадают: адрес стирается до ухода, а на чужой домен браузер
+   «ушёл на оплату», адрес стирается и страница уходит на чекаут Stripe.
+   В Stripe ответы не попадают: адрес стирается до ухода, а на чужой домен браузер
    отдаёт только origin. Старые ссылки с #h по-прежнему понимаются.
 
    Через «••• → Открыть в браузере» TikTok передаёт ИСХОДНУЮ ссылку из
@@ -75,14 +75,15 @@
     }
   } catch (e) {}
   var CHECKOUT = {
-    monthly: 'https://astromap.gumroad.com/l/astromap?monthly=true&wanted=true',
-    yearly: 'https://astromap.gumroad.com/l/astromap?yearly=true&wanted=true'
+    monthly: '',   /* TODO: https://buy.stripe.com/… — то же, что CHECKOUT_URL */
+    yearly: ''     /* TODO: https://buy.stripe.com/… — то же, что CHECKOUT_URL_YEAR */
   };
   var LANGS = ['en', 'pl', 'ru', 'uk', 'de', 'es', 'fr', 'it', 'pt', 'tr'];
   if (window.ASTROMAP_FRAMED) { return; }
   try {
     var q = new URLSearchParams(location.search);
     var plan = q.get('go');
+    var lang = 'en';
     if (!CHECKOUT[plan] || INAPP) { return; }
     var h = (location.hash.match(/[#&]h=([^&]+)/) || [])[1] || q.get('h');
     if (h) {
@@ -94,7 +95,7 @@
         localStorage.setItem('astromap.funnel', JSON.stringify(data.f));
       }
       var variant = data && data.f && data.f.v === 'q2' ? 'q2' : 'a';
-      if (data && LANGS.indexOf(data.l) >= 0) { localStorage.setItem('astromap.lang', data.l); }
+      if (data && LANGS.indexOf(data.l) >= 0) { localStorage.setItem('astromap.lang', data.l); lang = data.l; }
     }
     localStorage.setItem('astromap.checkout', JSON.stringify({ plan: plan, at: Date.now() }));
     sessionStorage.setItem('astromap.checkoutTab', '1');
@@ -102,8 +103,10 @@
     sessionStorage.setItem('astromap.visit', '1');
     window.ASTROMAP_HANDOFF = true;
     history.replaceState(null, '', location.pathname);
-    /* Метка варианта эксперимента — см. withVariant() в flow.js. */
-    location.replace(CHECKOUT[plan] + '&astro_v=' + (typeof variant === 'string' ? variant : 'a'));
+    /* Метка для вебхука Stripe — тот же формат, что checkoutUrl() в flow.js. */
+    var ref = (typeof variant === 'string' ? variant : 'a') + '_' + (plan === 'yearly' ? 'y' : 'm') + '_' + lang + '_' +
+      (window.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+    location.replace(CHECKOUT[plan] + (CHECKOUT[plan].indexOf('?') >= 0 ? '&' : '?') + 'client_reference_id=' + ref);
   } catch (e) { /* битая ссылка — просто показываем воронку */ }
 })();
 </script>
@@ -147,8 +150,8 @@
    - доступ подтверждён (astromap.access, его пишет гейт продукта) → сразу в
      продукт;
    - доступа нет, но за последние трое суток человек ушёл на оплату
-     (astromap.checkout, пишет flow.js перед переходом на Gumroad) → на гейт
-     продукта в режиме «ключ пришёл на почту». Там же есть ссылка обратно на
+     (astromap.checkout, пишет flow.js перед переходом на Stripe) → на гейт
+     продукта в режиме «ссылка для входа пришла на почту». Там же есть ссылка обратно на
      оплату — на случай, если он её не завершил.
 
    Один домен здесь не случайность: localStorage общий только в пределах
@@ -183,10 +186,10 @@
     if (window.ASTROMAP_INAPP) { return; }
     if (/[?&](funnel|fpdebug)(=|&|$)/.test(location.search)) { return; }
     var a = JSON.parse(localStorage.getItem('astromap.access') || 'null');
-    if (a && a.email && a.licenseKey) { window.ASTROMAP_LEAVING = true; location.replace('product/'); return; }
+    if (a && a.email && a.token) { window.ASTROMAP_LEAVING = true; location.replace('product/'); return; }
     /* Та же вкладка, из которой уходили на оплату (sessionStorage живёт до
-       закрытия вкладки), — это почти всегда «Назад» с чекаута Gumroad без
-       оплаты. Его не отправляем на гейт с «ключ летит на почту». */
+       закрытия вкладки), — это почти всегда «Назад» с чекаута Stripe без
+       оплаты. Его не отправляем на гейт с «ссылка летит на почту». */
     if (sessionStorage.getItem('astromap.checkoutTab')) { return; }
     /* Пришёл из TikTok по ссылке из профиля, а ожидающей оплаты не нашлось:
        отметка «ушёл на оплату» тут почти наверняка старая, и экран «ключ
@@ -482,8 +485,8 @@
         <p class="disc" id="planDisc"></p>
       </div>
 
-      <!-- Ключ приходит на почту — говорим это ДО оплаты, крупно, а не
-           мелким шрифтом: иначе после Gumroad человек не знает, что искать. -->
+      <!-- Как устроен вход после оплаты — говорим это ДО оплаты, крупно, а
+           не мелким шрифтом. -->
       <div class="keynote">
         <svg class="keynote__ic" viewBox="0 0 48 40" aria-hidden="true">
           <rect x="2" y="8" width="44" height="30" rx="6" fill="none" stroke="currentColor" stroke-width="2.4"/>
@@ -530,8 +533,8 @@
         <p class="legal checkout-note hidden" id="checkoutNoteYear"></p>
       </div>
 
-      <!-- Ключ приходит на почту — говорим это ДО оплаты, крупно, а не
-           мелким шрифтом: иначе после Gumroad человек не знает, что искать. -->
+      <!-- Как устроен вход после оплаты — говорим это ДО оплаты, крупно, а
+           не мелким шрифтом. -->
       <div class="keynote">
         <svg class="keynote__ic" viewBox="0 0 48 40" aria-hidden="true">
           <rect x="2" y="8" width="44" height="30" rx="6" fill="none" stroke="currentColor" stroke-width="2.4"/>
