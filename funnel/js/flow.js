@@ -22,8 +22,8 @@
      https://astromap.me/product/?session_id={CHECKOUT_SESSION_ID}
    — оттуда гейт продукта сразу предлагает придумать пароль (см.
    product/js/app.js и cf-worker/license-verify.js). */
-var CHECKOUT_URL = '';            /* TODO: https://buy.stripe.com/… — месяц, $7.99 */
-var CHECKOUT_URL_YEAR = '';       /* TODO: https://buy.stripe.com/… — год, $29.99 */
+var CHECKOUT_URL = 'https://buy.stripe.com/8x2aEPgKF4yz4Lrgya9fW00';      /* месяц, $7.99 */
+var CHECKOUT_URL_YEAR = 'https://buy.stripe.com/00w3cn0LHfdd2Dj0zc9fW02'; /* год, $29.99 */
 var TERMS_URL = 'https://docs.google.com/document/d/1GuEKF2tU3MG_ZUZqJnA7B27-OxGCoWB95aGkWyI8u9I/edit?usp=sharing';
                                   /* Terms of Use (Google Docs) */
 var PRIVACY_URL = 'https://docs.google.com/document/d/1J_HDyOfxye2w8JvKNG8ytiDkBXFHsuDFKQYHbj4ALh0/edit?usp=sharing';

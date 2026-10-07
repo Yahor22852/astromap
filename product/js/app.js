@@ -27,7 +27,7 @@
        ?reset=<токен>   — ссылка из письма «создайте пароль» / «сброс»;
        почта + пароль   — все остальные разы. */
   var LICENSE_API = 'https://astromap-license-verify.egorrut3030.workers.dev';
-  var GATE_CHECKOUT_URL = ''; /* TODO: https://buy.stripe.com/… — тот же месячный Payment Link, что CHECKOUT_URL в funnel/js/flow.js */
+  var GATE_CHECKOUT_URL = 'https://buy.stripe.com/8x2aEPgKF4yz4Lrgya9fW00'; /* тот же месячный Payment Link, что CHECKOUT_URL в funnel/js/flow.js */
   /* Юридические документы и адрес поддержки. Ссылки стоят на гейте и в
      настройках. Те же адреса лежат в funnel/js/flow.js — меняешь здесь,
      меняй и там. */
