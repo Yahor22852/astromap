@@ -311,13 +311,12 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (V2) { if (window.AstroQuiz) { window.AstroQuiz.trackCurrent(); } }
       else if (S.screen === 's1') { track('s1'); }
     };
-    var checked = false;
-    try { checked = sessionStorage.getItem('astromap.tt.checked') === '1'; sessionStorage.setItem('astromap.tt.checked', '1'); } catch (e) {}
-    if (checked) {
-      try { localStorage.setItem('astromap.dbg.take', JSON.stringify({ at: new Date().toISOString().slice(11, 19), result: 'skipped: already checked in this tab' })); } catch (e) {}
-      fallback(); return;
-    }
-
+    /* Раньше проверка шла один раз на вкладку (sessionStorage). Но Safari
+       на iPhone, получив из TikTok ту же ссылку из профиля, не открывает
+       новую вкладку, а возвращает уже открытую — ту, куда человек вернулся
+       «Назад» с оплаты. Второе «оплатить» в TikTok тогда приводило в
+       воронку, а не на оплату. Теперь проверяем при каждой загрузке и
+       ещё раз — когда вкладка снова становится видимой (watchTikTokReturn). */
     var note = function (what) {
       try {
         localStorage.setItem('astromap.dbg.take', JSON.stringify({
@@ -337,6 +336,29 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       if (r && r.hint) { done = true; showContinueBanner(T); return; }
       fallback();
     }).catch(function (e) { note('request failed: ' + (e && e.name)); fallback(); });
+    watchTikTokReturn(T);
+  }
+
+  /* Вкладка с ?src=tiktok уже открыта, и Safari просто показывает её снова
+     (второе «Открыть в браузере» из TikTok) — страница при этом может и не
+     перезагрузиться. Как только вкладка видна, спрашиваем воркер ещё раз:
+     появилась новая ожидающая оплата — уходим на чекаут. Плашки «продолжить»
+     здесь не показываем, чтобы не мешать тому, кто просто вернулся. */
+  var ttWatching = false, ttLastCheck = 0;
+  function watchTikTokReturn(T) {
+    if (ttWatching) { return; }
+    ttWatching = true;
+    var recheck = function () {
+      if (document.hidden || Date.now() - ttLastCheck < 2000) { return; }
+      ttLastCheck = Date.now();
+      apiPost('/handoff/take', { fp: deviceFp(), coarse: coarseFp() }, 3500).then(function (r) {
+        if (r && r.ok && (r.plan === 'monthly' || r.plan === 'yearly')) { finishHandoff(r, T); return; }
+        if (r && r.confirm && r.token && !document.querySelector('.ttcont')) { showConfirmBanner(T, r.token); }
+      }).catch(function () {});
+    };
+    ttLastCheck = Date.now();
+    document.addEventListener('visibilitychange', recheck);
+    window.addEventListener('focus', recheck);
   }
 
   function finishHandoff(r, T) {
@@ -2095,5 +2117,17 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   }
 
   if (window.ASTROMAP_TT_ARRIVAL) { arrivalFromTikTok(); }
+  /* «Назад» со страницы Stripe: Safari достаёт страницу из кэша вместе с
+     экраном «Открываем оплату…» — убираем его, иначе страница выглядит
+     зависшей. И сразу проверяем, не ждёт ли новая оплата из TikTok. */
+  window.addEventListener('pageshow', function (ev) {
+    if (!ev.persisted) { return; }
+    Array.prototype.forEach.call(document.querySelectorAll('.whelp--busy'), function (n) { n.parentNode.removeChild(n); });
+    if (!window.ASTROMAP_INAPP && /[?&]src=tiktok(&|$)/.test(location.search)) {
+      watchTikTokReturn(C.paywall.inapp || window.COPY_ALL.en.paywall.inapp);
+      ttLastCheck = 0;
+      document.dispatchEvent(new Event('visibilitychange'));
+    }
+  });
   if (/[?&]fpdebug(=|&|$)/.test(location.search)) { fpDebug(); }
 })();
