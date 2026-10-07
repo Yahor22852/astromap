@@ -217,6 +217,14 @@
 (function () {
   var SUPPORTED = ['en', 'pl', 'ru', 'uk', 'de', 'es', 'fr', 'it', 'pt', 'tr'];
   var l = null;
+  /* ?lang=es в ссылке (например, в профиле испанского TikTok-аккаунта)
+     важнее всего остального и запоминается: TikTok подставляет язык
+     своего интерфейса, а не страны аудитории. Дальше человек может
+     сменить язык в меню, как обычно. */
+  try {
+    var ql = (new URLSearchParams(location.search).get('lang') || '').toLowerCase();
+    if (SUPPORTED.indexOf(ql) >= 0) { localStorage.setItem('astromap.lang', ql); }
+  } catch (e) {}
   try { l = localStorage.getItem('astromap.lang'); } catch (e) {}
   if (!l) {
     var cands = (navigator.languages && navigator.languages.length)
