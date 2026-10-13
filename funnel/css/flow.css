@@ -1020,6 +1020,12 @@ select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .whelp__busy { margin: 0; text-align: center; font-size: 16px; color: var(--ink); }
 .whelp__p { position: relative; margin: 0 0 20px; font-size: 16px; line-height: 1.45; color: var(--ink-dim); }
 .whelp--done .whelp__ok { text-decoration: none; }
+.whelp__stay {
+  display: block; margin: 14px auto 0; padding: 8px 12px;
+  background: none; border: 0; font: inherit; font-size: 14px;
+  color: var(--ink-faint); text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.whelp__card .whelp__ok { width: 100%; }
 
 /* Safari/Chrome: оплата из TikTok ждёт, но IP другой — кнопка возьмёт
    ссылку из буфера обмена. Плашка снизу, над доком. */

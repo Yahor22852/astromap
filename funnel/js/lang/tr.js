@@ -208,9 +208,15 @@
         contBtn: 'Ödemeye devam et',
         doneTitle: 'Ödeme tamamlandı ✓',
         doneText: 'Erişim anahtarın zaten girildi — sadece bir şifre belirle.',
-        doneBtn: 'Erişimimi aç'
+        doneBtn: 'Erişimimi aç',
+        sBadge: '5 saniye sürer',
+        sTitle: 'AstroMap’i tarayıcıda aç',
+        sSub: 'TikTok uygulama içinde ödemeye ve {w} kullanmaya izin vermiyor. Tarayıcıda haritan aynı şekilde hesaplanır, erişim tek dokunuşla açılır.',
+        sStep3: 'AstroMap açılır — doğrudan orada başla',
+        sStay: 'TikTok’ta devam et'
       },
-      checkoutOff: 'Ödeme henüz bağlı değil. Bilgilerin kayıtlı — birazdan tekrar uğra.'
+      checkoutOff: 'Ödeme henüz bağlı değil. Bilgilerin kayıtlı — birazdan tekrar uğra.',
+      payFail: 'Ödeme gerçekleşmedi. Kartla ödemek için düğmeye tekrar dokun.'
     },
 
     recovery: {

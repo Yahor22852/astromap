@@ -8,12 +8,15 @@ Gumroad из кода убран полностью. Оплата — Stripe Pay
 ## Как это работает
 
 ```
-TikTok → квиз → «оплатить»
-  ├─ внутри TikTok: инструкция «••• → Открыть в браузере»
-  │     ответы и план едут через воркер visits (/handoff), в Safari/Chrome
-  │     страница сама открывает Stripe нужного плана
-  └─ в обычном браузере: сразу Stripe Payment Link
-        ?client_reference_id=<вариант>_<m|y>_<язык>_<uuid>
+TikTok (ссылка в профиле) → сразу инструкция «••• → Открыть в браузере»
+  ├─ открыл в Safari/Chrome → квиз → «оплатить»
+  │     ├─ есть Apple Pay / Google Pay → сразу системное окно оплаты
+  │     │     (funnel/js/wallet.js → license-verify, action subscribe)
+  │     └─ нет кошелька → Stripe Payment Link (как раньше)
+  │           ?client_reference_id=<вариант>_<m|y>_<язык>_<uuid>
+  └─ «продолжить в TikTok» → квиз → «оплатить» → снова инструкция,
+        ответы и план едут через воркер visits (/handoff), в Safari/Chrome
+        одна кнопка «Оплатить через Apple Pay»
 
 Stripe Checkout → оплата (карта / Apple Pay / Google Pay)
   └─ redirect: astromap.me/product/?session_id=cs_…
@@ -120,7 +123,55 @@ Edit code → вставить `cf-worker/visits.js` целиком → Deploy. 
    сейчас» (после конца периода, или отменить «immediately» в дашборде Stripe)
    → гейт закрывается.
 8. В TikTok (или `localStorage.setItem('astromap.qa.inapp','1')` в консоли)
-   кнопка оплаты показывает инструкцию «••• → Открыть в браузере».
+   инструкция «••• → Открыть в браузере» встречает сразу на входе; после
+   «Продолжить в TikTok» её же показывает кнопка оплаты. `?nogate` в адресе
+   отключает инструкцию на входе.
+
+## 8а. Apple Pay в одно касание (без страницы Stripe Checkout)
+
+Кнопка на пейволле сразу открывает окно Apple Pay (iPhone, Safari на Mac)
+или Google Pay (Android). Пока не сделаны шаги ниже, `STRIPE_PK` пустой и
+всё работает через Payment Links, как раньше — выкатывать можно в любом
+порядке, но **ключ в `wallet.js` вписывать последним**.
+
+1. **Домен для Apple Pay.** Stripe → Settings → Payment methods → **Payment
+   method domains** → Add `astromap.me`. Если Stripe попросит файл
+   `apple-developer-merchantid-domain-association` — положить его в
+   `funnel/.well-known/` и выложить, затем нажать Verify. Apple Pay и
+   Google Pay в Settings → Payment methods должны быть включены.
+2. **ID цен.** Product catalog → AstroMap → у каждой цены скопировать
+   `price_…`.
+3. **Воркер `astromap-license-verify`**: вставить новый
+   `cf-worker/license-verify.js` → Deploy. Variables:
+   `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY` (Text, `price_…`).
+   Restricted key: добавить права **Customers — Write, Subscriptions —
+   Write, PaymentMethods — Write, Invoices — Read, PaymentIntents — Read**
+   (или создать новый ключ с ними и заменить `STRIPE_SECRET_KEY`).
+4. **Воркер `astromap-visits`**: вставить новый `cf-worker/visits.js` →
+   Deploy. Вебхук этого воркера (Developers → Webhooks →
+   …/astromap-visits…/stripe/webhook) → **Add events → `invoice.paid`** —
+   по нему считаются оплаты через Apple Pay (в Checkout вебхука нет).
+5. **`funnel/js/wallet.js`**, начало файла: `STRIPE_PK` = publishable key
+   (`pk_live_…`, Developers → API keys), `STRIPE_COUNTRY` — страна
+   аккаунта Stripe (две буквы). `WALLET_PRICES` — суммы в центах, как в
+   Stripe (799 и 2999).
+6. Проверка: на iPhone в Safari пройти квиз → «оплатить» → должно сразу
+   всплыть окно Apple Pay с суммой и «подписка, ежемесячно». После оплаты —
+   `/product/?session_id=sub_…` и форма «придумайте пароль», письмо
+   «Доступ к AstroMap готов». В тестовом режиме — `pk_test_…`, `sk_test_…`
+   и тестовые `price_…`; в тестовом режиме Apple Pay берёт карту из
+   Wallet, но денег не списывает.
+
+Налог: окно Apple Pay показывает ровно `WALLET_PRICES`. Если в Stripe налог
+считается сверху, сумма в окне и списание разойдутся — для Apple Pay цены
+лучше сделать с налогом внутри (Include tax in price → Yes) и убрать
+«+ VAT» из текстов. `STRIPE_AUTOMATIC_TAX=1` у воркера включает Stripe Tax
+и для этих подписок.
+
+На `/stats` новый блок «Из TikTok в браузер»: сколько увидели инструкцию
+на входе (`tt_gate`), сколько открыли ссылку уже в браузере (`tt_open`),
+сколько остались в TikTok (`tt_stay`), и воронка окна Apple Pay — открыли
+окно / оплатили / закрыли.
 
 ## 9. Боевой режим
 

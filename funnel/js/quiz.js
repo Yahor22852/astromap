@@ -1118,6 +1118,7 @@
      повтор или продолжение без превью; ответы при этом не теряются. */
   var pvTab = null;
   RENDER.preview = function (s) {
+    if (F.prepareWallet) { F.prepareWallet(); }
     var n = natal();
     if (!n) { return; }
     if (assetsState !== 'ready') {
@@ -1277,6 +1278,8 @@
   function payCta() { return Q.pay.cta; }
   function yearCta() { return Q.year.cta; }
   RENDER.pay = function (s) {
+    /* Окно Apple Pay готовится заранее — см. prepareWallet в flow.js. */
+    if (F.prepareWallet) { F.prepareWallet(); }
     var n = natal();
     var opens = (GOAL_OPENS[st.goal] || [0, 1, 2]).map(function (i) { return C.pw.opens[i]; });
     s.innerHTML = '<p class="eyebrow">' + esc(C.paywall.eyebrow) + '</p>' +
@@ -1298,6 +1301,7 @@
     dock(payCta(), true, Q.pay.seeYear, C.billing.priceLine + ' \u00B7 ' + C.billing.renewLine);
   };
   RENDER.year = function (s) {
+    if (F.prepareWallet) { F.prepareWallet(); }
     s.innerHTML = '<p class="eyebrow">' + esc(C.paywall.eyebrow) + '</p>' +
       head('year', Q.year.title, Q.year.sub) +
       '<div class="alt"><div class="alt__t">' + esc(C.recovery.yearTitle) + '</div>' +
@@ -1384,7 +1388,7 @@
   var want = 'goal';
   try { want = sessionStorage.getItem('astromap.q2.step') || 'goal'; } catch (e) {}
   window.AstroQuiz = { trackCurrent: function () { if (cur) { F.track('q2_' + cur); } } };
-  show(reachable(want), { noFocus: true, noTrack: !!window.ASTROMAP_TT_ARRIVAL });
+  show(reachable(want), { noFocus: true, noTrack: !!window.ASTROMAP_TT_ARRIVAL || !!window.ASTROMAP_INAPP_GATE });
   if (cur === 'preview' || cur === 'bridge' || cur === 'pay' || cur === 'year') {
     ensureAssets(function () { if (cur) { RENDER[cur](section(cur)); } });
   }

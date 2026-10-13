@@ -226,7 +226,8 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
      ссылка с ответами в буфер обмена (запасной путь, если в браузере
      окажется другой IP), ответы и план на воркер и полноэкранная
      инструкция, как открыть страницу в браузере. Ответа воркера она не
-     ждёт: пока человек жмёт «•••», запрос успеет. */
+     ждёт: пока человек жмёт «•••», запрос успеет. Сюда попадают те, кто
+     на входе выбрал «остаться в TikTok» (см. showStartGate). */
   function showBrowserHandoff(plan) {
     var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
     var TE = window.COPY_ALL.en.paywall.inapp;
@@ -243,7 +244,61 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     apiPost('/handoff/put', { fp: deviceFp(), coarse: coarseFp(), plan: plan, data: handoffData() })
       .catch(function () { /* остаётся буфер обмена */ });
     document.dispatchEvent(new CustomEvent('funnel:inapp', { detail: { plan: plan } }));
+    browserHelp({
+      badge: T.pBadge || TE.pBadge,
+      title: T.pTitle || TE.pTitle,
+      sub: (T.pSub || TE.pSub).replace('{w}', WALLET),
+      step3: T.pStep3 || TE.pStep3,
+      saved: T.pSaved || TE.pSaved,
+      ok: T.wOk
+    });
+  }
 
+  /* Вход в воронку из встроенного браузера TikTok (ссылка в шапке
+     профиля). Оплатить там нельзя — ни Apple Pay, ни Stripe, — поэтому
+     инструкция «••• → Открыть в браузере» стоит не перед оплатой, а сразу
+     на входе: квиз человек проходит уже в Safari/Chrome, и кнопка на
+     пейволле там сразу открывает Apple Pay. Под инструкцией — неяркая
+     ссылка «продолжить в TikTok»: у кого в меню нет «Открыть в браузере»,
+     не застрянет, а на пейволле его встретит прежняя передача оплаты.
+
+     Для /stats: tt_gate — показали инструкцию, tt_stay — остались в
+     TikTok, tt_open — открыли ссылку из профиля в настоящем браузере (его
+     считает загрузка страницы в Safari/Chrome с ?src=tiktok). */
+  var STAY_KEY = 'astromap.ttstay';
+  function startGateWanted() {
+    if (!window.ASTROMAP_INAPP || window.ASTROMAP_FRAMED || window.ASTROMAP_HANDOFF) { return false; }
+    if (/[?&](fpdebug|nogate)(=|&|$)/.test(location.search)) { return false; }
+    try { if (sessionStorage.getItem(STAY_KEY)) { return false; } } catch (e) {}
+    return true;
+  }
+  function showStartGate() {
+    var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
+    var TE = window.COPY_ALL.en.paywall.inapp;
+    track('tt_gate');
+    browserHelp({
+      badge: T.sBadge || TE.sBadge,
+      title: T.sTitle || TE.sTitle,
+      sub: (T.sSub || TE.sSub).replace('{w}', WALLET),
+      step3: T.sStep3 || TE.sStep3,
+      saved: '',
+      stay: T.sStay || TE.sStay,
+      onStay: function () {
+        try { sessionStorage.setItem(STAY_KEY, '1'); } catch (e) {}
+        window.ASTROMAP_INAPP_GATE = false;
+        track('tt_stay');
+        /* Первый экран, открытый под инструкцией, не считался — считаем
+           его сейчас, когда человек действительно начал здесь. */
+        if (V2) { if (window.AstroQuiz) { window.AstroQuiz.trackCurrent(); } }
+        else { track(S.screen); }
+      }
+    });
+  }
+
+  /* Полноэкранная инструкция «••• → Открыть в браузере». ok — кнопка
+     «Понятно», закрывает; stay — текстовая ссылка «остаться», без ok
+     инструкция не закрывается ничем, кроме неё. */
+  function browserHelp(o) {
     var old = el('walletHelp');
     if (old) { old.parentNode.removeChild(old); }
     var h = document.createElement('div');
@@ -266,7 +321,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
         '<p class="whelp__badge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" ' +
           'fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" ' +
           'stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span id="whelpBadge"></span></p>' +
-        '<h2 class="whelp__t" id="whelpT"></h2>' +
+        '<h2 class="whelp__t" id="whelpT" tabindex="-1"></h2>' +
         '<p class="whelp__p" id="whelpSub"></p>' +
         '<ol class="whelp__steps whelp__steps--pay">' +
           '<li><b>1</b><span class="whelp__txt" id="whelp1"></span><span class="whelp__vis whelp__vis--dots" aria-hidden="true">•••</span></li>' +
@@ -275,25 +330,35 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
             '<path d="M15.8 8.2 13.4 13.4 8.2 15.8 10.6 10.6Z" fill="currentColor"/></svg></span></li>' +
           '<li><b>3</b><span class="whelp__txt" id="whelp3"></span><span class="whelp__vis whelp__vis--wallet" aria-hidden="true" id="whelpWallet"></span></li>' +
         '</ol>' +
-        '<p class="whelp__saved" id="whelpSaved"></p>' +
-        '<button type="button" class="cta whelp__ok" id="whelpOk"></button>' +
+        (o.saved ? '<p class="whelp__saved" id="whelpSaved"></p>' : '') +
+        (o.ok ? '<button type="button" class="cta whelp__ok" id="whelpOk"></button>' : '') +
+        (o.stay ? '<button type="button" class="whelp__stay" id="whelpStay"></button>' : '') +
       '</div>';
     document.body.appendChild(h);
     document.body.style.overflow = 'hidden';
-    el('whelpBadge').textContent = T.pBadge || TE.pBadge;
-    el('whelpT').textContent = T.pTitle || TE.pTitle;
-    el('whelpSub').textContent = (T.pSub || TE.pSub).replace('{w}', WALLET);
+    var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
+    var close = function () {
+      if (h.parentNode) { h.parentNode.removeChild(h); }
+      document.body.style.overflow = '';
+    };
+    el('whelpBadge').textContent = o.badge;
+    el('whelpT').textContent = o.title;
+    el('whelpSub').textContent = o.sub;
     el('whelp1').textContent = T.wStep1;
     el('whelp2').textContent = T.wStep2;
-    el('whelp3').textContent = T.pStep3 || TE.pStep3;
+    el('whelp3').textContent = o.step3;
     el('whelpWallet').textContent = WALLET;
-    el('whelpSaved').textContent = T.pSaved || TE.pSaved;
-    el('whelpOk').textContent = T.wOk;
-    el('whelpOk').addEventListener('click', function () {
-      h.parentNode.removeChild(h);
-      document.body.style.overflow = '';
-    });
-    el('whelpOk').focus();
+    if (o.saved) { el('whelpSaved').textContent = o.saved; }
+    if (o.ok) {
+      el('whelpOk').textContent = o.ok;
+      el('whelpOk').addEventListener('click', close);
+      el('whelpOk').focus();
+    }
+    if (o.stay) {
+      el('whelpStay').textContent = o.stay;
+      el('whelpStay').addEventListener('click', function () { close(); if (o.onStay) { o.onStay(); } });
+      if (!o.ok) { el('whelpT').focus(); }
+    }
   }
 
   /* Тот же человек открыл ссылку из профиля в Safari/Chrome. Спрашиваем
@@ -387,12 +452,45 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     } catch (e) {}
     var url = r.plan === 'yearly' ? CHECKOUT_URL_YEAR : CHECKOUT_URL;
     if (!url) { noCheckout(r.plan === 'yearly' ? 'CHECKOUT_URL_YEAR' : 'CHECKOUT_URL'); return; }
-    showOpening(T.opening);
-    markCheckout(r.plan);
+    var busy = showOpening(T.opening);
     /* Вариант — тот, в котором человек проходил квиз в TikTok (он едет в
        ответах), а не тот, что выпал этому браузеру. */
     var v = data && data.f && data.f.v === 'q2' ? 'q2' : 'a';
-    location.replace(checkoutUrl(url, r.plan, v));
+    var toCheckout = function () {
+      markCheckout(r.plan);
+      location.replace(checkoutUrl(url, r.plan, v));
+    };
+    /* Окно Apple Pay открывается только по нажатию, а страница пришла сюда
+       сама. Поэтому вместо автоматического ухода на Stripe Checkout — одна
+       кнопка «Оплатить через Apple Pay». Кошелька нет — как раньше,
+       Checkout. */
+    if (!AW || !AW.enabled()) { toCheckout(); return; }
+    prepareWallet().then(function () {
+      if (!AW.ready(r.plan)) { toCheckout(); return; }
+      if (busy.parentNode) { busy.parentNode.removeChild(busy); }
+      showWalletContinue(T, r.plan, v, toCheckout);
+    });
+  }
+
+  function showWalletContinue(T, plan, v, toCheckout) {
+    var o = document.createElement('div');
+    o.className = 'whelp';
+    o.setAttribute('role', 'dialog');
+    o.setAttribute('aria-modal', 'true');
+    o.innerHTML = '<div class="whelp__card"><h2 class="whelp__t"></h2>' +
+      '<button type="button" class="cta whelp__ok"></button>' +
+      '<button type="button" class="whelp__stay"></button></div>';
+    document.body.appendChild(o);
+    o.querySelector('.whelp__t').textContent = T.cont;
+    var btn = o.querySelector('.whelp__ok');
+    btn.textContent = T.wallet.replace('{w}', AW.kind() || WALLET);
+    btn.addEventListener('click', function () {
+      if (!payWithWallet(plan, v, function () { if (o.parentNode) { o.parentNode.removeChild(o); } })) { toCheckout(); }
+    });
+    var back = o.querySelector('.whelp__stay');
+    back.textContent = T.close;
+    back.addEventListener('click', function () { o.parentNode.removeChild(o); });
+    btn.focus();
   }
 
   /* Совпали IP и грубый отпечаток: запись почти наверняка этого человека,
@@ -454,6 +552,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     o.innerHTML = '<div class="whelp__card"><div class="paybox__spin paybox__spin--light"></div><p class="whelp__busy"></p></div>';
     document.body.appendChild(o);
     o.querySelector('.whelp__busy').textContent = text;
+    return o;
   }
 
   function showContinueBanner(T) {
@@ -495,18 +594,63 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
      выбирают язык письма «создайте пароль» (cf-worker/license-verify.js).
      Формат: <вариант>_<m|y>_<язык>_<случайный id>. На сумму и условия
      метка не влияет. Тот же формат собирает скрипт в <head> index.html. */
-  function checkoutUrl(url, plan, v) {
+  /* Та же метка уходит и в подписку, оформленную через Apple Pay
+     (metadata.ref, см. action subscribe в cf-worker/license-verify.js). */
+  function makeRef(plan, v) {
     var rnd = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
       : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function () { return (Math.random() * 16 | 0).toString(16); });
-    var ref = (v || (V2 ? 'q2' : 'a')) + '_' + (plan === 'yearly' ? 'y' : 'm') + '_' +
+    return (v || (V2 ? 'q2' : 'a')) + '_' + (plan === 'yearly' ? 'y' : 'm') + '_' +
       (/^[a-z]{2}$/.test(window.LANG || '') ? window.LANG : 'en') + '_' + rnd;
-    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'client_reference_id=' + ref;
+  }
+  function checkoutUrl(url, plan, v) {
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'client_reference_id=' + makeRef(plan, v);
+  }
+
+  /* --- Apple Pay / Google Pay в одно касание (js/wallet.js) ---------------
+     Кнопка на пейволле сразу открывает системное окно оплаты, без
+     страницы Stripe Checkout. Окно готовится заранее (prepareWallet — на
+     превью и пейволле): браузер показывает его только синхронно в ответ на
+     нажатие, ждать загрузки в момент нажатия нельзя. Не готово (нет
+     кошелька, Stripe.js не загрузился, ключ не задан) — Checkout, как
+     раньше. Оплата не прошла — следующее нажатие ведёт на Checkout, где
+     можно ввести карту. */
+  var AW = window.AstroWallet;
+  var walletFailed = false;
+  function prepareWallet() {
+    if (!AW || !AW.enabled()) { return Promise.resolve({}); }
+    return AW.prepare({
+      monthly: 'AstroMap \u00B7 ' + C.paywall.planTitle,
+      yearly: 'AstroMap \u00B7 ' + C.recovery.yearTitle
+    });
+  }
+  function payWithWallet(plan, v, onDone) {
+    if (!AW || walletFailed) { return false; }
+    var shown = AW.pay(plan, {
+      ref: makeRef(plan, v),
+      onSuccess: function (sub) {
+        if (onDone) { onDone(); }
+        markCheckout(plan);
+        track('ap_ok');
+        var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
+        showOpening(T.doneTitle);
+        window.location.href = 'product/?session_id=' + encodeURIComponent(sub);
+      },
+      onFail: function () {
+        walletFailed = true;
+        track('ap_fail');
+        showNote(C.paywall.payFail || window.COPY_ALL.en.paywall.payFail);
+      },
+      onCancel: function () { track('ap_cancel'); }
+    });
+    if (shown) { track(plan === 'yearly' ? 'ap_y' : 'ap_m'); }
+    return shown;
   }
 
   /* Единая точка ухода на оплату. Внутри TikTok — инструкция «открыть в
-     браузере», в обычном браузере — сразу Stripe. */
+     браузере», в обычном браузере — окно Apple Pay, а без него Stripe. */
   function goCheckout(plan, url) {
     if (window.ASTROMAP_INAPP) { showBrowserHandoff(plan); return; }
+    if (payWithWallet(plan)) { return; }
     markCheckout(plan);
     window.location.href = checkoutUrl(url, plan);
   }
@@ -518,12 +662,16 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     /* Сообщение ставим на ТОТ экран, который сейчас открыт: пейволл и экран
        годового плана — разные секции, и заметка, лежащая в скрытой секции,
        просто не видна — кнопка выглядит сломанной молча. */
+    showNote(C.paywall.checkoutOff);
+    console.warn('astromap: ' + which + ' не заполнен в js/flow.js — кнопка оплаты никуда не ведёт.');
+  }
+
+  function showNote(text) {
     var note = document.querySelector('.scr.is-active .checkout-note');
     if (note) {
-      note.textContent = C.paywall.checkoutOff;
+      note.textContent = text;
       note.classList.remove('hidden');
     }
-    console.warn('astromap: ' + which + ' не заполнен в js/flow.js — кнопка оплаты никуда не ведёт.');
   }
 
   /* --- подстановка статических строк по data-t --------------------------- */
@@ -1925,8 +2073,8 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       }
       return;
     }
-    if (S.screen === 's4') { buildSummary(); pvStart(); go('s5'); return; }
-    if (S.screen === 's5') { buildPaywall(); go('s6'); return; }
+    if (S.screen === 's4') { buildSummary(); pvStart(); prepareWallet(); go('s5'); return; }
+    if (S.screen === 's5') { buildPaywall(); prepareWallet(); go('s6'); return; }
     if (S.screen === 's6') {
       /* Нажатие считаем здесь, а не в goCheckout: туда же приходит
          продолжение оплаты из TikTok в Safari, и нажатие посчиталось бы
@@ -2110,11 +2258,17 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
      помощники и строку согласия: берёт их отсюда. Всё остальное у него своё,
      и экраны s1–s7 в его варианте не открываются вовсе. */
   window.AstroFlow = {
-    v2: V2, track: track, deg: deg, goCheckout: goCheckout, noCheckout: noCheckout,
+    v2: V2, track: track, deg: deg, goCheckout: goCheckout, noCheckout: noCheckout, prepareWallet: prepareWallet,
     checkoutUrl: CHECKOUT_URL, checkoutUrlYear: CHECKOUT_URL_YEAR,
     legalHtml: legalHtml, discHtml: discHtml, priceHtml: priceHtml,
     daysIn: daysIn, dateValid: dateValid
   };
+
+  /* Решается до квиза: под инструкцией первый экран не считается. */
+  if (startGateWanted()) { window.ASTROMAP_INAPP_GATE = true; }
+  /* Открыли ссылку из профиля TikTok уже в настоящем браузере — «перешли
+     из TikTok» на /stats. Раз на вкладку, как любой шаг. */
+  if (!window.ASTROMAP_INAPP && /[?&]src=tiktok(&|$)/.test(location.search)) { track('tt_open'); }
 
   if (V2) {
     /* Экраны прежней воронки закрыты сразу, до первой отрисовки: s1
@@ -2126,8 +2280,11 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     /* Первый экран открыт без go(). Пришедший из TikTok в Safari считается,
        только когда выяснилось, что он не продолжает оплату, начатую в
        TikTok (fallback в arrivalFromTikTok): тот человек уже посчитан. */
-    if (!window.ASTROMAP_TT_ARRIVAL) { track('s1'); }
+    if (!window.ASTROMAP_TT_ARRIVAL && !window.ASTROMAP_INAPP_GATE) { track('s1'); }
   }
+  if (window.ASTROMAP_INAPP_GATE) { showStartGate(); }
+  /* Вернулись с ошибкой оплаты или по «Назад» — окно готовим заново. */
+  if (!V2 && (S.screen === 's5' || S.screen === 's6' || S.screen === 's7')) { prepareWallet(); }
 
   if (window.ASTROMAP_TT_ARRIVAL) { arrivalFromTikTok(); }
   /* «Назад» со страницы Stripe: Safari достаёт страницу из кэша вместе с

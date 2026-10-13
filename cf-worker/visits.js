@@ -148,6 +148,20 @@ var FUNNEL_STEPS = {
   paid_m:  'Оплатили месяц',
   paid_y:  'Оплатили год',
 
+  /* Вход из TikTok: инструкция «открыть в браузере» стоит на входе в
+     воронку (showStartGate в funnel/js/flow.js), а не перед оплатой. */
+  tt_gate: 'TikTok: на входе показали «открыть в браузере»',
+  tt_stay: 'TikTok: остались проходить внутри TikTok',
+  tt_open: 'Открыли ссылку из TikTok в браузере',
+  /* Оплата в одно касание (funnel/js/wallet.js). paid_w считает вебхук
+     (invoice.paid по подписке с metadata.source = wallet), ap_ok — страница. */
+  ap_m:      'Apple Pay: открыли окно (месяц)',
+  ap_y:      'Apple Pay: открыли окно (год)',
+  ap_cancel: 'Apple Pay: закрыли окно, не оплатив',
+  ap_fail:   'Apple Pay: оплата не прошла',
+  ap_ok:     'Apple Pay: оплата прошла (по странице)',
+  paid_w:    'Оплатили через Apple Pay / Google Pay',
+
   /* Эксперимент: прежняя воронка ('a', шаги выше) против квиза v2 ('q2').
      Оплаты по вариантам — по client_reference_id на ссылке чекаута,
      которую Stripe возвращает в вебхуке (см. stripeWebhook). */
@@ -371,7 +385,14 @@ async function handoff(request, env, action) {
    Вариант эксперимента и план воронка кладёт в client_reference_id:
    <вариант>_<m|y>_<язык>_<uuid> (см. checkoutUrl в funnel/js/flow.js).
    Без него (прямая ссылка) оплата считается в общие paid_m/paid_y по
-   интервалу из metadata.plan ссылки, если он там есть, иначе — месяц. */
+   интервалу из metadata.plan ссылки, если он там есть, иначе — месяц.
+
+   Оплата через Apple Pay прямо на пейволле (funnel/js/wallet.js) идёт без
+   Checkout, поэтому её ловит второе событие — invoice.paid с
+   billing_reason = subscription_create по подписке с metadata.source =
+   wallet; метка та же, в metadata.ref. Его нужно добавить в этот же
+   эндпоинт (Developers → Webhooks → эндпоинт → Add events). Подписки из
+   Checkout тоже присылают invoice.paid — их отсекает source. */
 async function stripeSignatureOk(secret, header, raw) {
   var t = null, sigs = [];
   String(header || '').split(',').forEach(function (part) {
@@ -401,16 +422,29 @@ async function stripeWebhook(request, env) {
   }
   var event;
   try { event = JSON.parse(raw); } catch (e) { return new Response('bad json', { status: 400 }); }
-  if (event.type !== 'checkout.session.completed' || !event.livemode) { return new Response('ok'); }
+  if (!event.livemode) { return new Response('ok'); }
   var s = (event.data && event.data.object) || {};
-  if (s.mode && s.mode !== 'subscription') { return new Response('ok'); }
-  var ref = String(s.client_reference_id || '').split('_');
-  var plan = ref[1] || (s.metadata && /^y/i.test(s.metadata.plan || '') ? 'y' : 'm');
+  if (event.type === 'checkout.session.completed') {
+    if (s.mode && s.mode !== 'subscription') { return new Response('ok'); }
+    await countPaid(env, s.client_reference_id, s.metadata && s.metadata.plan);
+  } else if (event.type === 'invoice.paid' && s.billing_reason === 'subscription_create') {
+    /* Где лежат метаданные подписки, зависит от версии API эндпоинта. */
+    var md = (s.subscription_details && s.subscription_details.metadata) ||
+      (s.parent && s.parent.subscription_details && s.parent.subscription_details.metadata) || {};
+    if (md.source !== 'wallet') { return new Response('ok'); }
+    await addStep(env, 'paid_w');
+    await countPaid(env, md.ref, md.plan);
+  }
+  return new Response('ok');
+}
+
+async function countPaid(env, clientRef, planHint) {
+  var ref = String(clientRef || '').split('_');
+  var plan = ref[1] || (/^y/i.test(planHint || '') ? 'y' : 'm');
   var per = plan === 'y' ? 'y' : 'm';
   await addStep(env, 'paid_' + per);
   var variant = ref[0] || '';
   if (variant === 'q2' || variant === 'a') { await addStep(env, variant + '_paid_' + per); }
-  return new Response('ok');
 }
 
 function esc(t) {
@@ -1016,6 +1050,32 @@ function quizSection(f, opt) {
       'На малых числах доли сильно прыгают от одного человека.</p></section>';
 }
 
+/* Вход из TikTok и Apple Pay: сколько увидели инструкцию «открыть в
+   браузере» на входе, сколько дошли до браузера и как работает окно
+   Apple Pay на пейволле. */
+function ttSection(f) {
+  var gate = f.tt_gate || 0, open = f.tt_open || 0, stay = f.tt_stay || 0;
+  var sheet = (f.ap_m || 0) + (f.ap_y || 0);
+  if (!gate && !open && !sheet) { return ''; }
+  function tile(k, v, s) {
+    return '<div class="tile"><div class="k">' + esc(k) + '</div><div class="v">' + v + '</div><div class="s">' + s + '</div></div>';
+  }
+  return '<section id="tiktok"><h2>Из TikTok в браузер</h2>' +
+    '<p class="sub">Инструкция «••• → Открыть в браузере» показывается сразу при входе по ссылке из профиля TikTok.</p>' +
+    '<div class="tiles">' +
+      tile('Увидели инструкцию', gate, 'вкладок открыли сайт внутри TikTok') +
+      tile('Перешли в браузер', open, gate ? pct(open, gate) + ' от увидевших инструкцию' : 'открыли ссылку из TikTok в Safari/Chrome') +
+      tile('Остались в TikTok', stay, gate ? pct(stay, gate) + ' нажали «продолжить в TikTok»' : '—') +
+    '</div>' +
+    (sheet ? '<h3>Apple Pay / Google Pay на пейволле</h3><div class="tiles">' +
+      tile('Открыли окно оплаты', sheet, 'месяц — ' + (f.ap_m || 0) + ', год — ' + (f.ap_y || 0)) +
+      tile('Оплатили', f.paid_w || 0, pct(f.paid_w || 0, sheet) + ' от открывших окно, по вебхуку Stripe') +
+      tile('Закрыли окно', f.ap_cancel || 0, (f.ap_fail ? 'ещё ' + f.ap_fail + ' — банк отказал' : 'без оплаты')) +
+    '</div>' : '') +
+    '<p class="note">«Перешли в браузер» считает и тех, кто открыл ссылку из TikTok в браузере уже на пейволле, ' +
+      'и повторные открытия в новой вкладке. Числа — вкладки, а не люди.</p></section>';
+}
+
 /* Прежняя воронка рядом с квизом — «до/после», а не тест: за это время
    меняются трафик и креативы. */
 function oldCompare(f) {
@@ -1168,6 +1228,7 @@ function statsPage(url, P, rows, bySource, funnel, byCountry, ccSince) {
     '</div>';
 
   /* Квиз — основная воронка, прежняя — свёрнутым архивом ниже. */
+  html += ttSection(ccFunnel);
   html += quizSection(ccFunnel, { cc: cc, byCountry: byCountry, key: key, days: days, pq: P.pq });
 
   /* Откуда приходят. */

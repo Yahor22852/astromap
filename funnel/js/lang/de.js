@@ -203,9 +203,15 @@
         contBtn: 'Zahlung fortsetzen',
         doneTitle: 'Zahlung abgeschlossen ✓',
         doneText: 'Dein Zugangsschlüssel ist schon eingetragen – leg nur noch ein Passwort fest.',
-        doneBtn: 'Zugang öffnen'
+        doneBtn: 'Zugang öffnen',
+        sBadge: 'Dauert 5 Sekunden',
+        sTitle: 'Öffne AstroMap im Browser',
+        sSub: 'TikTok erlaubt in der App weder Zahlungen noch {w}. Im Browser wird deine Karte genauso berechnet, und der Zugang öffnet sich mit einem Tippen.',
+        sStep3: 'AstroMap öffnet sich — fang direkt dort an',
+        sStay: 'In TikTok weitermachen'
       },
-      checkoutOff: 'Zahlungen sind noch nicht angebunden. Deine Angaben sind gespeichert — komm gleich wieder.'
+      checkoutOff: 'Zahlungen sind noch nicht angebunden. Deine Angaben sind gespeichert — komm gleich wieder.',
+      payFail: 'Die Zahlung ist nicht durchgegangen. Tippe noch einmal auf den Button, um mit Karte zu zahlen.'
     },
 
     recovery: {

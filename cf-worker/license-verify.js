@@ -20,14 +20,29 @@
       такое же письмо «создайте пароль» — на случай, если человек закрыл
       вкладку, не дойдя до гейта.
    6. portal — ссылка в Stripe Customer Portal (отмена, смена карты, чеки).
+   7. subscribe — оплата в одно касание через Apple Pay / Google Pay прямо
+      на пейволле (funnel/js/wallet.js), без Stripe Checkout. Страница
+      присылает платёжный метод из окна кошелька, здесь заводится клиент и
+      подписка на этот метод, и человек уходит на
+        https://astromap.me/product/?session_id=<sub_…>
+      — дальше всё как после Checkout: claim_info / claim принимают и
+      cs_…, и sub_… (только подписки с metadata.source = wallet). Письмо
+      «создайте пароль» шлёт сам subscribe — вебхука checkout здесь нет.
+      Принимаются только методы из Apple Pay / Google Pay: обычную карту
+      через этот вход не провести, и подбирать по нему краденые карты
+      бессмысленно.
 
    ДЕПЛОЙ: вручную через дашборд Cloudflare (Workers & Pages → этот воркер →
    Edit code → вставить файл целиком → Deploy). Settings → Variables:
 
      STRIPE_SECRET_KEY      Secret. Лучше restricted key (Developers → API
                             keys → Create restricted key) с правами:
-                            Customers — Read, Checkout Sessions — Read,
-                            Subscriptions — Read, Customer portal — Write.
+                            Customers — Write, Checkout Sessions — Read,
+                            Subscriptions — Write, Customer portal — Write,
+                            PaymentMethods — Write, Invoices — Read,
+                            PaymentIntents — Read. (Write на клиентов,
+                            подписки и методы — для Apple Pay, action
+                            subscribe; без Apple Pay хватает Read.)
                             sk_test_… для теста, sk_live_… для продажи.
      STRIPE_WEBHOOK_SECRET  Secret, whsec_… — Developers → Webhooks → Add
                             endpoint: https://<этот воркер>/stripe/webhook,
@@ -38,6 +53,14 @@
                             подтверждён в Resend → Domains).
      MAIL_FROM              Обычная переменная, например
                             AstroMap <hello@astromap.me>
+     STRIPE_PRICE_MONTHLY   Обычная переменная, price_… месячной цены
+     STRIPE_PRICE_YEARLY    Обычная переменная, price_… годовой цены
+                            (Product catalog → AstroMap → цена → ID).
+                            Нужны только для Apple Pay (subscribe).
+     STRIPE_AUTOMATIC_TAX   Необязательно. 1 — Stripe Tax считает налог
+                            сверху (как на Payment Links с «Collect tax
+                            automatically»). Окно Apple Pay показывает сумму
+                            без налога, поэтому лучше цены с налогом внутри.
      KV namespace ACCOUNTS  Settings → Bindings → KV namespace, имя
                             переменной ACCOUNTS (тот же, что был).
 
@@ -50,6 +73,11 @@
      reset_info    { token }                   → { ok, ready, email }
      reset         { token, password }         → доступ
      portal        { token }                   → { ok, url }
+     subscribe     { plan, paymentMethod, email, ref }
+                   → { ok, status: 'active', subscription }
+                     | { ok, status: 'requires_action', clientSecret, subscription }
+                     | { ok: false, reason: 'card_declined' | 'wallet_only' | … }
+     subscribe_check { subscription }          → { ok, status }
    Доступ: { ok: true, active: true, email, plan, token }
        или { ok: true, active: false, reason }
    reason: 'not_found' | 'subscription_ended' | 'no_account' |
@@ -84,12 +112,17 @@ function json(obj, status) {
 }
 
 /* --- Stripe API ---------------------------------------------------------- */
-async function stripe(env, method, path, params) {
+async function stripe(env, method, path, params, opt) {
   var url = STRIPE_API + path;
   var init = {
     method: method,
     headers: { 'Authorization': 'Bearer ' + env.STRIPE_SECRET_KEY }
   };
+  /* version — версия API для запроса (ответы подписок отличаются между
+     версиями), idem — Idempotency-Key: повтор того же запроса не заведёт
+     второго клиента или вторую подписку. */
+  if (opt && opt.version) { init.headers['Stripe-Version'] = opt.version; }
+  if (opt && opt.idem) { init.headers['Idempotency-Key'] = opt.idem; }
   if (params) {
     var form = new URLSearchParams();
     Object.keys(params).forEach(function (k) { form.append(k, params[k]); });
@@ -365,6 +398,7 @@ function parseRef(ref) {
 function strField(body, k) { return typeof body[k] === 'string' ? body[k].trim() : ''; }
 
 async function getPaidSession(env, sessionId) {
+  if (/^sub_[A-Za-z0-9]{10,200}$/.test(sessionId)) { return getWalletSub(env, sessionId); }
   if (!/^cs_(test|live)_[A-Za-z0-9]{10,200}$/.test(sessionId)) { return null; }
   try {
     var s = await stripe(env, 'GET', '/checkout/sessions/' + sessionId);
@@ -374,6 +408,101 @@ async function getPaidSession(env, sessionId) {
     return { paid: paid, email: email, customer: typeof s.customer === 'string' ? s.customer : (s.customer && s.customer.id),
       created: (s.created || 0) * 1000, ref: s.client_reference_id };
   } catch (e) { return null; }
+}
+
+/* --- Apple Pay / Google Pay в одно касание ------------------------------ */
+var WALLET_API_VERSION = '2024-06-20';
+var SUB_PAID = { active: 1, trialing: 1 };
+
+/* Подписка, оформленная через subscribe, — вместо сессии Checkout. */
+async function getWalletSub(env, subId) {
+  try {
+    var sub = await stripe(env, 'GET', '/subscriptions/' + subId, { 'expand[]': 'customer' },
+      { version: WALLET_API_VERSION });
+    if (!sub.metadata || sub.metadata.source !== 'wallet') { return null; }
+    var cus = sub.customer && typeof sub.customer === 'object' ? sub.customer : null;
+    return { paid: !!SUB_PAID[sub.status], email: (cus && cus.email) || '',
+      customer: cus ? cus.id : sub.customer, created: (sub.created || 0) * 1000, ref: sub.metadata.ref || '' };
+  } catch (e) { return null; }
+}
+
+/* Письмо «создайте пароль» — один раз на подписку и только если у почты
+   пароля ещё нет (как вебхук после Checkout). */
+async function welcomeOnce(env, subId, email, ref) {
+  if (!email || !env.ACCOUNTS) { return; }
+  if (await env.ACCOUNTS.get('wmail:' + subId)) { return; }
+  await env.ACCOUNTS.put('wmail:' + subId, '1', { expirationTtl: 30 * 24 * 3600 });
+  var acct = await loadAcct(env, email);
+  if (!acct || !acct.hash) {
+    try { await sendLinkMail(env, (acct && acct.email) || email, 'welcome', parseRef(ref).lang); } catch (e) {}
+  }
+}
+
+async function handleSubscribe(env, body, ctx) {
+  if (!env.STRIPE_PRICE_MONTHLY || !env.STRIPE_PRICE_YEARLY) { return json({ ok: false, reason: 'not_configured' }, 503); }
+  var plan = body.plan === 'yearly' ? 'yearly' : (body.plan === 'monthly' ? 'monthly' : '');
+  var pm = strField(body, 'paymentMethod');
+  var email = strField(body, 'email');
+  var ref = strField(body, 'ref');
+  if (!plan || !/^pm_[A-Za-z0-9]{8,200}$/.test(pm)) { return json({ ok: false, reason: 'missing_fields' }, 400); }
+  if (!/^[A-Za-z0-9_-]{0,200}$/.test(ref)) { ref = ''; }
+  var v = WALLET_API_VERSION;
+  var sub;
+  try {
+    var method = await stripe(env, 'GET', '/payment_methods/' + pm, null, { version: v });
+    var wallet = method.card && method.card.wallet && method.card.wallet.type;
+    if (wallet !== 'apple_pay' && wallet !== 'google_pay') { return json({ ok: false, reason: 'wallet_only' }, 400); }
+    email = email || (method.billing_details && method.billing_details.email) || '';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { return json({ ok: false, reason: 'no_email' }, 400); }
+    var cp = {
+      email: email, payment_method: pm, 'invoice_settings[default_payment_method]': pm,
+      'metadata[ref]': ref, 'metadata[source]': 'wallet'
+    };
+    var addr = method.billing_details && method.billing_details.address;
+    var tax = env.STRIPE_AUTOMATIC_TAX === '1';
+    if (tax && addr && addr.country) {
+      cp['address[country]'] = addr.country;
+      if (addr.postal_code) { cp['address[postal_code]'] = addr.postal_code; }
+    }
+    var customer = await stripe(env, 'POST', '/customers', cp, { version: v, idem: 'am-cus-' + pm });
+    var sp = {
+      customer: customer.id,
+      'items[0][price]': plan === 'yearly' ? env.STRIPE_PRICE_YEARLY : env.STRIPE_PRICE_MONTHLY,
+      default_payment_method: pm,
+      payment_behavior: 'allow_incomplete',
+      'expand[0]': 'latest_invoice.payment_intent',
+      'metadata[ref]': ref, 'metadata[source]': 'wallet', 'metadata[plan]': plan
+    };
+    if (tax) { sp['automatic_tax[enabled]'] = 'true'; }
+    sub = await stripe(env, 'POST', '/subscriptions', sp, { version: v, idem: 'am-sub-' + pm });
+  } catch (e) {
+    if (e.status === 402) { return json({ ok: false, reason: 'card_declined' }); }
+    return json({ ok: false, reason: 'upstream_error' }, 502);
+  }
+  if (SUB_PAID[sub.status]) {
+    var mail = welcomeOnce(env, sub.id, email, ref);
+    if (ctx && ctx.waitUntil) { ctx.waitUntil(mail); } else { await mail; }
+    return json({ ok: true, status: 'active', subscription: sub.id });
+  }
+  var pi = sub.latest_invoice && sub.latest_invoice.payment_intent;
+  if (sub.status === 'incomplete' && pi && pi.status === 'requires_action') {
+    return json({ ok: true, status: 'requires_action', clientSecret: pi.client_secret, subscription: sub.id });
+  }
+  /* Банк отказал: незавершённую подписку не оставляем висеть 23 часа. */
+  try { await stripe(env, 'DELETE', '/subscriptions/' + sub.id, null, { version: v }); } catch (e) {}
+  return json({ ok: false, reason: 'card_declined' });
+}
+
+/* После 3-D Secure: подписка стала активной? */
+async function handleSubscribeCheck(env, body, ctx) {
+  var subId = strField(body, 'subscription');
+  if (!/^sub_[A-Za-z0-9]{10,200}$/.test(subId)) { return json({ ok: false, reason: 'missing_fields' }, 400); }
+  var s = await getWalletSub(env, subId);
+  if (!s) { return json({ ok: false, reason: 'bad_link' }); }
+  if (!s.paid) { return json({ ok: true, status: 'incomplete' }); }
+  var mail = welcomeOnce(env, subId, s.email, s.ref);
+  if (ctx && ctx.waitUntil) { ctx.waitUntil(mail); } else { await mail; }
+  return json({ ok: true, status: 'active', subscription: subId });
 }
 
 async function handleClaimInfo(env, body) {
@@ -559,7 +688,7 @@ async function handleWebhook(request, env) {
 }
 
 /* --- маршрутизация -------------------------------------------------------- */
-async function handle(request, env) {
+async function handle(request, env, ctx) {
   var url = new URL(request.url);
   if (request.method === 'POST' && url.pathname === '/stripe/webhook') {
     return handleWebhook(request, env);
@@ -587,12 +716,14 @@ async function handle(request, env) {
     case 'reset_info': return handleResetInfo(env, body);
     case 'reset': return handleReset(env, body);
     case 'portal': return handlePortal(env, body);
+    case 'subscribe': return handleSubscribe(env, body, ctx);
+    case 'subscribe_check': return handleSubscribeCheck(env, body, ctx);
     default: return json({ ok: false, reason: 'unknown_action' }, 400);
   }
 }
 
 export default {
-  async fetch(request, env) {
-    return handle(request, env);
+  async fetch(request, env, ctx) {
+    return handle(request, env, ctx);
   }
 };
