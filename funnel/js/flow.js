@@ -450,47 +450,16 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
         localStorage.setItem('astromap.lang', data.l);
       }
     } catch (e) {}
-    var url = r.plan === 'yearly' ? CHECKOUT_URL_YEAR : CHECKOUT_URL;
-    if (!url) { noCheckout(r.plan === 'yearly' ? 'CHECKOUT_URL_YEAR' : 'CHECKOUT_URL'); return; }
-    var busy = showOpening(T.opening);
-    /* Вариант — тот, в котором человек проходил квиз в TikTok (он едет в
-       ответах), а не тот, что выпал этому браузеру. */
-    var v = data && data.f && data.f.v === 'q2' ? 'q2' : 'a';
-    var toCheckout = function () {
-      markCheckout(r.plan);
-      location.replace(checkoutUrl(url, r.plan, v));
-    };
-    /* Окно Apple Pay открывается только по нажатию, а страница пришла сюда
-       сама. Поэтому вместо автоматического ухода на Stripe Checkout — одна
-       кнопка «Оплатить через Apple Pay». Кошелька нет — как раньше,
-       Checkout. */
-    if (!AW || !AW.enabled()) { toCheckout(); return; }
-    prepareWallet().then(function () {
-      if (!AW.ready(r.plan)) { toCheckout(); return; }
-      if (busy.parentNode) { busy.parentNode.removeChild(busy); }
-      showWalletContinue(T, r.plan, v, toCheckout);
-    });
-  }
-
-  function showWalletContinue(T, plan, v, toCheckout) {
-    var o = document.createElement('div');
-    o.className = 'whelp';
-    o.setAttribute('role', 'dialog');
-    o.setAttribute('aria-modal', 'true');
-    o.innerHTML = '<div class="whelp__card"><h2 class="whelp__t"></h2>' +
-      '<button type="button" class="cta whelp__ok"></button>' +
-      '<button type="button" class="whelp__stay"></button></div>';
-    document.body.appendChild(o);
-    o.querySelector('.whelp__t').textContent = T.cont;
-    var btn = o.querySelector('.whelp__ok');
-    btn.textContent = T.wallet.replace('{w}', AW.kind() || WALLET);
-    btn.addEventListener('click', function () {
-      if (!payWithWallet(plan, v, function () { if (o.parentNode) { o.parentNode.removeChild(o); } })) { toCheckout(); }
-    });
-    var back = o.querySelector('.whelp__stay');
-    back.textContent = T.close;
-    back.addEventListener('click', function () { o.parentNode.removeChild(o); });
-    btn.focus();
+    /* Никакого автоматического ухода на Stripe Checkout: окно Apple Pay
+       браузер открывает только по нажатию, а запись могла оказаться и
+       чужой (два одинаковых телефона в одном Wi-Fi). Ответы восстановлены —
+       открываем воронку сразу на пейволле нужного плана, дальше человек
+       сам жмёт кнопку, и всплывает Apple Pay. Адрес без ?src=tiktok, чтобы
+       эта же проверка не сработала снова; ?funnel — без переадресации на
+       гейт продукта. */
+    try { sessionStorage.setItem('astromap.q2.step', r.plan === 'yearly' ? 'year' : 'pay'); } catch (e) {}
+    showOpening(T.opening);
+    location.replace(location.pathname + '?funnel');
   }
 
   /* Совпали IP и грубый отпечаток: запись почти наверняка этого человека,

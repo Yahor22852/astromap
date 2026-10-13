@@ -112,19 +112,15 @@
       if (data && data.f && data.f.dob && data.f.dob.y) {
         localStorage.setItem('astromap.funnel', JSON.stringify(data.f));
       }
-      var variant = data && data.f && data.f.v === 'q2' ? 'q2' : 'a';
       if (data && LANGS.indexOf(data.l) >= 0) { localStorage.setItem('astromap.lang', data.l); lang = data.l; }
     }
-    localStorage.setItem('astromap.checkout', JSON.stringify({ plan: plan, at: Date.now() }));
-    sessionStorage.setItem('astromap.checkoutTab', '1');
     /* Этот переход — не новый заход по ссылке, а продолжение того же. */
     sessionStorage.setItem('astromap.visit', '1');
     window.ASTROMAP_HANDOFF = true;
-    history.replaceState(null, '', location.pathname);
-    /* Метка для вебхука Stripe — тот же формат, что checkoutUrl() в flow.js. */
-    var ref = (typeof variant === 'string' ? variant : 'a') + '_' + (plan === 'yearly' ? 'y' : 'm') + '_' + lang + '_' +
-      (window.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
-    location.replace(CHECKOUT[plan] + (CHECKOUT[plan].indexOf('?') >= 0 ? '&' : '?') + 'client_reference_id=' + ref);
+    /* Не на Stripe Checkout, а на пейволл нужного плана: оплата — окном
+       Apple Pay по кнопке (js/wallet.js). */
+    sessionStorage.setItem('astromap.q2.step', plan === 'yearly' ? 'year' : 'pay');
+    location.replace(location.pathname + '?funnel');
   } catch (e) { /* битая ссылка — просто показываем воронку */ }
 })();
 </script>
