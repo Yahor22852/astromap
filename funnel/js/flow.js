@@ -688,6 +688,8 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       return;
     }
     if (payWithWallet(plan)) { return; }
+    /* Окно должно было открыться, но не готово — для /stats. */
+    if (AW && AW.enabled() && !walletFailed) { track('ap_fallback'); }
     markCheckout(plan);
     window.location.href = checkoutUrl(url, plan);
   }
@@ -2322,6 +2324,18 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     if (!window.ASTROMAP_TT_ARRIVAL && !window.ASTROMAP_INAPP_GATE) { track('s1'); }
   }
   if (window.ASTROMAP_INAPP_GATE) { showStartGate(); }
+  /* Окно Apple Pay готовим сразу, а не на превью: Stripe.js и проверка
+     кошелька занимают секунду-две, и нажавший «оплатить» раньше ушёл бы на
+     Checkout. Небольшая пауза — чтобы не мешать первой отрисовке.
+     Для /stats: ap_ready — окно готово, ap_unready — Stripe ответил «нет
+     Apple/Google Pay» (кошелёк пуст, домен, браузер). */
+  if (AW && AW.enabled()) {
+    setTimeout(function () {
+      prepareWallet().then(function (r) {
+        track(r && (r.monthly || r.yearly) ? 'ap_ready' : 'ap_unready');
+      });
+    }, 600);
+  }
   /* Вернулись с ошибкой оплаты или по «Назад» — окно готовим заново. */
   if (!V2 && (S.screen === 's5' || S.screen === 's6' || S.screen === 's7')) { prepareWallet(); }
 

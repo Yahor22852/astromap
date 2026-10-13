@@ -162,6 +162,9 @@ var FUNNEL_STEPS = {
   ap_fail:   'Apple Pay: оплата не прошла',
   ap_ok:     'Apple Pay: оплата прошла (по странице)',
   paid_w:    'Оплатили через Apple Pay / Google Pay',
+  ap_ready:    'Apple Pay: окно готово на странице',
+  ap_unready:  'Apple Pay: Stripe ответил «кошелька нет»',
+  ap_fallback: 'Apple Pay: окно не готово, ушли на Checkout',
 
   /* Эксперимент: прежняя воронка ('a', шаги выше) против квиза v2 ('q2').
      Оплаты по вариантам — по client_reference_id на ссылке чекаута,
@@ -1069,6 +1072,11 @@ function ttSection(f) {
       tile('Остались в TikTok', stay, gate ? pct(stay, gate) + ' нажали «продолжить в TikTok»' : '—') +
       tile('Apple Pay прямо в TikTok', inpay, 'инструкцию не показывали — платят внутри') +
     '</div>' +
+    ((f.ap_ready || f.ap_unready) ? '<h3>Готовность окна Apple Pay / Google Pay</h3><div class="tiles">' +
+      tile('Окно готово', f.ap_ready || 0, 'вкладок, где Stripe подтвердил кошелёк') +
+      tile('Кошелька нет', f.ap_unready || 0, 'Stripe ответил «нет Apple/Google Pay»') +
+      tile('Ушли на Checkout', f.ap_fallback || 0, 'нажали «оплатить», окно не было готово') +
+    '</div>' : '') +
     (sheet ? '<h3>Apple Pay / Google Pay на пейволле</h3><div class="tiles">' +
       tile('Открыли окно оплаты', sheet, 'месяц — ' + (f.ap_m || 0) + ', год — ' + (f.ap_y || 0)) +
       tile('Оплатили', f.paid_w || 0, pct(f.paid_w || 0, sheet) + ' от открывших окно, по вебхуку Stripe') +

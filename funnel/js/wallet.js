@@ -79,25 +79,17 @@ var PAY_API = 'https://astromap-license-verify.egorrut3030.workers.dev';
       country: STRIPE_COUNTRY,
       currency: WALLET_CURRENCY,
       total: { label: label, amount: amount },
+      displayItems: [{ label: label, amount: amount }],
       requestPayerEmail: true,
+      requestPayerName: true,
       /* Только системные кошельки: Link и сохранённые в браузере карты
          открывают не окно Apple/Google Pay, а свою форму. */
       disableWallets: ['link', 'browserCard']
     };
-    /* В окне Apple Pay — «подписка, каждый месяц / год» и где ей управлять. */
-    try {
-      return stripe.paymentRequest(Object.assign({}, base, { applePay: { recurringPaymentRequest: {
-        paymentDescription: label,
-        managementURL: 'https://astromap.me/product/',
-        regularBilling: {
-          amount: amount, label: label,
-          recurringPaymentIntervalUnit: plan === 'yearly' ? 'year' : 'month',
-          recurringPaymentIntervalCount: 1
-        }
-      } } }));
-    } catch (e) {
-      return stripe.paymentRequest(base);
-    }
+    /* Без applePay.recurringPaymentRequest: с ним на iPhone окно не
+       появлялось, а у сайта-образца (то же stripe.paymentRequest, окно
+       открывается и внутри TikTok) его нет. */
+    return stripe.paymentRequest(base);
   }
 
   /* Готовит оба запроса и узнаёт, есть ли кошелёк. Повторные вызовы
