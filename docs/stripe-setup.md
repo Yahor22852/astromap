@@ -131,36 +131,39 @@ Edit code → вставить `cf-worker/visits.js` целиком → Deploy. 
 
 Кнопка на пейволле сразу открывает окно Apple Pay (iPhone, Safari на Mac)
 или Google Pay (Android). Пока не сделаны шаги ниже, `STRIPE_PK` пустой и
-всё работает через Payment Links, как раньше — выкатывать можно в любом
-порядке, но **ключ в `wallet.js` вписывать последним**.
+всё работает через Payment Links, как раньше. **Ключ в `wallet.js` вписывать
+последним.** Пути ниже — по интерфейсу Stripe с Workbench (осень 2026);
+надёжнее всего открывать прямые ссылки.
 
-1. **Домен для Apple Pay.** Stripe → Settings → Payment methods → **Payment
-   method domains** → Add `astromap.me`. Если Stripe попросит файл
-   `apple-developer-merchantid-domain-association` — положить его в
-   `funnel/.well-known/` и выложить, затем нажать Verify. Apple Pay и
-   Google Pay в Settings → Payment methods должны быть включены.
-2. **ID цен.** Product catalog → AstroMap → у каждой цены скопировать
-   `price_…`.
-3. **Воркер `astromap-license-verify`**: вставить новый
-   `cf-worker/license-verify.js` → Deploy. Variables:
-   `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY` (Text, `price_…`).
-   Restricted key: добавить права **Customers — Write, Subscriptions —
-   Write, PaymentMethods — Write, Invoices — Read, PaymentIntents — Read**
-   (или создать новый ключ с ними и заменить `STRIPE_SECRET_KEY`).
-4. **Воркер `astromap-visits`**: вставить новый `cf-worker/visits.js` →
-   Deploy. Вебхук этого воркера (Developers → Webhooks →
-   …/astromap-visits…/stripe/webhook) → **Add events → `invoice.paid`** —
-   по нему считаются оплаты через Apple Pay (в Checkout вебхука нет).
-5. **`funnel/js/wallet.js`**, начало файла: `STRIPE_PK` = publishable key
-   (`pk_live_…`, Developers → API keys), `STRIPE_COUNTRY` — страна
-   аккаунта Stripe (две буквы). `WALLET_PRICES` — суммы в центах, как в
-   Stripe (799 и 2999).
-6. Проверка: на iPhone в Safari пройти квиз → «оплатить» → должно сразу
-   всплыть окно Apple Pay с суммой и «подписка, ежемесячно». После оплаты —
-   `/product/?session_id=sub_…` и форма «придумайте пароль», письмо
-   «Доступ к AstroMap готов». В тестовом режиме — `pk_test_…`, `sk_test_…`
-   и тестовые `price_…`; в тестовом режиме Apple Pay берёт карту из
-   Wallet, но денег не списывает.
+1. **Кошельки включены.** https://dashboard.stripe.com/settings/payment_methods
+   — Apple Pay и Google Pay в состоянии On.
+2. **Домен.** https://dashboard.stripe.com/settings/payment_method_domains →
+   **Add a new domain** → `astromap.me` → **Save and continue**. Файл для
+   Apple и Merchant ID не нужны: проверку Apple Stripe делает сам.
+3. **ID цен.** https://dashboard.stripe.com/products → AstroMap → цена →
+   скопировать `price_…` (месяц и год).
+4. **Права ключа.** https://dashboard.stripe.com/apikeys → Restricted keys →
+   ⋯ у ключа воркера → **Edit key** → Customers **Write**, Subscriptions
+   **Write**, PaymentMethods **Write**, Invoices **Read**, PaymentIntents
+   **Read** → Save. Значение ключа не меняется. Если удобнее новый ключ —
+   ⋯ → **Duplicate key**, добавить права, новый `rk_live_…` — в
+   `STRIPE_SECRET_KEY` воркера.
+5. **Воркер `astromap-license-verify`**: вставить новый
+   `cf-worker/license-verify.js` → Deploy. Variables (Text):
+   `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY`.
+6. **Воркер `astromap-visits`**: вставить новый `cf-worker/visits.js` →
+   Deploy.
+7. **Событие для статистики.** https://dashboard.stripe.com/webhooks (вкладка
+   Webhooks в Workbench) → назначение `…astromap-visits…/stripe/webhook` →
+   редактирование назначения → добавить событие **`invoice.paid`** →
+   сохранить. Формат событий у назначения должен остаться **Snapshot**.
+8. **`funnel/js/wallet.js`**: `STRIPE_PK` — Publishable key `pk_live_…` со
+   страницы https://dashboard.stripe.com/apikeys; `STRIPE_COUNTRY` — страна
+   аккаунта (две буквы).
+9. Проверка: iPhone, Safari, квиз → «оплатить» → сразу окно Apple Pay →
+   `/product/?session_id=sub_…` с формой пароля и письмо «Доступ к AstroMap
+   готов». Проверять боевыми ключами своей картой и вернуть деньги: в
+   sandbox пришлось бы переключать оба воркера на тестовые ключи.
 
 Налог: окно Apple Pay показывает ровно `WALLET_PRICES`. Если в Stripe налог
 считается сверху, сумма в окне и списание разойдутся — для Apple Pay цены
