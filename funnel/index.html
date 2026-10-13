@@ -57,8 +57,25 @@
          navigator.standalone.
        Android — встроенный браузер (WebView) помечен «; wv)». */
   var ua = navigator.userAgent;
-  var INAPP = /musical_ly|bytedance|tiktok|trill_|aweme|bytelocale/i.test(ua) ||
-    (/iPhone|iPad|iPod/.test(ua) && !/Safari\//.test(ua) && navigator.standalone !== true) ||
+  /* Новые версии TikTok на iPhone выдают user-agent, неотличимый от
+     Safari (с «Safari/» и без слов TikTok), — по строке их не узнать, и
+     человек проходил воронку внутри TikTok без инструкции, а оплата
+     уходила на Stripe Checkout. Поэтому на iPhone ещё два признака,
+     которые подделать нельзя:
+       navigator.standalone — свойство есть только у Safari (false во
+         вкладке, true на домашнем экране); во встроенном браузере
+         приложения (WKWebView) его нет вовсе;
+       window.webkit.messageHandlers — мост между страницей и приложением,
+         его есть только у WKWebView приложения.
+     Chrome, Firefox, Edge и другие браузеры на iPhone — тоже WKWebView, их
+     отличает своя метка в user-agent (CriOS, FxiOS, EdgiOS…). */
+  var IOS = /iPhone|iPad|iPod/.test(ua);
+  var IOS_BROWSER = /CriOS|FxiOS|EdgiOS|OPiOS|OPT\/|YaBrowser|DuckDuckGo/.test(ua);
+  var iosWebView = IOS && !IOS_BROWSER && navigator.standalone !== true && (
+    !/Safari\//.test(ua) ||
+    typeof navigator.standalone === 'undefined' ||
+    !!(window.webkit && window.webkit.messageHandlers));
+  var INAPP = /musical_ly|bytedance|tiktok|trill_|aweme|bytelocale/i.test(ua) || iosWebView ||
     (/Android/.test(ua) && /; wv\)/.test(ua));
   /* Проверка без телефона: localStorage.setItem('astromap.qa.inapp', '1')
      в консоли включает тот же режим, removeItem — выключает. */
