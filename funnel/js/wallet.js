@@ -16,11 +16,9 @@
    или STRIPE_PK пуст — pay() возвращает false, и кнопка, как раньше, ведёт
    на Stripe Checkout (Payment Link).
 
-   Встроенные браузеры приложений (TikTok, Instagram) на iPhone — это
-   WKWebView, и Apple Pay в нём есть, если приложение не мешает (iOS 16+).
-   Проверка синхронная — ApplePaySession.canMakePayments(): есть Apple Pay —
-   окно открывается прямо внутри TikTok, без инструкции «открыть в
-   браузере»; нет — инструкция, как раньше (см. showStartGate в flow.js).
+   Внутри TikTok этот модуль выключен: Apple Pay и Google Pay там не
+   открываются, человека на входе встречает инструкция «открыть в
+   браузере» (showStartGate в flow.js).
 
    Настройка — docs/stripe-setup.md, раздел «Apple Pay в одно касание». */
 var STRIPE_PK = 'pk_live_51UNVi70oxMEGhVt9r2m3QuFaihYlijxqSkuNm7CAem9etCFZBecc4UAgF1TggkCRtOVzTobWNrBN81Gclvy6zm7L00hgjltg1Z';                 /* pk_live_… (Developers → API keys → Publishable key).
@@ -39,25 +37,7 @@ var PAY_API = 'https://astromap-license-verify.egorrut3030.workers.dev';
   var req = {}, ready = {}, ctx = null, busy = false;
   var kind = '';
 
-  /* Apple Pay во встроенном браузере приложения. Android WebView Google Pay
-     не поддерживает — там всегда инструкция. */
-  var inAppPay = null;
-  function inApp() {
-    if (inAppPay !== null) { return inAppPay; }
-    inAppPay = false;
-    try {
-      if (STRIPE_PK && window.ASTROMAP_INAPP && window.ApplePaySession &&
-          window.ApplePaySession.canMakePayments()) { inAppPay = true; }
-    } catch (e) { inAppPay = false; }
-    /* Проверка без телефона: localStorage astromap.qa.inapppay = 0 — как
-       будто Apple Pay внутри TikTok нет. */
-    try { if (localStorage.getItem('astromap.qa.inapppay') === '0') { inAppPay = false; } } catch (e) {}
-    return inAppPay;
-  }
-
-  function enabled() {
-    return !!STRIPE_PK && !window.ASTROMAP_FRAMED && (!window.ASTROMAP_INAPP || inApp());
-  }
+  function enabled() { return !!STRIPE_PK && !window.ASTROMAP_INAPP && !window.ASTROMAP_FRAMED; }
 
   function loadStripe() {
     if (loading) { return loading; }
@@ -177,7 +157,6 @@ var PAY_API = 'https://astromap-license-verify.egorrut3030.workers.dev';
 
   window.AstroWallet = {
     enabled: enabled,
-    inApp: inApp,
     prepare: prepare,
     pay: pay,
     ready: function (plan) { return enabled() && !!ready[plan]; },

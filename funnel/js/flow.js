@@ -268,8 +268,6 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   var STAY_KEY = 'astromap.ttstay';
   function startGateWanted() {
     if (!window.ASTROMAP_INAPP || window.ASTROMAP_FRAMED || window.ASTROMAP_HANDOFF) { return false; }
-    /* Apple Pay работает прямо здесь — уводить в браузер незачем. */
-    if (AW && AW.inApp()) { return false; }
     if (/[?&](fpdebug|nogate)(=|&|$)/.test(location.search)) { return false; }
     try { if (sessionStorage.getItem(STAY_KEY)) { return false; } } catch (e) {}
     return true;
@@ -540,7 +538,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
         try { return window.ApplePaySession ? 'yes, canMakePayments=' + window.ApplePaySession.canMakePayments() : 'no'; }
         catch (e) { return 'error ' + (e && e.name); }
       })(),
-      'wallet enabled:      ' + !!(AW && AW.enabled()) + (AW ? ', inApp=' + AW.inApp() : ''),
+      'wallet enabled:      ' + !!(AW && AW.enabled()),
       'wallet ready:        …'
     ];
     box.textContent = lines.join('\n');
@@ -645,9 +643,6 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
         track('ap_ok');
         var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
         var next = 'product/?session_id=' + encodeURIComponent(sub);
-        /* TikTok не пускает переход, который страница делает сама, — внутри
-           него в продукт ведёт кнопка. */
-        if (window.ASTROMAP_INAPP) { showPaidDone(T, next); return; }
         showOpening(T.doneTitle);
         window.location.href = next;
       },
@@ -662,31 +657,11 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     return shown;
   }
 
-  function showPaidDone(T, href) {
-    var o = document.createElement('div');
-    o.className = 'whelp whelp--done';
-    o.setAttribute('role', 'dialog');
-    o.setAttribute('aria-modal', 'true');
-    o.innerHTML = '<div class="whelp__card"><h2 class="whelp__t"></h2><p class="whelp__p"></p>' +
-      '<a class="cta whelp__ok"></a></div>';
-    document.body.appendChild(o);
-    o.querySelector('.whelp__t').textContent = T.doneTitle;
-    o.querySelector('.whelp__p').textContent = T.doneText;
-    var a = o.querySelector('.whelp__ok');
-    a.textContent = T.doneBtn;
-    a.setAttribute('href', href);
-    a.focus();
-  }
-
-  /* Единая точка ухода на оплату. Внутри TikTok — окно Apple Pay, если оно
-     там работает, иначе инструкция «открыть в браузере»; в обычном
-     браузере — окно Apple Pay / Google Pay, а без него Stripe. */
+  /* Единая точка ухода на оплату. Внутри TikTok — инструкция «открыть в
+     браузере», в обычном браузере — окно Apple Pay / Google Pay, а без
+     него Stripe. */
   function goCheckout(plan, url) {
-    if (window.ASTROMAP_INAPP) {
-      if (payWithWallet(plan)) { return; }
-      showBrowserHandoff(plan);
-      return;
-    }
+    if (window.ASTROMAP_INAPP) { showBrowserHandoff(plan); return; }
     if (payWithWallet(plan)) { return; }
     /* Окно должно было открыться, но не готово — для /stats. */
     if (AW && AW.enabled() && !walletFailed) { track('ap_fallback'); }
@@ -2305,8 +2280,6 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
 
   /* Решается до квиза: под инструкцией первый экран не считается. */
   if (startGateWanted()) { window.ASTROMAP_INAPP_GATE = true; }
-  /* Внутри TikTok, но Apple Pay работает на месте — для /stats. */
-  else if (window.ASTROMAP_INAPP && AW && AW.inApp()) { track('tt_inpay'); }
   /* Открыли ссылку из профиля TikTok уже в настоящем браузере — «перешли
      из TikTok» на /stats. Раз на вкладку, как любой шаг. */
   if (!window.ASTROMAP_INAPP && /[?&]src=tiktok(&|$)/.test(location.search)) { track('tt_open'); }
