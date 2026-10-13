@@ -204,11 +204,8 @@
         doneTitle: 'Pagamento concluído ✓',
         doneText: 'Sua chave de acesso já está preenchida — é só criar uma senha.',
         doneBtn: 'Abrir meu acesso',
-        sBadge: 'Leva 5 segundos',
-        sTitle: 'Abra o AstroMap no navegador',
-        sSub: 'O TikTok não permite pagamentos nem {w} dentro do app. No navegador seu mapa é calculado do mesmo jeito, e o acesso abre com um toque.',
-        sStep3: 'O AstroMap abre — comece por lá',
-        sStay: 'Continuar no TikTok'
+        sTitle: 'Abra no navegador',
+        sSub: 'No navegador o AstroMap funciona por completo. São só dois toques.'
       },
       checkoutOff: 'Os pagamentos ainda não estão ligados. Seus dados foram salvos — volte daqui a pouco.',
       payFail: 'O pagamento não foi concluído. Toque no botão de novo para pagar com cartão.'

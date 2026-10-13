@@ -226,8 +226,8 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
      ссылка с ответами в буфер обмена (запасной путь, если в браузере
      окажется другой IP), ответы и план на воркер и полноэкранная
      инструкция, как открыть страницу в браузере. Ответа воркера она не
-     ждёт: пока человек жмёт «•••», запрос успеет. Сюда попадают те, кто
-     на входе выбрал «остаться в TikTok» (см. showStartGate). */
+     ждёт: пока человек жмёт «•••», запрос успеет. Запасной путь: на входе
+     в TikTok и так стоит инструкция (showStartGate). */
   function showBrowserHandoff(plan) {
     var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
     var TE = window.COPY_ALL.en.paywall.inapp;
@@ -256,48 +256,62 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
 
   /* Вход в воронку из встроенного браузера TikTok (ссылка в шапке
      профиля). Оплатить там нельзя — ни Apple Pay, ни Stripe, — поэтому
-     инструкция «••• → Открыть в браузере» стоит не перед оплатой, а сразу
-     на входе: квиз человек проходит уже в Safari/Chrome, и кнопка на
-     пейволле там сразу открывает Apple Pay. Под инструкцией — неяркая
-     ссылка «продолжить в TikTok»: у кого в меню нет «Открыть в браузере»,
-     не застрянет, а на пейволле его встретит прежняя передача оплаты.
+     инструкция «••• → Открыть в браузере» стоит сразу на входе и не
+     закрывается: квиз человек проходит уже в Safari/Chrome, и кнопка на
+     пейволле там сразу открывает Apple Pay. Про оплату на экране ни слова —
+     только логотип, заголовок, строка пояснения и два шага.
 
-     Для /stats: tt_gate — показали инструкцию, tt_stay — остались в
-     TikTok, tt_open — открыли ссылку из профиля в настоящем браузере (его
-     считает загрузка страницы в Safari/Chrome с ?src=tiktok). */
-  var STAY_KEY = 'astromap.ttstay';
+     Для /stats: tt_gate — показали инструкцию, tt_open — открыли ссылку из
+     профиля в настоящем браузере (его считает загрузка страницы в
+     Safari/Chrome с ?src=tiktok). */
   function startGateWanted() {
     if (!window.ASTROMAP_INAPP || window.ASTROMAP_FRAMED || window.ASTROMAP_HANDOFF) { return false; }
     if (/[?&](fpdebug|nogate)(=|&|$)/.test(location.search)) { return false; }
-    try { if (sessionStorage.getItem(STAY_KEY)) { return false; } } catch (e) {}
     return true;
   }
   function showStartGate() {
     var T = C.paywall.inapp || window.COPY_ALL.en.paywall.inapp;
     var TE = window.COPY_ALL.en.paywall.inapp;
     track('tt_gate');
-    browserHelp({
-      badge: T.sBadge || TE.sBadge,
-      title: T.sTitle || TE.sTitle,
-      sub: (T.sSub || TE.sSub).replace('{w}', WALLET),
-      step3: T.sStep3 || TE.sStep3,
-      saved: '',
-      stay: T.sStay || TE.sStay,
-      onStay: function () {
-        try { sessionStorage.setItem(STAY_KEY, '1'); } catch (e) {}
-        window.ASTROMAP_INAPP_GATE = false;
-        track('tt_stay');
-        /* Первый экран, открытый под инструкцией, не считался — считаем
-           его сейчас, когда человек действительно начал здесь. */
-        if (V2) { if (window.AstroQuiz) { window.AstroQuiz.trackCurrent(); } }
-        else { track(S.screen); }
-      }
-    });
+    var g = document.createElement('div');
+    g.className = 'tgate';
+    g.setAttribute('role', 'dialog');
+    g.setAttribute('aria-modal', 'true');
+    g.setAttribute('aria-labelledby', 'tgateT');
+    g.innerHTML =
+      '<div class="tgate__hint" aria-hidden="true">' +
+        '<svg viewBox="0 0 64 64" class="tgate__arrow"><path d="M10 54 C 22 30, 34 18, 52 10" fill="none" ' +
+          'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 7"/>' +
+          '<path d="M41 8.5 L53 9.5 L48.5 21" fill="none" stroke="currentColor" stroke-width="2.4" ' +
+          'stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '<span class="tgate__dots">•••</span>' +
+      '</div>' +
+      '<div class="tgate__body">' +
+        '<div class="tgate__mark" aria-hidden="true"></div>' +
+        '<p class="tgate__brand">AstroMap</p>' +
+        '<h1 class="tgate__t" id="tgateT" tabindex="-1"></h1>' +
+        '<p class="tgate__sub"></p>' +
+        '<ol class="tgate__steps">' +
+          '<li><span class="tgate__n">1</span><span class="tgate__txt"></span>' +
+            '<span class="tgate__ico tgate__ico--dots" aria-hidden="true">•••</span></li>' +
+          '<li><span class="tgate__n">2</span><span class="tgate__txt"></span>' +
+            '<span class="tgate__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" ' +
+            'fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M15.6 8.4 13.3 13.3 8.4 15.6 10.7 10.7Z" ' +
+            'fill="currentColor"/></svg></span></li>' +
+        '</ol>' +
+      '</div>';
+    document.body.appendChild(g);
+    document.body.style.overflow = 'hidden';
+    g.querySelector('.tgate__t').textContent = T.sTitle || TE.sTitle;
+    g.querySelector('.tgate__sub').textContent = T.sSub || TE.sSub;
+    var txt = g.querySelectorAll('.tgate__txt');
+    txt[0].textContent = T.wStep1;
+    txt[1].textContent = T.wStep2;
+    g.querySelector('.tgate__t').focus();
   }
 
-  /* Полноэкранная инструкция «••• → Открыть в браузере». ok — кнопка
-     «Понятно», закрывает; stay — текстовая ссылка «остаться», без ok
-     инструкция не закрывается ничем, кроме неё. */
+  /* Полноэкранная инструкция «••• → Открыть в браузере» перед оплатой;
+     ok — кнопка «Понятно», закрывает. */
   function browserHelp(o) {
     var old = el('walletHelp');
     if (old) { old.parentNode.removeChild(old); }
@@ -332,7 +346,6 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
         '</ol>' +
         (o.saved ? '<p class="whelp__saved" id="whelpSaved"></p>' : '') +
         (o.ok ? '<button type="button" class="cta whelp__ok" id="whelpOk"></button>' : '') +
-        (o.stay ? '<button type="button" class="whelp__stay" id="whelpStay"></button>' : '') +
       '</div>';
     document.body.appendChild(h);
     document.body.style.overflow = 'hidden';
@@ -353,11 +366,6 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
       el('whelpOk').textContent = o.ok;
       el('whelpOk').addEventListener('click', close);
       el('whelpOk').focus();
-    }
-    if (o.stay) {
-      el('whelpStay').textContent = o.stay;
-      el('whelpStay').addEventListener('click', function () { close(); if (o.onStay) { o.onStay(); } });
-      if (!o.ok) { el('whelpT').focus(); }
     }
   }
 
@@ -2301,7 +2309,7 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
   (function () {
     var taps = [];
     document.addEventListener('click', function (e) {
-      if (!e.target.closest || !e.target.closest('.top__brand, .whelp__badge')) { return; }
+      if (!e.target.closest || !e.target.closest('.top__brand, .whelp__badge, .tgate__brand')) { return; }
       var now = Date.now();
       taps = taps.filter(function (x) { return now - x < 3000; });
       taps.push(now);

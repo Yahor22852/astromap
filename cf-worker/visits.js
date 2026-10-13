@@ -151,7 +151,6 @@ var FUNNEL_STEPS = {
   /* Вход из TikTok: инструкция «открыть в браузере» стоит на входе в
      воронку (showStartGate в funnel/js/flow.js), а не перед оплатой. */
   tt_gate: 'TikTok: на входе показали «открыть в браузере»',
-  tt_stay: 'TikTok: остались проходить внутри TikTok',
   tt_open: 'Открыли ссылку из TikTok в браузере',
   /* Оплата в одно касание (funnel/js/wallet.js). paid_w считает вебхук
      (invoice.paid по подписке с metadata.source = wallet), ap_ok — страница. */
@@ -1057,7 +1056,7 @@ function quizSection(f, opt) {
    браузере» на входе, сколько дошли до браузера и как работает окно
    Apple Pay на пейволле. */
 function ttSection(f) {
-  var gate = f.tt_gate || 0, open = f.tt_open || 0, stay = f.tt_stay || 0;
+  var gate = f.tt_gate || 0, open = f.tt_open || 0;
   var sheet = (f.ap_m || 0) + (f.ap_y || 0);
   if (!gate && !open && !sheet) { return ''; }
   function tile(k, v, s) {
@@ -1068,7 +1067,6 @@ function ttSection(f) {
     '<div class="tiles">' +
       tile('Увидели инструкцию', gate, 'вкладок открыли сайт внутри TikTok') +
       tile('Перешли в браузер', open, gate ? pct(open, gate) + ' от увидевших инструкцию' : 'открыли ссылку из TikTok в Safari/Chrome') +
-      tile('Остались в TikTok', stay, gate ? pct(stay, gate) + ' нажали «продолжить в TikTok»' : '—') +
     '</div>' +
     ((f.ap_ready || f.ap_unready) ? '<h3>Готовность окна Apple Pay / Google Pay</h3><div class="tiles">' +
       tile('Окно готово', f.ap_ready || 0, 'вкладок, где Stripe подтвердил кошелёк') +

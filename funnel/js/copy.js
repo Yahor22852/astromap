@@ -242,11 +242,8 @@
         doneTitle: 'Płatność zakończona ✓',
         doneText: 'Klucz dostępu jest już wpisany — wystarczy wymyślić hasło.',
         doneBtn: 'Otwórz dostęp',
-        sBadge: 'Zajmie 5 sekund',
-        sTitle: 'Otwórz AstroMap w przeglądarce',
-        sSub: 'TikTok nie pozwala płacić ani używać {w} w aplikacji. W przeglądarce mapa liczy się tak samo, a dostęp otworzysz jednym stuknięciem.',
-        sStep3: 'AstroMap się otworzy — zacznij od razu tam',
-        sStay: 'Kontynuuj w TikToku'
+        sTitle: 'Otwórz w przeglądarce',
+        sSub: 'W przeglądarce AstroMap działa w pełni. To tylko dwa stuknięcia.'
       },
       checkoutOff: 'Płatność nie jest jeszcze podłączona. Twoje dane są zapisane — wróć tu za chwilę.',
       payFail: 'Płatność nie przeszła. Stuknij przycisk jeszcze raz, aby zapłacić kartą.',
@@ -567,11 +564,8 @@
         doneTitle: 'Payment complete ✓',
         doneText: 'Your access key is already filled in — just create a password.',
         doneBtn: 'Open my access',
-        sBadge: 'Takes 5 seconds',
-        sTitle: 'Open AstroMap in your browser',
-        sSub: 'TikTok doesn’t allow payments or {w} inside the app. In your browser your map is calculated the same way, and access opens in one tap.',
-        sStep3: 'AstroMap opens — start right there',
-        sStay: 'Continue in TikTok'
+        sTitle: 'Open in your browser',
+        sSub: 'AstroMap works fully in your browser. It takes two taps.'
       },
       checkoutOff: 'Payments are not connected yet. Your details are saved — come back in a moment.',
       payFail: 'The payment didn’t go through. Tap the button again to pay by card.',

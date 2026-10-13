@@ -14,9 +14,6 @@ TikTok (ссылка в профиле) → сразу инструкция «�
   │     │     (funnel/js/wallet.js → license-verify, action subscribe)
   │     └─ нет кошелька → Stripe Payment Link (как раньше)
   │           ?client_reference_id=<вариант>_<m|y>_<язык>_<uuid>
-  └─ «продолжить в TikTok» → квиз → «оплатить» → снова инструкция,
-        ответы и план едут через воркер visits (/handoff), в Safari/Chrome
-        одна кнопка «Оплатить через Apple Pay»
 
 Stripe Checkout → оплата (карта / Apple Pay / Google Pay)
   └─ redirect: astromap.me/product/?session_id=cs_…
@@ -123,9 +120,8 @@ Edit code → вставить `cf-worker/visits.js` целиком → Deploy. 
    сейчас» (после конца периода, или отменить «immediately» в дашборде Stripe)
    → гейт закрывается.
 8. В TikTok (или `localStorage.setItem('astromap.qa.inapp','1')` в консоли)
-   инструкция «••• → Открыть в браузере» встречает сразу на входе; после
-   «Продолжить в TikTok» её же показывает кнопка оплаты. `?nogate` в адресе
-   отключает инструкцию на входе.
+   инструкция «••• → Открыть в браузере» встречает сразу на входе и не
+   закрывается. `?nogate` в адресе отключает её для проверки.
 
 ## 8а. Apple Pay в одно касание (без страницы Stripe Checkout)
 
@@ -173,7 +169,7 @@ Edit code → вставить `cf-worker/visits.js` целиком → Deploy. 
 
 На `/stats` новый блок «Из TikTok в браузер»: сколько увидели инструкцию
 на входе (`tt_gate`), сколько открыли ссылку уже в браузере (`tt_open`),
-сколько остались в TikTok (`tt_stay`), и воронка окна Apple Pay — открыли
+и воронка окна Apple Pay — открыли
 окно / оплатили / закрыли.
 
 ## 9. Боевой режим
