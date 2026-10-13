@@ -18,9 +18,9 @@
    вовсе: там Apple Pay недоступен, человек сначала уходит в браузер.
 
    Настройка — docs/stripe-setup.md, раздел «Apple Pay в одно касание». */
-var STRIPE_PK = '';                 /* pk_live_… (Developers → API keys → Publishable key).
+var STRIPE_PK = 'pk_live_51UNVi70oxMEGhVt9r2m3QuFaihYlijxqSkuNm7CAem9etCFZBecc4UAgF1TggkCRtOVzTobWNrBN81Gclvy6zm7L00hgjltg1Z';                 /* pk_live_… (Developers → API keys → Publishable key).
                                        Пусто — окна Apple Pay нет, работает Stripe Checkout. */
-var STRIPE_COUNTRY = 'US';          /* страна аккаунта Stripe, две буквы (Settings → Business details) */
+var STRIPE_COUNTRY = 'PL';          /* страна аккаунта Stripe, две буквы (Settings → Business details) */
 /* Суммы в окне Apple Pay — в центах. Должны совпадать с ценами в Stripe
    (STRIPE_PRICE_MONTHLY / STRIPE_PRICE_YEARLY у воркера) и с copy.js:
    списывает воркер по цене из Stripe, а окно лишь показывает сумму. */
