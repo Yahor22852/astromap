@@ -135,14 +135,20 @@ var PAY_API = 'https://astromap-license-verify.egorrut3030.workers.dev';
         });
       }
       complete('fail');
-      throw new Error((r && r.reason) || 'failed');
+      throw new Error(r ? [r.reason, r.code, r.status].filter(Boolean).join(' / ') +
+        (r.message ? ' — ' + r.message : '') : 'no_response');
     }).then(function (r) {
       busy = false; ctx = null;
       if (c.onSuccess) { c.onSuccess(r.subscription, plan); }
     }).catch(function (e) {
       complete('fail');
       busy = false; ctx = null;
-      if (c.onFail) { c.onFail((e && e.message) || 'failed', plan); }
+      var why = (e && e.message) || 'failed';
+      if (e && e.name === 'AbortError') { why = 'timeout'; }
+      if (e && e.name === 'TypeError') { why = 'network: ' + e.message; }
+      /* Для отладки (?fpdebug / 5 нажатий на логотип). */
+      try { localStorage.setItem('astromap.dbg.pay', JSON.stringify({ at: new Date().toISOString(), why: why })); } catch (x) {}
+      if (c.onFail) { c.onFail(why, plan); }
     });
   }
 

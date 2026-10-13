@@ -137,6 +137,7 @@ async function stripe(env, method, path, params, opt) {
   if (!res.ok) {
     var err = new Error((data && data.error && data.error.message) || ('stripe ' + res.status));
     err.status = res.status;
+    err.code = (data && data.error && (data.error.decline_code || data.error.code || data.error.type)) || '';
     throw err;
   }
   return data;
@@ -476,8 +477,13 @@ async function handleSubscribe(env, body, ctx) {
     if (tax) { sp['automatic_tax[enabled]'] = 'true'; }
     sub = await stripe(env, 'POST', '/subscriptions', sp, { version: v, idem: 'am-sub-' + pm });
   } catch (e) {
-    if (e.status === 402) { return json({ ok: false, reason: 'card_declined' }); }
-    return json({ ok: false, reason: 'upstream_error' }, 502);
+    /* Код и текст ошибки Stripe уходят странице: она показывает код под
+       кнопкой — по скриншоту видно, что именно не так (права ключа, ID
+       цены, отказ банка). Секретов в них нет. */
+    var detail = { code: e.code || '', status: e.status || 0, message: String(e.message || '').slice(0, 240) };
+    console.log('subscribe failed', JSON.stringify(detail));
+    if (e.status === 402) { return json(Object.assign({ ok: false, reason: 'card_declined' }, detail)); }
+    return json(Object.assign({ ok: false, reason: 'upstream_error' }, detail), 502);
   }
   if (SUB_PAID[sub.status]) {
     var mail = welcomeOnce(env, sub.id, email, ref);

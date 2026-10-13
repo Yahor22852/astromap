@@ -516,12 +516,13 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
         catch (e) { return 'error ' + (e && e.name); }
       })(),
       'wallet enabled:      ' + !!(AW && AW.enabled()),
-      'wallet ready:        …'
+      'wallet ready:        …',
+      'last pay error:      ' + (localStorage.getItem('astromap.dbg.pay') || 'none')
     ];
     box.textContent = lines.join('\n');
     document.body.appendChild(box);
     prepareWallet().then(function (r) {
-      lines[lines.length - 1] = 'wallet ready:        ' + JSON.stringify(r || {}) + (AW ? ' ' + AW.kind() : '');
+      lines[lines.length - 2] = 'wallet ready:        ' + JSON.stringify(r || {}) + (AW ? ' ' + AW.kind() : '');
       box.textContent = lines.join('\n');
     });
     apiPost('/handoff/whoami', {}, 4000).then(function (r) {
@@ -623,10 +624,11 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
         showOpening(T.doneTitle);
         window.location.href = next;
       },
-      onFail: function () {
+      onFail: function (why) {
         walletFailed = true;
         track('ap_fail');
-        showNote(C.paywall.payFail || window.COPY_ALL.en.paywall.payFail);
+        /* Код ошибки мелко в конце — по скриншоту видно причину. */
+        showNote((C.paywall.payFail || window.COPY_ALL.en.paywall.payFail) + (why ? ' [' + why + ']' : ''));
       },
       onCancel: function () { track('ap_cancel'); }
     });
