@@ -2326,4 +2326,17 @@ var SUPPORT_EMAIL = 'hello@astromap.me';
     }
   });
   if (/[?&]fpdebug(=|&|$)/.test(location.search)) { fpDebug(); }
+  /* Та же отладка без особого адреса — внутри TikTok его не откроешь:
+     пять быстрых нажатий на логотип AstroMap вверху (или на плашку
+     инструкции «открыть в браузере»). */
+  (function () {
+    var taps = [];
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest || !e.target.closest('.top__brand, .whelp__badge')) { return; }
+      var now = Date.now();
+      taps = taps.filter(function (x) { return now - x < 3000; });
+      taps.push(now);
+      if (taps.length >= 5) { taps = []; fpDebug(); }
+    });
+  })();
 })();
